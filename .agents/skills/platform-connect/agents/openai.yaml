@@ -1,4 +1,0 @@
-interface:
-  display_name: "Platform Connect"
-  short_description: "Create platform-native copy, visuals, and image packages"
-  default_prompt: "Use $platform-connect to adapt this article for Bilibili and YouTube Shorts."
