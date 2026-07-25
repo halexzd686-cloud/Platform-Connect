@@ -33,7 +33,8 @@ The required flow below supersedes the mode default after copy confirmation: alw
 12. Wait for the user to choose a global direction, optional platform overrides, or a custom direction. Then create an editable asset manifest using [output-schema.md](references/output-schema.md). If the user supplies a custom prompt, preserve its intent and ask only questions needed to resolve material factual, brand, or safety constraints.
 13. Stop at the visual-manifest gate. Generate no images until the user explicitly approves the manifest.
 14. After approval, use the available image-generation tool once per distinct asset. Inspect every output, apply the QA checklist in [visual-handoff.md](references/visual-handoff.md), and iterate one change at a time when necessary.
-15. Save or organize deliverables with the deterministic scripts below when filesystem output is requested.
+15. Save or organize deliverables with the deterministic scripts below when filesystem output is requested. Create a new immutable run directory for every revision; never overwrite a prior approved run.
+16. When the user needs a visible execution artifact, render the bundled offline showcase from the manifest, brief, copy packages, visual decisions, and QA state. The showcase visualizes this skill's work; it is not a separate AI application.
 
 ## Non-negotiable boundaries
 
@@ -66,9 +67,11 @@ Keep platform labels explicit. Do not merge several platform scripts into one ge
 
 Use these scripts for file operations; do not manually recreate their behavior:
 
-- `scripts/prepare_workspace.py <slug> --platforms ...` creates the delivery directory and starter manifest.
+- `scripts/prepare_workspace.py <slug> --platforms ...` creates an immutable versioned run directory and starter manifest.
 - `scripts/validate_manifest.py <manifest.json>` validates required fields, platform selection, duplicate assets, ratios, and approval state.
 - `scripts/build_delivery_index.py <manifest.json>` builds a Markdown delivery index after assets and copy paths are recorded.
+- `scripts/render_showcase.py <manifest.json>` renders the bundled offline execution showcase.
+- `scripts/validate_showcase.py <showcase-dir>` checks the rendered showcase contract and offline constraints.
 
 Run scripts from the repository or skill consumer's working directory. Use `--root` to choose a different output root.
 
