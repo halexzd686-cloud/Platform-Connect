@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Platform Connect — Skill Execution</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">PC</span>
+      <span>Platform Connect<small>SKILL EXECUTION · OFFLINE REPORT</small></span>
+    </div>
+    <div class="runtime"><i></i><span id="runtimeLabel">RUN LOADED</span></div>
+    <div class="run-meta" id="runMeta"></div>
+  </header>
+
+  <aside class="source-rail">
+    <div class="rail-label">SOURCE</div>
+    <div class="source-card">
+      <span class="file-mark">MD</span>
+      <div><strong id="sourceTitle">Source article</strong><small id="sourceMeta"></small></div>
+    </div>
+    <h2 id="sourceHeadline"></h2>
+    <div class="source-summary" id="sourceSummary"></div>
+    <footer>原文始终是事实来源；展示层不修改作者立场。</footer>
+  </aside>
+
+  <main class="stage">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">A visible skill, not another AI app</p>
+        <h1>让一篇文章，沿着不同平台<br><em>生长出各自的表达</em></h1>
+      </div>
+      <div class="case-id" id="caseId"></div>
+    </section>
+
+    <nav class="stepper" id="stepper" aria-label="Skill execution steps"></nav>
+    <section class="screen" id="screen" aria-live="polite"></section>
+  </main>
+
+  <aside class="trace-rail">
+    <div class="rail-label">SKILL TRACE</div>
+    <div class="trace-summary">
+      <strong id="traceTitle"></strong>
+      <small>规则执行、用户决策与状态变化</small>
+    </div>
+    <div class="trace-list" id="traceList"></div>
+    <div class="gate-card">
+      <span>CURRENT GATE</span>
+      <strong id="gateLabel"></strong>
+    </div>
+  </aside>
+
+  <script id="case-data" type="application/json">__PLATFORM_CONNECT_CASE_JSON__</script>
+  <script src="app.js"></script>
+</body>
+</html>
