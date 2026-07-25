@@ -1,0 +1,121 @@
+{
+  "source": {
+    "file_name": "AI 不会替代你的工作.md",
+    "title": "AI 不会替代你的工作，但会重新分配你的工作",
+    "summary_paragraphs": [
+      "这篇文章讨论生成式 AI 如何改变知识工作的任务分配。",
+      "真正需要保护的不是每项具体任务，而是目标、判断和最终责任。"
+    ]
+  },
+  "brief": {
+    "core_thesis": "AI 改变的不是“职业是否存在”，而是职业内部任务如何被重新分配。",
+    "author_stance": "反对简单的“AI 替代人”叙事",
+    "audience": "正在使用 AI 的知识工作者与团队管理者",
+    "audience_need": "建立更准确的人机协作认知",
+    "tone": "理性、克制、有判断力",
+    "protected_claims": [
+      "不把任务重组强化成岗位必然消失",
+      "不虚构效率数据、调研结果或成功案例",
+      "保留最终责任仍由人承担的判断"
+    ]
+  },
+  "platforms": [
+    {
+      "id": "xiaohongshu",
+      "label": "小红书",
+      "language": "zh-CN",
+      "market": "中国大陆",
+      "rationale": "以认知反差开场，用可收藏的判断框架承接观点。"
+    },
+    {
+      "id": "linkedin",
+      "label": "LinkedIn",
+      "language": "en",
+      "market": "Global",
+      "rationale": "保留专业判断，强调团队如何重新划分人机职责。"
+    }
+  ],
+  "visual_directions": [
+    {
+      "id": "EDITORIAL",
+      "name": "编辑部观点海报",
+      "fit": "用强标题和克制排版承载重新分工的判断。",
+      "platforms": "小红书 / LinkedIn",
+      "score": "92%"
+    },
+    {
+      "id": "DIAGRAM",
+      "name": "任务重组解释图",
+      "fit": "把重复任务与人的判断拆成清晰关系。",
+      "platforms": "LinkedIn / 轮播页",
+      "score": "88%"
+    },
+    {
+      "id": "COLLAGE",
+      "name": "人机协作拼贴",
+      "fit": "表现两种能力并存，但避免机器人替代人的俗套。",
+      "platforms": "封面 / 开场帧",
+      "score": "79%"
+    }
+  ],
+  "decisions": {
+    "brief": "approved",
+    "platforms": "approved"
+  },
+  "trace": {
+    "brief": [
+      {
+        "mark": "S",
+        "label": "Skill",
+        "text": "完整读取原文并建立共享内容简报。"
+      },
+      {
+        "mark": "R",
+        "label": "Rule",
+        "text": "锁定作者立场、事实和受保护主张。"
+      }
+    ],
+    "platforms": [
+      {
+        "mark": "U",
+        "label": "User decision",
+        "text": "选择小红书和 LinkedIn，LinkedIn 使用 English / Global。"
+      }
+    ],
+    "copies": [
+      {
+        "mark": "S",
+        "label": "Copy packages",
+        "text": "从同一事实基线派生两份独立平台文案。"
+      }
+    ],
+    "intent": [
+      {
+        "mark": "U",
+        "label": "Image intent",
+        "text": "用户明确选择：是，生成配图。"
+      }
+    ],
+    "directions": [
+      {
+        "mark": "S",
+        "label": "Visual routing",
+        "text": "根据文章行业、受众和沟通任务推荐视觉方向。"
+      }
+    ],
+    "assets": [
+      {
+        "mark": "R",
+        "label": "Manifest gate",
+        "text": "资产用途、来源锚点、比例与事实约束已确认。"
+      }
+    ],
+    "delivery": [
+      {
+        "mark": "S",
+        "label": "Delivery",
+        "text": "逐张生成并完成事实、文字、构图和风格 QA。"
+      }
+    ]
+  }
+}

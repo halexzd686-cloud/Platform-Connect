@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.1",
+  "skill_version": "0.3.0",
+  "article_slug": "ai-work-reallocation",
+  "run_id": "case-20260726",
+  "parent_run_id": null,
+  "mode": "full",
+  "platforms": [
+    "xiaohongshu",
+    "linkedin"
+  ],
+  "locale_assumptions": {
+    "source_language": "zh-CN",
+    "target_language": "en",
+    "market": "global"
+  },
+  "copy_approval": "approved",
+  "image_intent": "yes",
+  "visual_direction_approval": "approved",
+  "visual_manifest_approval": "approved",
+  "global_style_id": "editorial-poster",
+  "platform_overrides": {},
+  "copy_files": {
+    "xiaohongshu": "xiaohongshu/copy.md",
+    "linkedin": "linkedin/copy.md"
+  },
+  "showcase_file": "showcase/index.html",
+  "assets": [
+    {
+      "id": "xiaohongshu-cover-01",
+      "platform": "xiaohongshu",
+      "asset_type": "cover",
+      "purpose": "承载任务重新分配的核心判断",
+      "source_anchor": "core-thesis",
+      "core_idea": "AI 先重组任务，而不是直接替代岗位",
+      "aspect_ratio": "3:4",
+      "style_id": "editorial-poster",
+      "on_image_text": "重新分工",
+      "custom_prompt": "",
+      "planning_status": "approved",
+      "generation_status": "ready",
+      "file": "xiaohongshu/images/cover-01.png",
+      "qa": {
+        "facts": "passed",
+        "text": "passed",
+        "composition": "passed",
+        "style": "passed"
+      }
+    },
+    {
+      "id": "linkedin-carousel-01",
+      "platform": "linkedin",
+      "asset_type": "carousel",
+      "purpose": "解释任务与人的判断之间的关系",
+      "source_anchor": "content-unit-02",
+      "core_idea": "重复任务可以交给 AI，责任仍然属于人",
+      "aspect_ratio": "4:5",
+      "style_id": "editorial-diagram",
+      "on_image_text": "TASKS × JUDGMENT",
+      "custom_prompt": "",
+      "planning_status": "approved",
+      "generation_status": "ready",
+      "file": "linkedin/images/carousel-01.png",
+      "qa": {
+        "facts": "passed",
+        "text": "passed",
+        "composition": "passed",
+        "style": "passed"
+      }
+    }
+  ],
+  "review_flags": [
+    "“过去两年”缺少明确起止时间，保留原文措辞。"
+  ]
+}
