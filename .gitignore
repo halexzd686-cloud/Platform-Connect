@@ -1,4 +1,15 @@
 __pycache__/
 *.py[cod]
 outputs/
+.tmp/
+/.agents/
+/.claude/
+ian-xiaohei-illustrations-main.zip
+.env
+.env.*
+*.key
+*.token
+credentials.json
 .DS_Store
+Thumbs.db
+Desktop.ini
