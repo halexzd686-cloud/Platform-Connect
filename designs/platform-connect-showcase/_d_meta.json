@@ -1,0 +1,28 @@
+{
+  "type": "design",
+  "designSystems": [],
+  "primaryDesignSystem": null,
+  "assets": {
+    "Platform Connect — Skill Showcase": {
+      "versions": [
+        {
+          "path": "Platform Connect — Skill Showcase.html",
+          "createdAt": "2026-07-23T07:42:11.396Z",
+          "status": "needs-review"
+        },
+        {
+          "path": "Platform Connect — Forest Console V2.html",
+          "createdAt": "2026-07-25T16:03:35.857Z",
+          "status": "needs-review"
+        },
+        {
+          "path": "Platform Connect — Skill Fidelity V3.html",
+          "createdAt": "2026-07-25T17:27:32.157Z",
+          "status": "needs-review"
+        }
+      ]
+    }
+  },
+  "createdAt": "2026-07-23T07:42:11.398Z",
+  "updatedAt": "2026-07-25T17:27:32.158Z"
+}

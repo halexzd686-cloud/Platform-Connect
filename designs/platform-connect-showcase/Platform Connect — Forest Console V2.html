@@ -1,0 +1,2096 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Platform Connect — Forest Console V2</title>
+  <style>
+    :root {
+      --paper: #f3f0e8;
+      --paper-deep: #e8e3d7;
+      --ink: #181915;
+      --muted: #6f7069;
+      --line: #c9c4b8;
+      --accent: #ff5a36;
+      --acid: #dfff3f;
+      --white: #fffdf8;
+      --green: #2b6f50;
+      --blue: #315b9c;
+      --shadow: 0 18px 55px rgba(31, 29, 22, .10);
+      --serif: "Iowan Old Style", "Palatino Linotype", "Songti SC", "Noto Serif SC", serif;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: var(--sans);
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image:
+        linear-gradient(rgba(24,25,21,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(24,25,21,.025) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    button, textarea, input { font: inherit; }
+    button { color: inherit; }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 68px 1fr;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto minmax(260px, 1fr);
+      align-items: center;
+      gap: 24px;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--ink);
+      background: rgba(243, 240, 232, .96);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 780;
+      letter-spacing: -.02em;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      color: var(--white);
+      background: var(--ink);
+      font-family: var(--mono);
+      font-size: 12px;
+      transform: rotate(-3deg);
+    }
+
+    .brand small {
+      display: block;
+      margin-top: 1px;
+      color: var(--muted);
+      font: 10px/1.1 var(--mono);
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .runtime-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font: 11px/1 var(--mono);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 5px rgba(43,111,80,.12);
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .quiet-button, .primary-button, .ghost-button {
+      min-height: 38px;
+      border: 1px solid var(--ink);
+      border-radius: 0;
+      padding: 0 15px;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    .quiet-button {
+      border-color: var(--line);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .primary-button {
+      color: var(--white);
+      background: var(--ink);
+      font-weight: 680;
+      box-shadow: 4px 4px 0 var(--accent);
+    }
+
+    .ghost-button {
+      background: var(--white);
+      font-weight: 650;
+    }
+
+    .quiet-button:hover, .primary-button:hover, .ghost-button:hover {
+      transform: translate(-1px, -1px);
+    }
+
+    .primary-button:hover { box-shadow: 6px 6px 0 var(--accent); }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 292px minmax(620px, 1fr) 340px;
+      min-height: calc(100vh - 68px);
+    }
+
+    .source-panel, .trace-panel {
+      position: sticky;
+      top: 68px;
+      height: calc(100vh - 68px);
+      overflow: auto;
+      background: rgba(255,253,248,.55);
+    }
+
+    .source-panel { border-right: 1px solid var(--ink); }
+    .trace-panel { border-left: 1px solid var(--ink); }
+
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: 54px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      font: 11px/1 var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .panel-heading span:last-child { color: var(--muted); }
+
+    .source-body { padding: 20px 18px 28px; }
+
+    .file-ticket {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+      box-shadow: 4px 4px 0 var(--acid);
+    }
+
+    .file-type {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 44px;
+      color: var(--white);
+      background: var(--blue);
+      font: 10px/1 var(--mono);
+    }
+
+    .file-name {
+      font-size: 13px;
+      font-weight: 720;
+      line-height: 1.35;
+    }
+
+    .file-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font: 10px/1.3 var(--mono);
+    }
+
+    .source-title {
+      margin: 30px 0 12px;
+      font: 700 27px/1.15 var(--serif);
+      letter-spacing: -.03em;
+    }
+
+    .source-dek {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.75;
+    }
+
+    .source-copy {
+      display: grid;
+      gap: 15px;
+      color: #3f403a;
+      font: 12px/1.8 var(--serif);
+    }
+
+    .source-copy p { margin: 0; }
+
+    .highlight {
+      padding: 0 2px;
+      background: linear-gradient(transparent 48%, rgba(223,255,63,.72) 48%);
+    }
+
+    .source-fade {
+      position: relative;
+      height: 82px;
+      margin-top: -70px;
+      background: linear-gradient(transparent, var(--paper));
+    }
+
+    .source-note {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font: 10px/1.6 var(--mono);
+    }
+
+    .main-stage {
+      min-width: 0;
+      padding: 26px clamp(24px, 4vw, 58px) 80px;
+    }
+
+    .demo-intro {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font: 11px/1 var(--mono);
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 24px;
+      height: 1px;
+      background: currentColor;
+    }
+
+    .demo-intro h1 {
+      max-width: 670px;
+      margin: 10px 0 0;
+      font: 740 clamp(34px, 4vw, 60px)/.98 var(--serif);
+      letter-spacing: -.055em;
+    }
+
+    .demo-intro h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .case-id {
+      flex: 0 0 auto;
+      padding-top: 4px;
+      text-align: right;
+      color: var(--muted);
+      font: 10px/1.6 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      margin-bottom: 28px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+
+    .step {
+      position: relative;
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 9px;
+      align-items: center;
+      min-width: 0;
+      min-height: 64px;
+      padding: 10px 12px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      transition: background .18s ease, color .18s ease;
+    }
+
+    .step:last-child { border-right: 0; }
+    .step:hover { background: var(--paper); }
+    .step.active { color: var(--white); background: var(--ink); }
+    .step.done::after {
+      content: "";
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .step-index {
+      font: 11px/1 var(--mono);
+      color: var(--muted);
+    }
+
+    .step.active .step-index { color: var(--acid); }
+    .step-label { font-size: 12px; font-weight: 680; white-space: nowrap; }
+
+    .screen {
+      display: none;
+      animation: enter .32s ease both;
+    }
+
+    .screen.active { display: block; }
+
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font: 700 27px/1.1 var(--serif);
+      letter-spacing: -.03em;
+    }
+
+    .section-head p {
+      max-width: 430px;
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .rule-tag {
+      flex: 0 0 auto;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font: 9px/1 var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .brief-grid {
+      display: grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap: 14px;
+    }
+
+    .card {
+      position: relative;
+      border: 1px solid var(--ink);
+      background: var(--white);
+    }
+
+    .card-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 40px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      font: 10px/1 var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .card-topline span:last-child { color: var(--muted); }
+
+    .thesis-card {
+      grid-row: span 2;
+      min-height: 304px;
+    }
+
+    .thesis-content { padding: 24px; }
+
+    .thesis-quote {
+      margin: 0 0 26px;
+      font: 650 29px/1.22 var(--serif);
+      letter-spacing: -.03em;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .mini-fact {
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .mini-fact label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font: 11px/1.25 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .mini-fact strong {
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .lock-list, .unit-list {
+      display: grid;
+      gap: 0;
+      padding: 6px 14px 12px;
+    }
+
+    .lock-item, .unit-item {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--line);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .lock-item:last-child, .unit-item:last-child { border-bottom: 0; }
+
+    .lock-icon {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      color: var(--white);
+      background: var(--ink);
+      font: 9px/1 var(--mono);
+    }
+
+    .unit-num {
+      color: var(--accent);
+      font: 10px/1.7 var(--mono);
+    }
+
+    .approval-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px solid var(--ink);
+      background: var(--acid);
+    }
+
+    .approval-copy {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .approval-copy strong {
+      display: block;
+      font-size: 12px;
+    }
+
+    .approval-copy small {
+      display: block;
+      margin-top: 3px;
+      color: rgba(24,25,21,.65);
+      font: 9px/1.4 var(--mono);
+    }
+
+    .approval-number {
+      font: 26px/1 var(--serif);
+      font-style: italic;
+    }
+
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .platform-card {
+      position: relative;
+      min-height: 184px;
+      padding: 18px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .platform-card:hover { transform: translateY(-2px); }
+    .platform-card.selected { box-shadow: 6px 6px 0 var(--accent); }
+    .platform-card.selected::after {
+      content: "SELECTED";
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 5px 7px;
+      color: var(--white);
+      background: var(--ink);
+      font: 8px/1 var(--mono);
+      letter-spacing: .08em;
+    }
+
+    .platform-monogram {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 16px;
+      border: 1px solid var(--ink);
+      font: 700 12px/1 var(--mono);
+    }
+
+    .platform-card h3 {
+      margin: 0 0 6px;
+      font: 700 18px/1.1 var(--serif);
+    }
+
+    .platform-card p {
+      min-height: 42px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .platform-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 14px;
+    }
+
+    .platform-tags span {
+      padding: 4px 6px;
+      background: var(--paper-deep);
+      font: 8px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .copy-layout {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .copy-tabs {
+      display: grid;
+      align-content: start;
+      border: 1px solid var(--ink);
+      background: var(--white);
+    }
+
+    .copy-tab {
+      position: relative;
+      display: grid;
+      gap: 4px;
+      min-height: 76px;
+      padding: 14px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .copy-tab:last-child { border-bottom: 0; }
+    .copy-tab.active { color: var(--white); background: var(--ink); }
+    .copy-tab strong { font-size: 12px; }
+    .copy-tab small { color: var(--muted); font: 9px/1.4 var(--mono); }
+    .copy-tab.active small { color: #a9aaa4; }
+
+    .copy-preview {
+      min-height: 432px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+    }
+
+    .preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 48px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .preview-toolbar div:first-child {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 11px;
+      font-weight: 680;
+    }
+
+    .draft-chip {
+      padding: 4px 6px;
+      color: var(--blue);
+      background: #e8eef7;
+      font: 8px/1 var(--mono);
+    }
+
+    .copy-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-button {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--line);
+      background: transparent;
+      cursor: pointer;
+      font: 11px/1 var(--mono);
+    }
+
+    .document-sheet {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: 30px 38px 40px;
+    }
+
+    .document-sheet h3 {
+      margin: 0 0 18px;
+      font: 700 26px/1.25 var(--serif);
+      letter-spacing: -.025em;
+    }
+
+    .document-sheet p {
+      margin: 0 0 14px;
+      color: #393a35;
+      font-size: 12px;
+      line-height: 1.85;
+    }
+
+    .hook {
+      display: inline;
+      background: linear-gradient(transparent 55%, rgba(255,90,54,.25) 55%);
+    }
+
+    .cta-line {
+      margin-top: 22px !important;
+      padding-top: 14px;
+      border-top: 1px solid var(--ink);
+      font-weight: 680;
+    }
+
+    .visual-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .visual-card {
+      border: 1px solid var(--ink);
+      background: var(--white);
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .visual-card:hover { transform: translateY(-3px); }
+    .visual-card.selected { box-shadow: 6px 6px 0 var(--accent); }
+
+    .visual-swatch {
+      position: relative;
+      height: 145px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .swatch-editorial { background: #e7dbc9; }
+    .swatch-editorial::before {
+      content: "AI";
+      position: absolute;
+      left: 16px;
+      bottom: -20px;
+      font: 900 116px/1 var(--serif);
+      color: #191a16;
+      transform: rotate(-7deg);
+    }
+    .swatch-editorial::after {
+      content: "重写工作，不重写判断";
+      position: absolute;
+      right: 11px;
+      top: 12px;
+      width: 78px;
+      padding: 6px;
+      color: var(--white);
+      background: var(--accent);
+      font: 700 10px/1.35 var(--sans);
+    }
+
+    .swatch-diagram {
+      background-color: #20221d;
+      background-image: linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+
+    .swatch-diagram::before, .swatch-diagram::after {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--acid);
+      color: var(--acid);
+      font: 10px/1.2 var(--mono);
+      text-align: center;
+    }
+
+    .swatch-diagram::before {
+      content: "重复任务";
+      left: 18px;
+      top: 43px;
+      width: 76px;
+      height: 45px;
+    }
+
+    .swatch-diagram::after {
+      content: "人的判断";
+      right: 18px;
+      top: 43px;
+      width: 76px;
+      height: 45px;
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: -42px 0 0 -41px var(--white);
+    }
+
+    .swatch-collage { background: var(--acid); }
+    .swatch-collage::before {
+      content: "HUMAN\A ×\A MACHINE";
+      white-space: pre;
+      position: absolute;
+      inset: 17px auto auto 17px;
+      font: 900 28px/.85 var(--sans);
+      letter-spacing: -.08em;
+    }
+
+    .swatch-collage::after {
+      content: "不是替代\A 是重新分工";
+      white-space: pre;
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      padding: 10px;
+      color: var(--white);
+      background: var(--blue);
+      font: 700 12px/1.25 var(--serif);
+      transform: rotate(4deg);
+    }
+
+    .visual-copy { padding: 14px; }
+    .visual-copy h3 { margin: 0 0 5px; font: 700 15px/1.2 var(--serif); }
+    .visual-copy p { min-height: 50px; margin: 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+
+    .fit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font: 8px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .asset-board {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .asset-card {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      min-height: 126px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+    }
+
+    .asset-thumb {
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-right: 1px solid var(--ink);
+      color: var(--white);
+      background: var(--ink);
+      font: 800 24px/1 var(--serif);
+    }
+
+    .asset-thumb.tall::after {
+      content: "";
+      position: absolute;
+      width: 34px;
+      height: 60px;
+      border: 1px solid var(--acid);
+    }
+
+    .asset-thumb.wide::after {
+      content: "";
+      position: absolute;
+      width: 62px;
+      height: 34px;
+      border: 1px solid var(--accent);
+    }
+
+    .asset-body { padding: 13px; }
+
+    .asset-line {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .asset-line h3 { margin: 0; font-size: 12px; }
+
+    .ready-chip {
+      padding: 4px 6px;
+      color: var(--green);
+      background: #e0eee7;
+      font: 8px/1 var(--mono);
+    }
+
+    .asset-meta {
+      margin-top: 5px;
+      color: var(--muted);
+      font: 9px/1.5 var(--mono);
+    }
+
+    .qa-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+      margin-top: 12px;
+    }
+
+    .qa-row span {
+      padding: 5px 6px;
+      border: 1px solid var(--line);
+      font: 8px/1 var(--mono);
+    }
+
+    .qa-row span::before {
+      content: "✓";
+      margin-right: 4px;
+      color: var(--green);
+    }
+
+    .delivery-footer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      margin-top: 14px;
+      padding: 18px;
+      color: var(--white);
+      background: var(--ink);
+    }
+
+    .delivery-footer strong { font: 680 16px/1.2 var(--serif); }
+    .delivery-footer small { display: block; margin-top: 4px; color: #acaea7; font: 9px/1.4 var(--mono); }
+
+    .trace-body {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 122px);
+    }
+
+    .trace-context {
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper-deep);
+    }
+
+    .trace-context strong {
+      display: block;
+      font: 11px/1.4 var(--mono);
+    }
+
+    .trace-context span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font: 9px/1.5 var(--mono);
+    }
+
+    .trace-stream {
+      display: grid;
+      align-content: start;
+      gap: 18px;
+      flex: 1;
+      padding: 18px;
+    }
+
+    .trace-event {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      animation: traceIn .28s ease both;
+    }
+
+    @keyframes traceIn {
+      from { opacity: 0; transform: translateX(5px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .event-mark {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+      font: 8px/1 var(--mono);
+    }
+
+    .event-mark::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 22px;
+      width: 1px;
+      height: 42px;
+      background: var(--line);
+    }
+
+    .trace-event:last-child .event-mark::after { display: none; }
+    .trace-event.agent .event-mark { color: var(--white); background: var(--ink); }
+    .trace-event.user .event-mark { background: var(--acid); }
+    .trace-event.rule .event-mark { color: var(--white); background: var(--accent); border-color: var(--accent); }
+
+    .event-copy label {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font: 8px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .event-copy p {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    .event-copy code {
+      display: block;
+      margin-top: 7px;
+      padding: 7px 8px;
+      border: 1px solid var(--line);
+      color: #4d4e48;
+      background: var(--white);
+      font: 8px/1.55 var(--mono);
+      white-space: pre-wrap;
+    }
+
+    .decision-box {
+      position: sticky;
+      bottom: 0;
+      padding: 14px 18px 18px;
+      border-top: 1px solid var(--ink);
+      background: var(--paper);
+    }
+
+    .decision-box label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font: 8px/1 var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .decision-text {
+      margin-bottom: 11px;
+      font-size: 11px;
+      font-weight: 680;
+      line-height: 1.45;
+    }
+
+    .decision-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .decision-actions button {
+      min-height: 36px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+      font-size: 10px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .decision-actions button.confirm {
+      color: var(--white);
+      background: var(--ink);
+    }
+
+    .toast {
+      position: fixed;
+      right: 28px;
+      bottom: 28px;
+      z-index: 50;
+      max-width: 340px;
+      padding: 13px 16px;
+      color: var(--white);
+      background: var(--ink);
+      box-shadow: 5px 5px 0 var(--accent);
+      font-size: 11px;
+      line-height: 1.5;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1180px) {
+      .workspace { grid-template-columns: 240px minmax(560px, 1fr); }
+      .trace-panel {
+        position: fixed;
+        z-index: 30;
+        right: 0;
+        top: 68px;
+        width: 340px;
+        transform: translateX(100%);
+        transition: transform .25s ease;
+        box-shadow: -18px 0 50px rgba(0,0,0,.12);
+      }
+      body.trace-open .trace-panel { transform: translateX(0); }
+    }
+
+    @media (max-width: 820px) {
+      .topbar { grid-template-columns: 1fr auto; padding: 0 16px; }
+      .runtime-status { display: none; }
+      .workspace { display: block; }
+      .source-panel { display: none; }
+      .main-stage { padding: 22px 16px 60px; }
+      .demo-intro { display: block; }
+      .case-id { margin-top: 14px; text-align: left; }
+      .stepper { overflow-x: auto; grid-template-columns: repeat(5, 130px); }
+      .brief-grid, .platform-grid, .copy-layout, .visual-grid, .asset-board { grid-template-columns: 1fr; }
+      .thesis-card { grid-row: auto; }
+      .copy-tabs { grid-template-columns: repeat(3, 1fr); overflow-x: auto; }
+      .copy-tab { border-right: 1px solid var(--line); border-bottom: 0; }
+    }
+    /* Forest Console V2 — visual layer only */
+    :root {
+      --paper: #e9ebe6;
+      --paper-deep: #d9ddd7;
+      --ink: #26312a;
+      --muted: #747b76;
+      --line: #c6cbc5;
+      --accent: #987457;
+      --acid: #829587;
+      --white: #f8f7f2;
+      --green: #607966;
+      --blue: #6f7b74;
+      --shadow: 0 10px 30px rgba(31, 41, 35, .06);
+    }
+
+    body {
+      background: var(--paper);
+      background-image: none;
+    }
+
+    .topbar {
+      color: #eef0eb;
+      border-bottom-color: #3e4b43;
+      background: rgba(31, 41, 35, .97);
+      box-shadow: 0 6px 20px rgba(23, 31, 26, .12);
+    }
+
+    .brand-mark {
+      color: #f4f1eb;
+      border: 1px solid #6d7a71;
+      background: #344139;
+      transform: none;
+    }
+
+    .brand small,
+    .runtime-status {
+      color: #aeb8b1;
+    }
+
+    .pulse {
+      background: #88a08e;
+      box-shadow: 0 0 0 4px rgba(136, 160, 142, .14);
+    }
+
+    .topbar .quiet-button {
+      color: #d1d7d2;
+      border-color: #56645b;
+      background: transparent;
+    }
+
+    .topbar .primary-button {
+      color: #f8f5ef;
+      border-color: #a78365;
+      background: #8c694f;
+      box-shadow: none;
+    }
+
+    .topbar .primary-button:hover {
+      background: #9a7657;
+      box-shadow: none;
+    }
+
+    .source-panel {
+      color: var(--ink);
+      border-right-color: var(--line);
+      background: #e2e4df;
+    }
+
+    .trace-panel {
+      color: #e8ebe6;
+      border-left-color: #46534b;
+      background: #202a24;
+    }
+
+    .panel-heading {
+      border-bottom-color: rgba(116, 132, 121, .42);
+    }
+
+    .trace-panel .panel-heading span:last-child {
+      color: #9aa69e;
+    }
+
+    .source-body {
+      padding-top: 22px;
+    }
+
+    .file-ticket {
+      border-color: #adb4ae;
+      background: #f3f3ef;
+      box-shadow: none;
+    }
+
+    .file-type {
+      color: #eef0eb;
+      background: #52695a;
+    }
+
+    .source-title {
+      font-size: 25px;
+      color: #2b352e;
+    }
+
+    .source-dek,
+    .source-note {
+      color: #747b76;
+    }
+
+    .source-copy {
+      color: #4c544e;
+    }
+
+    .highlight,
+    .hook {
+      background: linear-gradient(transparent 57%, rgba(112, 139, 119, .24) 57%);
+    }
+
+    .source-fade {
+      background: linear-gradient(transparent, #e2e4df);
+    }
+
+    .main-stage {
+      background: #eceee9;
+    }
+
+    .eyebrow {
+      color: #87674f;
+    }
+
+    .demo-intro h1 {
+      max-width: 720px;
+      font-size: clamp(32px, 3.5vw, 50px);
+      line-height: 1.02;
+      letter-spacing: -.045em;
+    }
+
+    .demo-intro h1 em {
+      color: #536b5b;
+      font-style: normal;
+    }
+
+    .case-id {
+      color: #78807a;
+    }
+
+    .stepper {
+      border-color: #b8beb8;
+      background: #f6f6f2;
+      box-shadow: var(--shadow);
+    }
+
+    .step {
+      border-right-color: #d0d4cf;
+    }
+
+    .step:hover {
+      background: #e5e8e3;
+    }
+
+    .step.active {
+      color: #f4f5f1;
+      background: #2f3d34;
+    }
+
+    .step.done::after {
+      background: #78917e;
+    }
+
+    .step.active .step-index {
+      color: #b7c7bb;
+    }
+
+    .rule-tag {
+      color: #727a74;
+      border-color: #c3c8c2;
+      background: rgba(248, 247, 242, .58);
+    }
+
+    .card,
+    .platform-card,
+    .copy-tabs,
+    .copy-preview,
+    .visual-card,
+    .asset-card {
+      border-color: #bcc2bc;
+      background: #f8f7f2;
+      box-shadow: none;
+    }
+
+    .card-topline,
+    .preview-toolbar {
+      border-bottom-color: #d1d4cf;
+      background: #f0f1ed;
+    }
+
+    .thesis-quote {
+      color: #29342c;
+      font-size: 27px;
+    }
+
+    .mini-fact,
+    .lock-item,
+    .unit-item,
+    .fit-row {
+      border-color: #d0d4ce;
+      font-size: 10px;
+      line-height: 1.35;
+      letter-spacing: .01em;
+    }
+
+    .recommendation-score {
+      margin-left: 3px;
+      color: #87674f;
+      font: italic 700 15px/1 var(--serif);
+      letter-spacing: -.02em;
+    }
+
+    .lock-icon {
+      color: #edf0ec;
+      background: #536b5a;
+    }
+
+    .unit-num {
+      color: #8a684f;
+    }
+
+    .approval-bar {
+      color: #342e29;
+      border-color: #c4b5a8;
+      background: #e3dbd2;
+      box-shadow: inset 4px 0 0 #8d6b51;
+    }
+
+    .approval-copy small {
+      color: #796e65;
+    }
+
+    .primary-button {
+      color: #f7f4ee;
+      border-color: #7e5f49;
+      background: #826149;
+      box-shadow: none;
+    }
+
+    .primary-button:hover {
+      background: #916e53;
+      box-shadow: none;
+    }
+
+    .quiet-button:hover,
+    .primary-button:hover,
+    .ghost-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .platform-card:hover,
+    .visual-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .platform-card.selected,
+    .visual-card.selected {
+      border-color: #5e7865;
+      box-shadow: inset 0 0 0 1px #5e7865;
+    }
+
+    .platform-card.selected::after {
+      color: #eff2ee;
+      background: #526959;
+    }
+
+    .platform-monogram {
+      color: #f0f2ee;
+      border-color: #52675a;
+      background: #52675a;
+    }
+
+    .platform-tags span {
+      color: #68716a;
+      background: #e6e8e3;
+      padding: 5px 7px;
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .copy-tab {
+      border-bottom-color: #d0d4cf;
+    }
+
+    .copy-tab.active {
+      color: #f1f3ef;
+      background: #34443a;
+    }
+
+    .copy-tab.active small {
+      color: #b3bdb6;
+    }
+
+    .copy-tab small {
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .draft-chip {
+      color: #526a5a;
+      background: #e1e8e2;
+    }
+
+    .icon-button {
+      color: #69716b;
+      border-color: #c6cbc5;
+    }
+
+    .document-sheet p {
+      color: #444b46;
+    }
+
+    .swatch-editorial {
+      background: #ddd9d0;
+    }
+
+    .swatch-editorial::before {
+      color: #26332b;
+    }
+
+    .swatch-editorial::after {
+      color: #f4f2ed;
+      background: #82644e;
+    }
+
+    .swatch-diagram {
+      background-color: #27342c;
+      background-image:
+        linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+    }
+
+    .swatch-diagram::before {
+      color: #a9b9ad;
+      border-color: #829789;
+    }
+
+    .swatch-diagram::after {
+      color: #c1a58f;
+      border-color: #9a765a;
+    }
+
+    .swatch-collage {
+      color: #26332b;
+      background: #a7b4aa;
+    }
+
+    .swatch-collage::after {
+      color: #f4f2ed;
+      background: #775c48;
+    }
+
+    .asset-thumb {
+      color: #eef1ed;
+      border-right-color: #526158;
+      background: #2c3b32;
+    }
+
+    .asset-thumb.tall::after {
+      border-color: #8fa291;
+    }
+
+    .asset-thumb.wide::after {
+      border-color: #ae8b70;
+    }
+
+    .ready-chip {
+      color: #4f6c59;
+      background: #e0e9e2;
+    }
+
+    .qa-row span {
+      border-color: #d0d4cf;
+      background: #f1f2ee;
+      padding: 7px 8px;
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .delivery-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #c6cbc5;
+    }
+
+    .delivery-actions .ghost-button {
+      color: #2f382f;
+      border-color: #b9c0ba;
+      background: #f5f4ef;
+    }
+
+    .trace-context {
+      border-bottom-color: #46534b;
+      background: #28352d;
+    }
+
+    .trace-context span {
+      color: #9ca79f;
+    }
+
+    .trace-stream {
+      background: #202a24;
+    }
+
+    .event-mark {
+      color: #253129;
+      border-color: #708076;
+      background: #dfe3de;
+    }
+
+    .event-mark::after {
+      background: #46534b;
+    }
+
+    .trace-event.agent .event-mark {
+      color: #eef1ed;
+      background: #526b5a;
+    }
+
+    .trace-event.user .event-mark {
+      color: #f3efe8;
+      border-color: #8d6d55;
+      background: #8d6d55;
+    }
+
+    .trace-event.rule .event-mark {
+      color: #28322b;
+      border-color: #9ca79f;
+      background: #aab3ac;
+    }
+
+    .event-copy label {
+      color: #909d94;
+    }
+
+    .event-copy p {
+      color: #d8ddd8;
+    }
+
+    .event-copy code {
+      color: #bcc5be;
+      border-color: #46534b;
+      background: #2a362e;
+    }
+
+    .decision-box {
+      color: #ebeee9;
+      border-top-color: #4a584f;
+      background: #26332b;
+    }
+
+    .decision-box label {
+      color: #9eaaa2;
+    }
+
+    .decision-actions button {
+      color: #dfe4df;
+      border-color: #67756c;
+      background: transparent;
+    }
+
+    .decision-actions button.confirm {
+      color: #f6f2ec;
+      border-color: #987457;
+      background: #8a674e;
+    }
+
+    .toast {
+      color: #f5f2ec;
+      background: #2c3a31;
+      box-shadow: 0 10px 30px rgba(24, 32, 27, .18);
+    }
+
+    @media (max-width: 1180px) {
+      .trace-panel {
+        box-shadow: -18px 0 50px rgba(18, 25, 20, .22);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">PC</div>
+        <div>
+          Platform Connect
+          <small>Forest console · v2</small>
+        </div>
+      </div>
+      <div class="runtime-status">
+        <span class="pulse"></span>
+        <span>Skill loaded</span>
+        <span>·</span>
+        <span>case replay</span>
+      </div>
+      <div class="top-actions">
+        <button class="quiet-button" id="toggleTrace">执行记录</button>
+        <button class="primary-button" id="restartDemo">重新演示</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="source-panel">
+        <div class="panel-heading">
+          <span>Input</span>
+          <span>01 source</span>
+        </div>
+        <div class="source-body">
+          <div class="file-ticket">
+            <div class="file-type">MD</div>
+            <div>
+              <div class="file-name">AI 不会替代你的工作.md</div>
+              <div class="file-meta">1,842 字 · 中文 · 已完整读取</div>
+            </div>
+          </div>
+          <h2 class="source-title">AI 不会替代你的工作，但会重新分配你的工作</h2>
+          <p class="source-dek">一篇关于知识工作者如何与生成式 AI 协作的观点文章。</p>
+          <div class="source-copy">
+            <p>过去两年，人们反复追问：AI 会不会取代我的工作？这个问题忽略了一件更重要的事——工作并不是一个不可拆分的整体。</p>
+            <p><span class="highlight">AI 更擅长接管重复、可描述、能够快速验证的任务；人仍然需要承担目标设定、价值判断与结果责任。</span></p>
+            <p>真正发生变化的，不是某个职业突然消失，而是职业内部的任务被重新组合。</p>
+            <p>因此，学习使用 AI 的关键并不是掌握更多提示词，而是知道哪些判断不能外包。</p>
+            <p>当团队把所有注意力都放在生成速度上，就容易忽略事实核查、上下文和最终责任。</p>
+          </div>
+          <div class="source-fade"></div>
+          <div class="source-note">演示案例 · 内容已缩略<br>原文始终作为事实来源，不被视觉展示层修改。</div>
+        </div>
+      </aside>
+
+      <main class="main-stage">
+        <div class="demo-intro">
+          <div>
+            <div class="eyebrow">A visible skill, not another AI app</div>
+            <h1>让一篇文章，沿着不同平台<br><em>生长出各自的表达</em></h1>
+          </div>
+          <div class="case-id">Case replay<br>PC–2026–017<br>Full mode</div>
+        </div>
+
+        <nav class="stepper" aria-label="Skill execution steps">
+          <button class="step active" data-step="0"><span class="step-index">01</span><span class="step-label">内容理解</span></button>
+          <button class="step" data-step="1"><span class="step-index">02</span><span class="step-label">平台选择</span></button>
+          <button class="step" data-step="2"><span class="step-index">03</span><span class="step-label">文案适配</span></button>
+          <button class="step" data-step="3"><span class="step-index">04</span><span class="step-label">视觉方向</span></button>
+          <button class="step" data-step="4"><span class="step-index">05</span><span class="step-label">交付资产</span></button>
+        </nav>
+
+        <section class="screen active" data-screen="0" data-screen-label="内容理解">
+          <div class="section-head">
+            <div>
+              <h2>共享内容简报</h2>
+            </div>
+          </div>
+
+          <div class="brief-grid">
+            <article class="card thesis-card">
+              <div class="card-topline"><span>Core thesis</span><span>事实基线 01</span></div>
+              <div class="thesis-content">
+                <p class="thesis-quote">AI 改变的不是“职业是否存在”，而是职业内部任务如何被重新分配。</p>
+                <div class="mini-grid">
+                  <div class="mini-fact"><label>作者立场</label><strong>反对简单的“AI 替代人”叙事</strong></div>
+                  <div class="mini-fact"><label>目标受众</label><strong>正在使用 AI 的知识工作者与团队管理者</strong></div>
+                  <div class="mini-fact"><label>沟通任务</label><strong>建立更准确的人机协作认知</strong></div>
+                  <div class="mini-fact"><label>语气</label><strong>理性、克制、有判断力</strong></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-topline"><span>Protected claims</span><span>不可漂移</span></div>
+              <div class="lock-list">
+                <div class="lock-item"><span class="lock-icon">L</span><span>不把“任务重组”强化成“岗位必然消失”</span></div>
+                <div class="lock-item"><span class="lock-icon">L</span><span>不虚构效率数据、调研结果或成功案例</span></div>
+                <div class="lock-item"><span class="lock-icon">L</span><span>保留“最终责任仍由人承担”的判断</span></div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-topline"><span>Content units</span><span>4 units</span></div>
+              <div class="unit-list">
+                <div class="unit-item"><span class="unit-num">01</span><span>错误问题：AI 会不会取代我</span></div>
+                <div class="unit-item"><span class="unit-num">02</span><span>任务可以被拆分与重新组合</span></div>
+                <div class="unit-item"><span class="unit-num">03</span><span>人的核心：目标、判断、责任</span></div>
+                <div class="unit-item"><span class="unit-num">04</span><span>行动：识别不能外包的判断</span></div>
+              </div>
+            </article>
+          </div>
+
+          <div class="approval-bar">
+            <div class="approval-copy">
+              <span class="approval-number">01</span>
+              <div><strong>第一道门：确认理解，而不是确认“好不好看”</strong><small>APPROVAL GATE · 用户仍掌握事实解释权</small></div>
+            </div>
+            <button class="primary-button next-button" data-next="1">确认简报，选择平台</button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="1" data-screen-label="平台选择">
+          <div class="section-head">
+            <div>
+              <h2>选择目标平台</h2>
+            </div>
+          </div>
+
+          <div class="platform-grid">
+            <article class="platform-card selected" data-platform="xiaohongshu">
+              <div class="platform-monogram">RED</div>
+              <h3>小红书</h3>
+              <p>以认知反差开场，用可收藏的判断清单承接观点。</p>
+              <div class="platform-tags"><span>共鸣式标题</span><span>卡片结构</span><span>收藏 CTA</span></div>
+            </article>
+            <article class="platform-card selected" data-platform="douyin">
+              <div class="platform-monogram">DY</div>
+              <h3>抖音</h3>
+              <p>前三秒提出错误问题，用口语节奏完成观点转折。</p>
+              <div class="platform-tags"><span>3 秒钩子</span><span>60 秒脚本</span><span>评论 CTA</span></div>
+            </article>
+            <article class="platform-card selected" data-platform="linkedin">
+              <div class="platform-monogram">IN</div>
+              <h3>LinkedIn</h3>
+              <p>保留专业判断，强调组织如何重新划分人机职责。</p>
+              <div class="platform-tags"><span>英文市场</span><span>专业观点</span><span>讨论 CTA</span></div>
+            </article>
+            <article class="platform-card" data-platform="wechat">
+              <div class="platform-monogram">WX</div>
+              <h3>微信公众号</h3>
+              <p>以完整论证展开，适合承载方法与案例层次。</p>
+              <div class="platform-tags"><span>长文结构</span><span>章节标题</span><span>深度阅读</span></div>
+            </article>
+          </div>
+
+          <div class="approval-bar">
+            <div class="approval-copy">
+              <span class="approval-number">03</span>
+              <div><strong id="platformCount">已选择 3 个平台</strong><small>每个平台将生成独立、可编辑的 copy package</small></div>
+            </div>
+            <button class="primary-button next-button" data-next="2">运行平台适配</button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="2" data-screen-label="文案适配">
+          <div class="section-head">
+            <div>
+              <h2>平台原生文案</h2>
+            </div>
+          </div>
+
+          <div class="copy-layout">
+            <div class="copy-tabs">
+              <button class="copy-tab active" data-copy="red"><strong>小红书</strong><small>认知反差 · 收藏型</small></button>
+              <button class="copy-tab" data-copy="dy"><strong>抖音</strong><small>60 秒 · 口语脚本</small></button>
+              <button class="copy-tab" data-copy="in"><strong>LinkedIn</strong><small>EN · Professional</small></button>
+            </div>
+
+            <article class="copy-preview">
+              <div class="preview-toolbar">
+                <div><span id="copyPlatformLabel">小红书图文</span></div>
+                <div class="copy-actions"><button class="icon-button" title="编辑">ED</button><button class="icon-button" title="重新生成">RE</button></div>
+              </div>
+              <div class="document-sheet" id="copyContent"></div>
+            </article>
+          </div>
+
+          <div class="approval-bar">
+            <div class="approval-copy">
+              <span class="approval-number">02</span>
+              <div><strong>第二道门：文案确认后，才询问是否生成配图</strong><small>COPY APPROVAL ≠ IMAGE APPROVAL</small></div>
+            </div>
+            <button class="primary-button next-button" data-next="3">文案可用，进入配图选择</button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="3" data-screen-label="视觉方向">
+          <div class="section-head">
+            <div>
+              <h2>内容特定的视觉方向</h2>
+            </div>
+            <div class="rule-tag">visual-handoff.md</div>
+          </div>
+
+          <div class="visual-grid">
+            <article class="visual-card selected" data-style="editorial">
+              <div class="visual-swatch swatch-editorial"></div>
+              <div class="visual-copy">
+                <h3>编辑部观点海报</h3>
+                <p>用强标题和克制排版承载“重新分工”的判断，适合观点型内容。</p>
+                <div class="fit-row"><span>小红书 / LinkedIn</span><span>推荐 <strong class="recommendation-score">92%</strong></span></div>
+              </div>
+            </article>
+            <article class="visual-card" data-style="diagram">
+              <div class="visual-swatch swatch-diagram"></div>
+              <div class="visual-copy">
+                <h3>任务重组解释图</h3>
+                <p>把重复任务与人的判断拆成可见关系，降低抽象概念的理解成本。</p>
+                <div class="fit-row"><span>抖音 / 轮播页</span><span>推荐 <strong class="recommendation-score">88%</strong></span></div>
+              </div>
+            </article>
+            <article class="visual-card" data-style="collage">
+              <div class="visual-swatch swatch-collage"></div>
+              <div class="visual-copy">
+                <h3>人机协作拼贴</h3>
+                <p>用更有张力的纸张拼贴表现两种能力并存，但需避免“机器人替代人”俗套。</p>
+                <div class="fit-row"><span>封面 / 开场帧</span><span>推荐 <strong class="recommendation-score">79%</strong></span></div>
+              </div>
+            </article>
+          </div>
+
+          <div class="approval-bar">
+            <div class="approval-copy">
+              <span class="approval-number">03</span>
+              <div><strong>已选择：<span id="selectedStyleLabel">编辑部观点海报</span></strong><small>仍可提供自定义提示词或按平台覆盖</small></div>
+            </div>
+            <button class="primary-button next-button" data-next="4">确认资产清单并生成</button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="4" data-screen-label="交付资产">
+          <div class="section-head">
+            <div>
+              <h2>可追溯的交付包</h2>
+            </div>
+            <div class="rule-tag">manifest.json · approved</div>
+          </div>
+
+          <div class="asset-board">
+            <article class="asset-card">
+              <div class="asset-thumb tall">RED</div>
+              <div class="asset-body">
+                <div class="asset-line"><h3>小红书首图</h3><span class="ready-chip">READY</span></div>
+                <div class="asset-meta">3:4 · editorial-poster<br>anchor: core_thesis</div>
+                <div class="qa-row"><span>事实</span><span>文字</span><span>构图</span><span>风格</span></div>
+              </div>
+            </article>
+            <article class="asset-card">
+              <div class="asset-thumb tall">DY</div>
+              <div class="asset-body">
+                <div class="asset-line"><h3>抖音开场帧</h3><span class="ready-chip">READY</span></div>
+                <div class="asset-meta">9:16 · editorial-poster<br>anchor: content_unit_01</div>
+                <div class="qa-row"><span>事实</span><span>文字</span><span>安全区</span><span>风格</span></div>
+              </div>
+            </article>
+            <article class="asset-card">
+              <div class="asset-thumb wide">IN</div>
+              <div class="asset-body">
+                <div class="asset-line"><h3>LinkedIn 横图</h3><span class="ready-chip">READY</span></div>
+                <div class="asset-meta">1.91:1 · editorial-poster<br>anchor: protected_claim_03</div>
+                <div class="qa-row"><span>事实</span><span>英文</span><span>构图</span><span>风格</span></div>
+              </div>
+            </article>
+            <article class="asset-card">
+              <div class="asset-thumb wide">04</div>
+              <div class="asset-body">
+                <div class="asset-line"><h3>解释卡片组</h3><span class="ready-chip">READY</span></div>
+                <div class="asset-meta">4 pages · platform override<br>anchor: content_units_01–04</div>
+                <div class="qa-row"><span>顺序</span><span>文字</span><span>一致性</span><span>风格</span></div>
+              </div>
+            </article>
+          </div>
+
+          <div class="delivery-actions">
+            <button class="ghost-button" id="inspectManifest">查看交付结构</button>
+          </div>
+        </section>
+      </main>
+
+      <aside class="trace-panel">
+        <div class="panel-heading">
+          <span>Skill trace</span>
+          <span id="traceCounter">03 events</span>
+        </div>
+        <div class="trace-body">
+          <div class="trace-context">
+            <strong>platform-connect / full</strong>
+            <span>展示 skill 的规则执行、用户决策与状态变化；不是通用聊天机器人。</span>
+          </div>
+          <div class="trace-stream" id="traceStream"></div>
+          <div class="decision-box">
+            <label>Current approval gate</label>
+            <div class="decision-text" id="decisionText">共享内容简报是否准确反映原文？</div>
+            <div class="decision-actions">
+              <button id="editDecision">需要调整</button>
+              <button class="confirm" id="confirmDecision">确认并继续</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const copyPackages = {
+      red: {
+        label: "小红书图文",
+        html: `
+          <h3><span class="hook">AI 不会直接抢走你的工作，但会先拿走其中一部分</span></h3>
+          <p>我们常把“工作”想成一个完整岗位，于是问题总是：AI 会不会取代我？</p>
+          <p>但更值得观察的是，你每天做的事情正在被重新拆分：重复、可描述、能快速验证的任务更适合交给 AI；目标设定、价值判断和结果责任仍然需要人。</p>
+          <p>真正要练习的，不只是写提示词，而是识别：<strong>哪些判断不能外包。</strong></p>
+          <p class="cta-line">收藏这份判断框架，也欢迎说说你工作中最不能交给 AI 的部分。</p>`
+      },
+      dy: {
+        label: "抖音 60 秒脚本",
+        html: `
+          <h3><span class="hook">AI 会不会取代你的工作？这个问题，可能从一开始就问错了。</span></h3>
+          <p>工作不是一个完整的盒子，它可以被拆成很多任务。</p>
+          <p>重复的、能说清楚的、结果可以快速检查的，AI 会越来越擅长。但目标怎么定、什么更重要、出了问题谁负责——这些判断仍然在人手里。</p>
+          <p>所以变化不是“一个职业突然消失”，而是职业内部重新分工。</p>
+          <p class="cta-line">你工作里哪一件事可以交给 AI，哪一个判断绝对不能？评论区聊聊。</p>`
+      },
+      in: {
+        label: "LinkedIn post · EN",
+        html: `
+          <h3><span class="hook">AI may not replace your job. It will redistribute the tasks inside it.</span></h3>
+          <p>The “Will AI take my job?” debate treats a role as one indivisible unit. In practice, roles are bundles of tasks.</p>
+          <p>Generative AI is increasingly useful for work that is repetitive, describable, and quickly verifiable. People still need to set goals, exercise judgment, and own the outcome.</p>
+          <p>The useful question is therefore not only what AI can do, but which decisions a team must not outsource.</p>
+          <p class="cta-line">Which task in your role is ready for AI—and which judgment should remain human?</p>`
+      }
+    };
+
+    const traceByStep = [
+      [
+        { type: "user", mark: "U", who: "User input", time: "00:01", text: "把这篇文章适配成多平台内容，并生成配图。" },
+        { type: "agent", mark: "S", who: "Skill", time: "00:03", text: "已完整读取原文，开始建立共享内容简报。", code: "mode: full\nsource_status: read" },
+        { type: "rule", mark: "R", who: "Rule", time: "00:04", text: "锁定作者立场、核心事实和不可强化的主张。", code: "content-brief-schema.md" }
+      ],
+      [
+        { type: "agent", mark: "S", who: "Skill", time: "00:08", text: "简报已确认。当前没有默认平台选择，请用户明确目标平台。" },
+        { type: "user", mark: "U", who: "User decision", time: "00:12", text: "选择小红书、抖音和 LinkedIn；英文面向全球职场用户。" },
+        { type: "rule", mark: "R", who: "Adapter", time: "00:13", text: "仅读取三个已选平台的适配规则。", code: "locale: zh-CN / en-global" }
+      ],
+      [
+        { type: "agent", mark: "S", who: "Skill", time: "00:19", text: "已从同一 brief 派生三份平台文案，保持事实与作者立场一致。" },
+        { type: "rule", mark: "R", who: "Approval gate", time: "00:20", text: "停止执行，等待文案确认。视觉方向不会与初稿同时出现。" },
+        { type: "user", mark: "U", who: "User decision", time: "00:26", text: "文案可用，继续生成配图。" }
+      ],
+      [
+        { type: "agent", mark: "S", who: "Skill", time: "00:30", text: "已识别行业为“未来工作 / AI 协作”，沟通任务为“认知重构”。" },
+        { type: "agent", mark: "S", who: "Visual routing", time: "00:33", text: "推荐 3 个内容特定方向，并保留自定义提示词入口。" },
+        { type: "rule", mark: "R", who: "Manifest gate", time: "00:34", text: "生成前先确认每个资产的用途、比例、来源锚点和事实约束。" }
+      ],
+      [
+        { type: "rule", mark: "R", who: "Validation", time: "00:42", text: "manifest 已通过字段、比例、重复资产与审批状态检查。" },
+        { type: "agent", mark: "S", who: "Generation", time: "00:55", text: "按 distinct asset 逐一生成，并完成事实、文字、构图与风格 QA。" },
+        { type: "agent", mark: "S", who: "Delivery", time: "01:02", text: "交付索引已建立，文案与图片都可追溯到共享 brief。", code: "generation_status: ready" }
+      ]
+    ];
+
+    const decisionLabels = [
+      "共享内容简报是否准确反映原文？",
+      "确认目标平台与语言市场？",
+      "平台文案是否可用，并继续询问配图意图？",
+      "确认视觉方向与资产清单？",
+      "交付完成：检查成果与 QA 状态。"
+    ];
+
+    const styleLabels = {
+      editorial: "编辑部观点海报",
+      diagram: "任务重组解释图",
+      collage: "人机协作拼贴"
+    };
+
+    let currentStep = 0;
+    let toastTimer;
+
+    const stepButtons = [...document.querySelectorAll(".step")];
+    const screens = [...document.querySelectorAll(".screen")];
+    const traceStream = document.getElementById("traceStream");
+    const copyContent = document.getElementById("copyContent");
+    const copyPlatformLabel = document.getElementById("copyPlatformLabel");
+    const decisionText = document.getElementById("decisionText");
+    const toast = document.getElementById("toast");
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    function renderTrace(step) {
+      traceStream.innerHTML = traceByStep[step].map(event => `
+        <div class="trace-event ${event.type}">
+          <div class="event-mark">${event.mark}</div>
+          <div class="event-copy">
+            <label><span>${event.who}</span><span>${event.time}</span></label>
+            <p>${event.text}</p>
+            ${event.code ? `<code>${event.code}</code>` : ""}
+          </div>
+        </div>
+      `).join("");
+      document.getElementById("traceCounter").textContent = `${String(traceByStep[step].length).padStart(2, "0")} events`;
+    }
+
+    function goToStep(step, notify = true) {
+      currentStep = Math.max(0, Math.min(4, Number(step)));
+      stepButtons.forEach((button, index) => {
+        button.classList.toggle("active", index === currentStep);
+        button.classList.toggle("done", index < currentStep);
+      });
+      screens.forEach((screen, index) => screen.classList.toggle("active", index === currentStep));
+      decisionText.textContent = decisionLabels[currentStep];
+      document.getElementById("confirmDecision").textContent = currentStep === 4 ? "查看交付" : "确认并继续";
+      renderTrace(currentStep);
+      if (notify) showToast(`已切换到 ${String(currentStep + 1).padStart(2, "0")} · ${stepButtons[currentStep].querySelector(".step-label").textContent}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    stepButtons.forEach(button => button.addEventListener("click", () => goToStep(button.dataset.step)));
+    document.querySelectorAll(".next-button").forEach(button => button.addEventListener("click", () => goToStep(button.dataset.next)));
+
+    document.querySelectorAll(".platform-card").forEach(card => {
+      card.addEventListener("click", () => {
+        card.classList.toggle("selected");
+        const count = document.querySelectorAll(".platform-card.selected").length;
+        document.getElementById("platformCount").textContent = `已选择 ${count} 个平台`;
+        showToast(count ? `平台选择已更新：${count} 个` : "至少需要选择一个平台");
+      });
+    });
+
+    document.querySelectorAll(".copy-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".copy-tab").forEach(item => item.classList.remove("active"));
+        tab.classList.add("active");
+        const pkg = copyPackages[tab.dataset.copy];
+        copyPlatformLabel.textContent = pkg.label;
+        copyContent.innerHTML = pkg.html;
+      });
+    });
+
+    document.querySelectorAll(".visual-card").forEach(card => {
+      card.addEventListener("click", () => {
+        document.querySelectorAll(".visual-card").forEach(item => item.classList.remove("selected"));
+        card.classList.add("selected");
+        document.getElementById("selectedStyleLabel").textContent = styleLabels[card.dataset.style];
+        showToast(`已选择视觉方向：${styleLabels[card.dataset.style]}`);
+      });
+    });
+
+    document.getElementById("confirmDecision").addEventListener("click", () => {
+      if (currentStep < 4) {
+        goToStep(currentStep + 1);
+      } else {
+        showToast("案例回放完成：所有交付资产已通过 QA");
+      }
+    });
+
+    document.getElementById("editDecision").addEventListener("click", () => {
+      showToast("展示态：真实执行时，这里会把修改意见返回给当前 skill 步骤");
+    });
+
+    document.getElementById("restartDemo").addEventListener("click", () => {
+      document.querySelectorAll(".platform-card").forEach((card, index) => card.classList.toggle("selected", index < 3));
+      document.getElementById("platformCount").textContent = "已选择 3 个平台";
+      goToStep(0);
+    });
+
+    document.getElementById("toggleTrace").addEventListener("click", () => {
+      document.body.classList.toggle("trace-open");
+    });
+
+    document.getElementById("inspectManifest").addEventListener("click", () => {
+      showToast("manifest.json → 7 assets · approval: approved · QA: passed");
+    });
+
+    copyContent.innerHTML = copyPackages.red.html;
+    renderTrace(0);
+  </script>
+</body>
+</html>

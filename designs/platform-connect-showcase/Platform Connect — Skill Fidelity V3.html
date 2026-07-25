@@ -1,0 +1,3028 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Platform Connect — Skill Fidelity V3</title>
+  <style>
+    :root {
+      --paper: #f3f0e8;
+      --paper-deep: #e8e3d7;
+      --ink: #181915;
+      --muted: #6f7069;
+      --line: #c9c4b8;
+      --accent: #ff5a36;
+      --acid: #dfff3f;
+      --white: #fffdf8;
+      --green: #2b6f50;
+      --blue: #315b9c;
+      --shadow: 0 18px 55px rgba(31, 29, 22, .10);
+      --serif: "Iowan Old Style", "Palatino Linotype", "Songti SC", "Noto Serif SC", serif;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: var(--sans);
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image:
+        linear-gradient(rgba(24,25,21,.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(24,25,21,.025) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    button, textarea, input { font: inherit; }
+    button { color: inherit; }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 68px 1fr;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto minmax(260px, 1fr);
+      align-items: center;
+      gap: 24px;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--ink);
+      background: rgba(243, 240, 232, .96);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 780;
+      letter-spacing: -.02em;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      color: var(--white);
+      background: var(--ink);
+      font-family: var(--mono);
+      font-size: 12px;
+      transform: rotate(-3deg);
+    }
+
+    .brand small {
+      display: block;
+      margin-top: 1px;
+      color: var(--muted);
+      font: 10px/1.1 var(--mono);
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .runtime-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font: 11px/1 var(--mono);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 5px rgba(43,111,80,.12);
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .quiet-button, .primary-button, .ghost-button {
+      min-height: 38px;
+      border: 1px solid var(--ink);
+      border-radius: 0;
+      padding: 0 15px;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+    }
+
+    .quiet-button {
+      border-color: var(--line);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .primary-button {
+      color: var(--white);
+      background: var(--ink);
+      font-weight: 680;
+      box-shadow: 4px 4px 0 var(--accent);
+    }
+
+    .ghost-button {
+      background: var(--white);
+      font-weight: 650;
+    }
+
+    .quiet-button:hover, .primary-button:hover, .ghost-button:hover {
+      transform: translate(-1px, -1px);
+    }
+
+    .primary-button:hover { box-shadow: 6px 6px 0 var(--accent); }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 292px minmax(620px, 1fr) 340px;
+      min-height: calc(100vh - 68px);
+    }
+
+    .source-panel, .trace-panel {
+      position: sticky;
+      top: 68px;
+      height: calc(100vh - 68px);
+      overflow: auto;
+      background: rgba(255,253,248,.55);
+    }
+
+    .source-panel { border-right: 1px solid var(--ink); }
+    .trace-panel { border-left: 1px solid var(--ink); }
+
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      height: 54px;
+      padding: 0 18px;
+      border-bottom: 1px solid var(--line);
+      font: 11px/1 var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .panel-heading span:last-child { color: var(--muted); }
+
+    .source-body { padding: 20px 18px 28px; }
+
+    .file-ticket {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+      box-shadow: 4px 4px 0 var(--acid);
+    }
+
+    .file-type {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 44px;
+      color: var(--white);
+      background: var(--blue);
+      font: 10px/1 var(--mono);
+    }
+
+    .file-name {
+      font-size: 13px;
+      font-weight: 720;
+      line-height: 1.35;
+    }
+
+    .file-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font: 10px/1.3 var(--mono);
+    }
+
+    .source-title {
+      margin: 30px 0 12px;
+      font: 700 27px/1.15 var(--serif);
+      letter-spacing: -.03em;
+    }
+
+    .source-dek {
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.75;
+    }
+
+    .source-copy {
+      display: grid;
+      gap: 15px;
+      color: #3f403a;
+      font: 12px/1.8 var(--serif);
+    }
+
+    .source-copy p { margin: 0; }
+
+    .highlight {
+      padding: 0 2px;
+      background: linear-gradient(transparent 48%, rgba(223,255,63,.72) 48%);
+    }
+
+    .source-fade {
+      position: relative;
+      height: 82px;
+      margin-top: -70px;
+      background: linear-gradient(transparent, var(--paper));
+    }
+
+    .source-note {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font: 10px/1.6 var(--mono);
+    }
+
+    .main-stage {
+      min-width: 0;
+      padding: 26px clamp(24px, 4vw, 58px) 80px;
+    }
+
+    .demo-intro {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent);
+      font: 11px/1 var(--mono);
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 24px;
+      height: 1px;
+      background: currentColor;
+    }
+
+    .demo-intro h1 {
+      max-width: 670px;
+      margin: 10px 0 0;
+      font: 740 clamp(34px, 4vw, 60px)/.98 var(--serif);
+      letter-spacing: -.055em;
+    }
+
+    .demo-intro h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .case-id {
+      flex: 0 0 auto;
+      padding-top: 4px;
+      text-align: right;
+      color: var(--muted);
+      font: 10px/1.6 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      margin-bottom: 28px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+
+    .step {
+      position: relative;
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 9px;
+      align-items: center;
+      min-width: 0;
+      min-height: 64px;
+      padding: 10px 12px;
+      border: 0;
+      border-right: 1px solid var(--line);
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      transition: background .18s ease, color .18s ease;
+    }
+
+    .step:last-child { border-right: 0; }
+    .step:hover { background: var(--paper); }
+    .step.active { color: var(--white); background: var(--ink); }
+    .step.done::after {
+      content: "";
+      position: absolute;
+      right: 8px;
+      top: 8px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .step-index {
+      font: 11px/1 var(--mono);
+      color: var(--muted);
+    }
+
+    .step.active .step-index { color: var(--acid); }
+    .step-label { font-size: 12px; font-weight: 680; white-space: nowrap; }
+
+    .screen {
+      display: none;
+      animation: enter .32s ease both;
+    }
+
+    .screen.active { display: block; }
+
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font: 700 27px/1.1 var(--serif);
+      letter-spacing: -.03em;
+    }
+
+    .section-head p {
+      max-width: 430px;
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .rule-tag {
+      flex: 0 0 auto;
+      padding: 7px 9px;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font: 9px/1 var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .brief-grid {
+      display: grid;
+      grid-template-columns: 1.3fr .9fr;
+      gap: 14px;
+    }
+
+    .card {
+      position: relative;
+      border: 1px solid var(--ink);
+      background: var(--white);
+    }
+
+    .card-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 40px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      font: 10px/1 var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .card-topline span:last-child { color: var(--muted); }
+
+    .thesis-card {
+      grid-row: span 2;
+      min-height: 304px;
+    }
+
+    .thesis-content { padding: 24px; }
+
+    .thesis-quote {
+      margin: 0 0 26px;
+      font: 650 29px/1.22 var(--serif);
+      letter-spacing: -.03em;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .mini-fact {
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .mini-fact label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font: 11px/1.25 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .mini-fact strong {
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .lock-list, .unit-list {
+      display: grid;
+      gap: 0;
+      padding: 6px 14px 12px;
+    }
+
+    .lock-item, .unit-item {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 8px;
+      align-items: start;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--line);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .lock-item:last-child, .unit-item:last-child { border-bottom: 0; }
+
+    .lock-icon {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      color: var(--white);
+      background: var(--ink);
+      font: 9px/1 var(--mono);
+    }
+
+    .unit-num {
+      color: var(--accent);
+      font: 10px/1.7 var(--mono);
+    }
+
+    .approval-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px solid var(--ink);
+      background: var(--acid);
+    }
+
+    .approval-copy {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .approval-copy strong {
+      display: block;
+      font-size: 12px;
+    }
+
+    .approval-copy small {
+      display: block;
+      margin-top: 3px;
+      color: rgba(24,25,21,.65);
+      font: 9px/1.4 var(--mono);
+    }
+
+    .approval-number {
+      font: 26px/1 var(--serif);
+      font-style: italic;
+    }
+
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .platform-card {
+      position: relative;
+      min-height: 184px;
+      padding: 18px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .platform-card:hover { transform: translateY(-2px); }
+    .platform-card.selected { box-shadow: 6px 6px 0 var(--accent); }
+    .platform-card.selected::after {
+      content: "SELECTED";
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 5px 7px;
+      color: var(--white);
+      background: var(--ink);
+      font: 8px/1 var(--mono);
+      letter-spacing: .08em;
+    }
+
+    .platform-monogram {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 16px;
+      border: 1px solid var(--ink);
+      font: 700 12px/1 var(--mono);
+    }
+
+    .platform-card h3 {
+      margin: 0 0 6px;
+      font: 700 18px/1.1 var(--serif);
+    }
+
+    .platform-card p {
+      min-height: 42px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .platform-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 14px;
+    }
+
+    .platform-tags span {
+      padding: 4px 6px;
+      background: var(--paper-deep);
+      font: 8px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .copy-layout {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .copy-tabs {
+      display: grid;
+      align-content: start;
+      border: 1px solid var(--ink);
+      background: var(--white);
+    }
+
+    .copy-tab {
+      position: relative;
+      display: grid;
+      gap: 4px;
+      min-height: 76px;
+      padding: 14px;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .copy-tab:last-child { border-bottom: 0; }
+    .copy-tab.active { color: var(--white); background: var(--ink); }
+    .copy-tab strong { font-size: 12px; }
+    .copy-tab small { color: var(--muted); font: 9px/1.4 var(--mono); }
+    .copy-tab.active small { color: #a9aaa4; }
+
+    .copy-preview {
+      min-height: 432px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+    }
+
+    .preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 48px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .preview-toolbar div:first-child {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 11px;
+      font-weight: 680;
+    }
+
+    .draft-chip {
+      padding: 4px 6px;
+      color: var(--blue);
+      background: #e8eef7;
+      font: 8px/1 var(--mono);
+    }
+
+    .copy-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .icon-button {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--line);
+      background: transparent;
+      cursor: pointer;
+      font: 11px/1 var(--mono);
+    }
+
+    .document-sheet {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: 30px 38px 40px;
+    }
+
+    .document-sheet h3 {
+      margin: 0 0 18px;
+      font: 700 26px/1.25 var(--serif);
+      letter-spacing: -.025em;
+    }
+
+    .document-sheet p {
+      margin: 0 0 14px;
+      color: #393a35;
+      font-size: 12px;
+      line-height: 1.85;
+    }
+
+    .hook {
+      display: inline;
+      background: linear-gradient(transparent 55%, rgba(255,90,54,.25) 55%);
+    }
+
+    .cta-line {
+      margin-top: 22px !important;
+      padding-top: 14px;
+      border-top: 1px solid var(--ink);
+      font-weight: 680;
+    }
+
+    .visual-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .visual-card {
+      border: 1px solid var(--ink);
+      background: var(--white);
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .visual-card:hover { transform: translateY(-3px); }
+    .visual-card.selected { box-shadow: 6px 6px 0 var(--accent); }
+
+    .visual-swatch {
+      position: relative;
+      height: 145px;
+      overflow: hidden;
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .swatch-editorial { background: #e7dbc9; }
+    .swatch-editorial::before {
+      content: "AI";
+      position: absolute;
+      left: 16px;
+      bottom: -20px;
+      font: 900 116px/1 var(--serif);
+      color: #191a16;
+      transform: rotate(-7deg);
+    }
+    .swatch-editorial::after {
+      content: "重写工作，不重写判断";
+      position: absolute;
+      right: 11px;
+      top: 12px;
+      width: 78px;
+      padding: 6px;
+      color: var(--white);
+      background: var(--accent);
+      font: 700 10px/1.35 var(--sans);
+    }
+
+    .swatch-diagram {
+      background-color: #20221d;
+      background-image: linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+      background-size: 18px 18px;
+    }
+
+    .swatch-diagram::before, .swatch-diagram::after {
+      position: absolute;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--acid);
+      color: var(--acid);
+      font: 10px/1.2 var(--mono);
+      text-align: center;
+    }
+
+    .swatch-diagram::before {
+      content: "重复任务";
+      left: 18px;
+      top: 43px;
+      width: 76px;
+      height: 45px;
+    }
+
+    .swatch-diagram::after {
+      content: "人的判断";
+      right: 18px;
+      top: 43px;
+      width: 76px;
+      height: 45px;
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: -42px 0 0 -41px var(--white);
+    }
+
+    .swatch-collage { background: var(--acid); }
+    .swatch-collage::before {
+      content: "HUMAN\A ×\A MACHINE";
+      white-space: pre;
+      position: absolute;
+      inset: 17px auto auto 17px;
+      font: 900 28px/.85 var(--sans);
+      letter-spacing: -.08em;
+    }
+
+    .swatch-collage::after {
+      content: "不是替代\A 是重新分工";
+      white-space: pre;
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      padding: 10px;
+      color: var(--white);
+      background: var(--blue);
+      font: 700 12px/1.25 var(--serif);
+      transform: rotate(4deg);
+    }
+
+    .visual-copy { padding: 14px; }
+    .visual-copy h3 { margin: 0 0 5px; font: 700 15px/1.2 var(--serif); }
+    .visual-copy p { min-height: 50px; margin: 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+
+    .fit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font: 8px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .asset-board {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .asset-card {
+      display: grid;
+      grid-template-columns: 92px 1fr;
+      min-height: 126px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+    }
+
+    .asset-thumb {
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-right: 1px solid var(--ink);
+      color: var(--white);
+      background: var(--ink);
+      font: 800 24px/1 var(--serif);
+    }
+
+    .asset-thumb.tall::after {
+      content: "";
+      position: absolute;
+      width: 34px;
+      height: 60px;
+      border: 1px solid var(--acid);
+    }
+
+    .asset-thumb.wide::after {
+      content: "";
+      position: absolute;
+      width: 62px;
+      height: 34px;
+      border: 1px solid var(--accent);
+    }
+
+    .asset-body { padding: 13px; }
+
+    .asset-line {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .asset-line h3 { margin: 0; font-size: 12px; }
+
+    .ready-chip {
+      padding: 4px 6px;
+      color: var(--green);
+      background: #e0eee7;
+      font: 8px/1 var(--mono);
+    }
+
+    .asset-meta {
+      margin-top: 5px;
+      color: var(--muted);
+      font: 9px/1.5 var(--mono);
+    }
+
+    .qa-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 5px;
+      margin-top: 12px;
+    }
+
+    .qa-row span {
+      padding: 5px 6px;
+      border: 1px solid var(--line);
+      font: 8px/1 var(--mono);
+    }
+
+    .qa-row span::before {
+      content: "✓";
+      margin-right: 4px;
+      color: var(--green);
+    }
+
+    .delivery-footer {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      margin-top: 14px;
+      padding: 18px;
+      color: var(--white);
+      background: var(--ink);
+    }
+
+    .delivery-footer strong { font: 680 16px/1.2 var(--serif); }
+    .delivery-footer small { display: block; margin-top: 4px; color: #acaea7; font: 9px/1.4 var(--mono); }
+
+    .trace-body {
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 122px);
+    }
+
+    .trace-context {
+      padding: 15px 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper-deep);
+    }
+
+    .trace-context strong {
+      display: block;
+      font: 11px/1.4 var(--mono);
+    }
+
+    .trace-context span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font: 9px/1.5 var(--mono);
+    }
+
+    .trace-stream {
+      display: grid;
+      align-content: start;
+      gap: 18px;
+      flex: 1;
+      padding: 18px;
+    }
+
+    .trace-event {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      animation: traceIn .28s ease both;
+    }
+
+    @keyframes traceIn {
+      from { opacity: 0; transform: translateX(5px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .event-mark {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+      font: 8px/1 var(--mono);
+    }
+
+    .event-mark::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 22px;
+      width: 1px;
+      height: 42px;
+      background: var(--line);
+    }
+
+    .trace-event:last-child .event-mark::after { display: none; }
+    .trace-event.agent .event-mark { color: var(--white); background: var(--ink); }
+    .trace-event.user .event-mark { background: var(--acid); }
+    .trace-event.rule .event-mark { color: var(--white); background: var(--accent); border-color: var(--accent); }
+
+    .event-copy label {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font: 8px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .event-copy p {
+      margin: 0;
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    .event-copy code {
+      display: block;
+      margin-top: 7px;
+      padding: 7px 8px;
+      border: 1px solid var(--line);
+      color: #4d4e48;
+      background: var(--white);
+      font: 8px/1.55 var(--mono);
+      white-space: pre-wrap;
+    }
+
+    .decision-box {
+      position: sticky;
+      bottom: 0;
+      padding: 14px 18px 18px;
+      border-top: 1px solid var(--ink);
+      background: var(--paper);
+    }
+
+    .decision-box label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font: 8px/1 var(--mono);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .decision-text {
+      margin-bottom: 11px;
+      font-size: 11px;
+      font-weight: 680;
+      line-height: 1.45;
+    }
+
+    .decision-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+    }
+
+    .decision-actions button {
+      min-height: 36px;
+      border: 1px solid var(--ink);
+      background: var(--white);
+      font-size: 10px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    .decision-actions button.confirm {
+      color: var(--white);
+      background: var(--ink);
+    }
+
+    .toast {
+      position: fixed;
+      right: 28px;
+      bottom: 28px;
+      z-index: 50;
+      max-width: 340px;
+      padding: 13px 16px;
+      color: var(--white);
+      background: var(--ink);
+      box-shadow: 5px 5px 0 var(--accent);
+      font-size: 11px;
+      line-height: 1.5;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @media (max-width: 1180px) {
+      .workspace { grid-template-columns: 240px minmax(560px, 1fr); }
+      .trace-panel {
+        position: fixed;
+        z-index: 30;
+        right: 0;
+        top: 68px;
+        width: 340px;
+        transform: translateX(100%);
+        transition: transform .25s ease;
+        box-shadow: -18px 0 50px rgba(0,0,0,.12);
+      }
+      body.trace-open .trace-panel { transform: translateX(0); }
+    }
+
+    @media (max-width: 820px) {
+      .topbar { grid-template-columns: 1fr auto; padding: 0 16px; }
+      .runtime-status { display: none; }
+      .workspace { display: block; }
+      .source-panel { display: none; }
+      .main-stage { padding: 22px 16px 60px; }
+      .demo-intro { display: block; }
+      .case-id { margin-top: 14px; text-align: left; }
+      .stepper { overflow-x: auto; grid-template-columns: repeat(5, 130px); }
+      .brief-grid, .platform-grid, .copy-layout, .visual-grid, .asset-board { grid-template-columns: 1fr; }
+      .thesis-card { grid-row: auto; }
+      .copy-tabs { grid-template-columns: repeat(3, 1fr); overflow-x: auto; }
+      .copy-tab { border-right: 1px solid var(--line); border-bottom: 0; }
+    }
+    /* Forest Console V2 — visual layer only */
+    :root {
+      --paper: #e9ebe6;
+      --paper-deep: #d9ddd7;
+      --ink: #26312a;
+      --muted: #747b76;
+      --line: #c6cbc5;
+      --accent: #987457;
+      --acid: #829587;
+      --white: #f8f7f2;
+      --green: #607966;
+      --blue: #6f7b74;
+      --shadow: 0 10px 30px rgba(31, 41, 35, .06);
+    }
+
+    body {
+      background: var(--paper);
+      background-image: none;
+    }
+
+    .topbar {
+      color: #eef0eb;
+      border-bottom-color: #3e4b43;
+      background: rgba(31, 41, 35, .97);
+      box-shadow: 0 6px 20px rgba(23, 31, 26, .12);
+    }
+
+    .brand-mark {
+      color: #f4f1eb;
+      border: 1px solid #6d7a71;
+      background: #344139;
+      transform: none;
+    }
+
+    .brand small,
+    .runtime-status {
+      color: #aeb8b1;
+    }
+
+    .pulse {
+      background: #88a08e;
+      box-shadow: 0 0 0 4px rgba(136, 160, 142, .14);
+    }
+
+    .topbar .quiet-button {
+      color: #d1d7d2;
+      border-color: #56645b;
+      background: transparent;
+    }
+
+    .topbar .primary-button {
+      color: #f8f5ef;
+      border-color: #a78365;
+      background: #8c694f;
+      box-shadow: none;
+    }
+
+    .topbar .primary-button:hover {
+      background: #9a7657;
+      box-shadow: none;
+    }
+
+    .source-panel {
+      color: var(--ink);
+      border-right-color: var(--line);
+      background: #e2e4df;
+    }
+
+    .trace-panel {
+      color: #e8ebe6;
+      border-left-color: #46534b;
+      background: #202a24;
+    }
+
+    .panel-heading {
+      border-bottom-color: rgba(116, 132, 121, .42);
+    }
+
+    .trace-panel .panel-heading span:last-child {
+      color: #9aa69e;
+    }
+
+    .source-body {
+      padding-top: 22px;
+    }
+
+    .file-ticket {
+      border-color: #adb4ae;
+      background: #f3f3ef;
+      box-shadow: none;
+    }
+
+    .file-type {
+      color: #eef0eb;
+      background: #52695a;
+    }
+
+    .source-title {
+      font-size: 25px;
+      color: #2b352e;
+    }
+
+    .source-dek,
+    .source-note {
+      color: #747b76;
+    }
+
+    .source-copy {
+      color: #4c544e;
+    }
+
+    .highlight,
+    .hook {
+      background: linear-gradient(transparent 57%, rgba(112, 139, 119, .24) 57%);
+    }
+
+    .source-fade {
+      background: linear-gradient(transparent, #e2e4df);
+    }
+
+    .main-stage {
+      background: #eceee9;
+    }
+
+    .eyebrow {
+      color: #87674f;
+    }
+
+    .demo-intro h1 {
+      max-width: 720px;
+      font-size: clamp(32px, 3.5vw, 50px);
+      line-height: 1.02;
+      letter-spacing: -.045em;
+    }
+
+    .demo-intro h1 em {
+      color: #536b5b;
+      font-style: normal;
+    }
+
+    .case-id {
+      color: #78807a;
+    }
+
+    .stepper {
+      border-color: #b8beb8;
+      background: #f6f6f2;
+      box-shadow: var(--shadow);
+    }
+
+    .step {
+      border-right-color: #d0d4cf;
+    }
+
+    .step:hover {
+      background: #e5e8e3;
+    }
+
+    .step.active {
+      color: #f4f5f1;
+      background: #2f3d34;
+    }
+
+    .step.done::after {
+      background: #78917e;
+    }
+
+    .step.active .step-index {
+      color: #b7c7bb;
+    }
+
+    .rule-tag {
+      color: #727a74;
+      border-color: #c3c8c2;
+      background: rgba(248, 247, 242, .58);
+    }
+
+    .card,
+    .platform-card,
+    .copy-tabs,
+    .copy-preview,
+    .visual-card,
+    .asset-card {
+      border-color: #bcc2bc;
+      background: #f8f7f2;
+      box-shadow: none;
+    }
+
+    .card-topline,
+    .preview-toolbar {
+      border-bottom-color: #d1d4cf;
+      background: #f0f1ed;
+    }
+
+    .thesis-quote {
+      color: #29342c;
+      font-size: 27px;
+    }
+
+    .mini-fact,
+    .lock-item,
+    .unit-item,
+    .fit-row {
+      border-color: #d0d4ce;
+      font-size: 10px;
+      line-height: 1.35;
+      letter-spacing: .01em;
+    }
+
+    .recommendation-score {
+      margin-left: 3px;
+      color: #87674f;
+      font: italic 700 15px/1 var(--serif);
+      letter-spacing: -.02em;
+    }
+
+    .lock-icon {
+      color: #edf0ec;
+      background: #536b5a;
+    }
+
+    .unit-num {
+      color: #8a684f;
+    }
+
+    .approval-bar {
+      color: #342e29;
+      border-color: #c4b5a8;
+      background: #e3dbd2;
+      box-shadow: inset 4px 0 0 #8d6b51;
+    }
+
+    .approval-copy small {
+      color: #796e65;
+    }
+
+    .primary-button {
+      color: #f7f4ee;
+      border-color: #7e5f49;
+      background: #826149;
+      box-shadow: none;
+    }
+
+    .primary-button:hover {
+      background: #916e53;
+      box-shadow: none;
+    }
+
+    .quiet-button:hover,
+    .primary-button:hover,
+    .ghost-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .platform-card:hover,
+    .visual-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .platform-card.selected,
+    .visual-card.selected {
+      border-color: #5e7865;
+      box-shadow: inset 0 0 0 1px #5e7865;
+    }
+
+    .platform-card.selected::after {
+      color: #eff2ee;
+      background: #526959;
+    }
+
+    .platform-monogram {
+      color: #f0f2ee;
+      border-color: #52675a;
+      background: #52675a;
+    }
+
+    .platform-tags span {
+      color: #68716a;
+      background: #e6e8e3;
+      padding: 5px 7px;
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .copy-tab {
+      border-bottom-color: #d0d4cf;
+    }
+
+    .copy-tab.active {
+      color: #f1f3ef;
+      background: #34443a;
+    }
+
+    .copy-tab.active small {
+      color: #b3bdb6;
+    }
+
+    .copy-tab small {
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .draft-chip {
+      color: #526a5a;
+      background: #e1e8e2;
+    }
+
+    .icon-button {
+      color: #69716b;
+      border-color: #c6cbc5;
+    }
+
+    .document-sheet p {
+      color: #444b46;
+    }
+
+    .swatch-editorial {
+      background: #ddd9d0;
+    }
+
+    .swatch-editorial::before {
+      color: #26332b;
+    }
+
+    .swatch-editorial::after {
+      color: #f4f2ed;
+      background: #82644e;
+    }
+
+    .swatch-diagram {
+      background-color: #27342c;
+      background-image:
+        linear-gradient(rgba(255,255,255,.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.055) 1px, transparent 1px);
+    }
+
+    .swatch-diagram::before {
+      color: #a9b9ad;
+      border-color: #829789;
+    }
+
+    .swatch-diagram::after {
+      color: #c1a58f;
+      border-color: #9a765a;
+    }
+
+    .swatch-collage {
+      color: #26332b;
+      background: #a7b4aa;
+    }
+
+    .swatch-collage::after {
+      color: #f4f2ed;
+      background: #775c48;
+    }
+
+    .asset-thumb {
+      color: #eef1ed;
+      border-right-color: #526158;
+      background: #2c3b32;
+    }
+
+    .asset-thumb.tall::after {
+      border-color: #8fa291;
+    }
+
+    .asset-thumb.wide::after {
+      border-color: #ae8b70;
+    }
+
+    .ready-chip {
+      color: #4f6c59;
+      background: #e0e9e2;
+    }
+
+    .qa-row span {
+      border-color: #d0d4cf;
+      background: #f1f2ee;
+      padding: 7px 8px;
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .delivery-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid #c6cbc5;
+    }
+
+    .delivery-actions .ghost-button {
+      color: #2f382f;
+      border-color: #b9c0ba;
+      background: #f5f4ef;
+    }
+
+    .trace-context {
+      border-bottom-color: #46534b;
+      background: #28352d;
+    }
+
+    .trace-context span {
+      color: #9ca79f;
+    }
+
+    .trace-stream {
+      background: #202a24;
+    }
+
+    .event-mark {
+      color: #253129;
+      border-color: #708076;
+      background: #dfe3de;
+    }
+
+    .event-mark::after {
+      background: #46534b;
+    }
+
+    .trace-event.agent .event-mark {
+      color: #eef1ed;
+      background: #526b5a;
+    }
+
+    .trace-event.user .event-mark {
+      color: #f3efe8;
+      border-color: #8d6d55;
+      background: #8d6d55;
+    }
+
+    .trace-event.rule .event-mark {
+      color: #28322b;
+      border-color: #9ca79f;
+      background: #aab3ac;
+    }
+
+    .event-copy label {
+      color: #909d94;
+    }
+
+    .event-copy p {
+      color: #d8ddd8;
+    }
+
+    .event-copy code {
+      color: #bcc5be;
+      border-color: #46534b;
+      background: #2a362e;
+    }
+
+    .decision-box {
+      color: #ebeee9;
+      border-top-color: #4a584f;
+      background: #26332b;
+    }
+
+    .decision-box label {
+      color: #9eaaa2;
+    }
+
+    .decision-actions button {
+      color: #dfe4df;
+      border-color: #67756c;
+      background: transparent;
+    }
+
+    .decision-actions button.confirm {
+      color: #f6f2ec;
+      border-color: #987457;
+      background: #8a674e;
+    }
+
+    .toast {
+      color: #f5f2ec;
+      background: #2c3a31;
+      box-shadow: 0 10px 30px rgba(24, 32, 27, .18);
+    }
+
+    @media (max-width: 1180px) {
+      .trace-panel {
+        box-shadow: -18px 0 50px rgba(18, 25, 20, .22);
+      }
+    }
+
+    /* V3 — skill fidelity layer */
+    .mode-map {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin: -2px 0 20px;
+      border: 1px solid #c2c8c2;
+      background: #f6f6f2;
+    }
+
+    .primary-button:disabled {
+      color: #8a918c;
+      border-color: #c4c9c4;
+      background: #dfe2de;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .mode-item {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 9px;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      padding: 10px 12px;
+      border-right: 1px solid #d0d4cf;
+    }
+
+    .mode-item:last-child {
+      border-right: 0;
+    }
+
+    .mode-item.active {
+      color: #eef1ed;
+      background: #334238;
+    }
+
+    .mode-name {
+      font: 700 10px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .mode-item small {
+      color: #7a817c;
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
+    .mode-item.active small {
+      color: #b8c2bb;
+    }
+
+    .stepper {
+      grid-template-columns: repeat(7, minmax(84px, 1fr));
+      overflow-x: auto;
+    }
+
+    .step {
+      grid-template-columns: 1fr;
+      gap: 5px;
+      padding: 10px;
+    }
+
+    .step-label {
+      font-size: 11px;
+    }
+
+    .schema-band {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr 1fr 1.1fr;
+      margin-top: 14px;
+      border: 1px solid #bcc2bc;
+      background: #f8f7f2;
+    }
+
+    .schema-cell {
+      min-width: 0;
+      padding: 13px;
+      border-right: 1px solid #d0d4cf;
+    }
+
+    .schema-cell:last-child {
+      border-right: 0;
+    }
+
+    .schema-cell label {
+      display: block;
+      margin-bottom: 7px;
+      color: #7a817c;
+      font: 9px/1 var(--mono);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .schema-cell strong,
+    .schema-cell span {
+      display: block;
+      font-size: 10px;
+      line-height: 1.55;
+    }
+
+    .schema-cell.flag {
+      color: #594536;
+      background: #ebe2d9;
+    }
+
+    .platform-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border: 1px solid #c1c7c1;
+      background: #f5f5f1;
+    }
+
+    .platform-tools strong {
+      font-size: 11px;
+    }
+
+    .tool-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .small-action {
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid #bfc5bf;
+      background: #f9f8f4;
+      font-size: 9px;
+      cursor: pointer;
+    }
+
+    .platform-catalog {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 12px 0;
+    }
+
+    .platform-catalog span {
+      padding: 6px 8px;
+      border: 1px solid #c8cdc8;
+      color: #69716b;
+      background: #f6f6f2;
+      font: 9px/1 var(--mono);
+    }
+
+    .locale-panel {
+      display: none;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap: 12px;
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid #7c9082;
+      background: #e3e8e3;
+    }
+
+    .locale-panel.visible {
+      display: grid;
+    }
+
+    .locale-field label {
+      display: block;
+      margin-bottom: 7px;
+      color: #69716b;
+      font: 9px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .locale-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .locale-options button {
+      min-height: 28px;
+      padding: 0 8px;
+      border: 1px solid #b6c0b8;
+      background: #f6f7f3;
+      font-size: 9px;
+      cursor: pointer;
+    }
+
+    .locale-options button.selected {
+      color: #f2f4f1;
+      border-color: #526b5a;
+      background: #526b5a;
+    }
+
+    .copy-package-meta {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      margin-top: 24px;
+      border-top: 1px solid #c9cec9;
+      border-bottom: 1px solid #c9cec9;
+    }
+
+    .copy-package-meta div {
+      padding: 10px;
+      border-right: 1px solid #d2d6d1;
+    }
+
+    .copy-package-meta div:last-child {
+      border-right: 0;
+    }
+
+    .copy-package-meta label {
+      display: block;
+      margin-bottom: 5px;
+      color: #7b827d;
+      font: 8px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .copy-package-meta strong {
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .review-flags {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-top: 12px;
+      padding: 11px 13px;
+      border: 1px solid #c8b8aa;
+      background: #e9e1d9;
+    }
+
+    .review-flags .flag-mark {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      color: #f5f1eb;
+      background: #876850;
+      font: 9px/1 var(--mono);
+    }
+
+    .review-flags strong {
+      display: block;
+      font-size: 10px;
+    }
+
+    .review-flags small {
+      display: block;
+      margin-top: 3px;
+      color: #74685e;
+      font-size: 9px;
+      line-height: 1.45;
+    }
+
+    .review-flags > span:last-child {
+      color: #7a6d62;
+      font: 9px/1 var(--mono);
+    }
+
+    .intent-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .intent-card {
+      display: grid;
+      align-content: space-between;
+      min-height: 260px;
+      padding: 24px;
+      border: 1px solid #b9c0ba;
+      background: #f8f7f2;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .intent-card:hover,
+    .intent-card.selected {
+      border-color: #5e7865;
+      box-shadow: inset 0 0 0 1px #5e7865;
+    }
+
+    .intent-card.no:hover,
+    .intent-card.no.selected {
+      border-color: #987457;
+      box-shadow: inset 0 0 0 1px #987457;
+    }
+
+    .intent-index {
+      color: #7b837d;
+      font: 10px/1 var(--mono);
+    }
+
+    .intent-card h3 {
+      margin: 50px 0 8px;
+      font: 700 25px/1.15 var(--serif);
+    }
+
+    .intent-card p {
+      margin: 0;
+      color: #6f7771;
+      font-size: 11px;
+      line-height: 1.65;
+    }
+
+    .intent-card footer {
+      margin-top: 25px;
+      padding-top: 12px;
+      border-top: 1px solid #d0d4cf;
+      font: 9px/1.4 var(--mono);
+    }
+
+    .nonvisual-actions {
+      display: none;
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid #c4b5a8;
+      background: #e8e1d9;
+    }
+
+    .nonvisual-actions.visible {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .visual-route {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin-bottom: 12px;
+      border: 1px solid #bec4be;
+      background: #f4f5f1;
+    }
+
+    .route-cell {
+      padding: 11px 13px;
+      border-right: 1px solid #d0d4cf;
+    }
+
+    .route-cell:last-child {
+      border-right: 0;
+    }
+
+    .route-cell label {
+      display: block;
+      margin-bottom: 5px;
+      color: #7a817c;
+      font: 8px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .route-cell strong {
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .visual-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .visual-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .direction-meta {
+      display: grid;
+      gap: 7px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #d0d4cf;
+    }
+
+    .direction-meta span,
+    .sample-prompt {
+      color: #68716b;
+      font-size: 9px;
+      line-height: 1.5;
+    }
+
+    .sample-prompt {
+      display: block;
+      padding: 7px 8px;
+      border: 1px solid #d0d4cf;
+      background: #f0f1ed;
+      font-family: var(--mono);
+    }
+
+    .custom-direction {
+      display: grid;
+      align-content: stretch;
+      min-height: 100%;
+      padding: 16px;
+      background: #e8ebe6;
+    }
+
+    .custom-direction textarea {
+      min-height: 112px;
+      resize: vertical;
+      margin-top: 12px;
+      padding: 10px;
+      color: #354039;
+      border: 1px solid #aeb8b0;
+      background: #f8f7f2;
+      font-size: 10px;
+      line-height: 1.55;
+    }
+
+    .manifest-summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      margin-bottom: 12px;
+      border: 1px solid #c0c6c0;
+      background: #f5f5f1;
+    }
+
+    .manifest-summary div {
+      padding: 11px;
+      border-right: 1px solid #d0d4cf;
+    }
+
+    .manifest-summary div:last-child {
+      border-right: 0;
+    }
+
+    .manifest-summary label {
+      display: block;
+      margin-bottom: 5px;
+      color: #7c837e;
+      font: 8px/1 var(--mono);
+      text-transform: uppercase;
+    }
+
+    .manifest-summary strong {
+      font-size: 10px;
+    }
+
+    .manifest-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .manifest-row {
+      display: grid;
+      grid-template-columns: 115px 1fr 90px 95px;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 13px;
+      border: 1px solid #c2c7c2;
+      background: #f8f7f2;
+    }
+
+    .manifest-row h3 {
+      margin: 0;
+      font-size: 11px;
+    }
+
+    .manifest-row p {
+      margin: 2px 0 0;
+      color: #767d78;
+      font: 8px/1.5 var(--mono);
+    }
+
+    .manifest-purpose {
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .manifest-ratio,
+    .manifest-status {
+      padding: 6px 7px;
+      border: 1px solid #ccd0cc;
+      text-align: center;
+      font: 9px/1 var(--mono);
+    }
+
+    .manifest-status {
+      color: #765d49;
+      border-color: #c9b8aa;
+      background: #ebe2d9;
+    }
+
+    .generation-run {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      color: #e9ede9;
+      background: #2b3930;
+    }
+
+    .generation-run strong {
+      font-size: 11px;
+    }
+
+    .run-track {
+      height: 5px;
+      background: #4a5a50;
+    }
+
+    .run-track span {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #879d8c;
+    }
+
+    .generation-run small {
+      color: #b8c2ba;
+      font: 9px/1 var(--mono);
+    }
+
+    .delivery-log {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: 12px;
+      border: 1px solid #c2c7c2;
+      background: #f5f5f1;
+    }
+
+    .delivery-log div {
+      padding: 11px;
+      border-right: 1px solid #d0d4cf;
+    }
+
+    .delivery-log div:last-child {
+      border-right: 0;
+    }
+
+    .delivery-log code {
+      display: block;
+      margin-bottom: 5px;
+      color: #52675a;
+      font: 9px/1.4 var(--mono);
+    }
+
+    .delivery-log span {
+      font-size: 9px;
+      color: #717873;
+    }
+
+    @media (max-width: 820px) {
+      .mode-map,
+      .schema-band,
+      .locale-panel,
+      .visual-route,
+      .manifest-summary,
+      .delivery-log {
+        grid-template-columns: 1fr;
+      }
+
+      .mode-map {
+        display: grid;
+      }
+
+      .mode-item,
+      .schema-cell,
+      .route-cell,
+      .manifest-summary div,
+      .delivery-log div {
+        border-right: 0;
+        border-bottom: 1px solid #d0d4cf;
+      }
+
+      .intent-grid,
+      .visual-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .manifest-row {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .stepper {
+        grid-template-columns: repeat(7, 120px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">PC</div>
+        <div>
+          Platform Connect
+          <small>Skill fidelity · v3</small>
+        </div>
+      </div>
+      <div class="runtime-status">
+        <span class="pulse"></span>
+        <span>Skill loaded</span>
+        <span>·</span>
+        <span>case replay</span>
+      </div>
+      <div class="top-actions">
+        <button class="quiet-button" id="toggleTrace">执行记录</button>
+        <button class="primary-button" id="restartDemo">重新演示</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="source-panel">
+        <div class="panel-heading">
+          <span>Input</span>
+          <span>01 source</span>
+        </div>
+        <div class="source-body">
+          <div class="file-ticket">
+            <div class="file-type">MD</div>
+            <div>
+              <div class="file-name">AI 不会替代你的工作.md</div>
+              <div class="file-meta">1,842 字 · 中文 · 已完整读取</div>
+            </div>
+          </div>
+          <h2 class="source-title">AI 不会替代你的工作，但会重新分配你的工作</h2>
+          <p class="source-dek">一篇关于知识工作者如何与生成式 AI 协作的观点文章。</p>
+          <div class="source-copy">
+            <p>过去两年，人们反复追问：AI 会不会取代我的工作？这个问题忽略了一件更重要的事——工作并不是一个不可拆分的整体。</p>
+            <p><span class="highlight">AI 更擅长接管重复、可描述、能够快速验证的任务；人仍然需要承担目标设定、价值判断与结果责任。</span></p>
+            <p>真正发生变化的，不是某个职业突然消失，而是职业内部的任务被重新组合。</p>
+            <p>因此，学习使用 AI 的关键并不是掌握更多提示词，而是知道哪些判断不能外包。</p>
+            <p>当团队把所有注意力都放在生成速度上，就容易忽略事实核查、上下文和最终责任。</p>
+          </div>
+          <div class="source-fade"></div>
+          <div class="source-note">演示案例 · 内容已缩略<br>原文始终作为事实来源，不被视觉展示层修改。</div>
+        </div>
+      </aside>
+
+      <main class="main-stage">
+        <div class="demo-intro">
+          <div>
+            <div class="eyebrow">A visible skill, not another AI app</div>
+            <h1>让一篇文章，沿着不同平台<br><em>生长出各自的表达</em></h1>
+          </div>
+          <div class="case-id">Case replay<br>PC–2026–017<br>Full mode · inferred</div>
+        </div>
+
+        <div class="mode-map" aria-label="Skill modes">
+          <div class="mode-item">
+            <span class="mode-name">Plan</span>
+            <small>brief + strategy + visual proposal</small>
+          </div>
+          <div class="mode-item">
+            <span class="mode-name">Copy</span>
+            <small>brief + editable platform copy</small>
+          </div>
+          <div class="mode-item active">
+            <span class="mode-name">Full</span>
+            <small>用户明确要求配图，仍保留 4 个审批门</small>
+          </div>
+        </div>
+
+        <nav class="stepper" aria-label="Skill execution steps">
+          <button class="step active" data-step="0"><span class="step-index">01</span><span class="step-label">内容简报</span></button>
+          <button class="step" data-step="1"><span class="step-index">02</span><span class="step-label">平台与语言</span></button>
+          <button class="step" data-step="2"><span class="step-index">03</span><span class="step-label">文案审阅</span></button>
+          <button class="step" data-step="3"><span class="step-index">04</span><span class="step-label">配图意图</span></button>
+          <button class="step" data-step="4"><span class="step-index">05</span><span class="step-label">视觉方向</span></button>
+          <button class="step" data-step="5"><span class="step-index">06</span><span class="step-label">资产清单</span></button>
+          <button class="step" data-step="6"><span class="step-index">07</span><span class="step-label">生成交付</span></button>
+        </nav>
+
+        <section class="screen active" data-screen="0" data-screen-label="内容简报">
+          <div class="section-head">
+            <div>
+              <h2>共享内容简报</h2>
+            </div>
+          </div>
+
+          <div class="brief-grid">
+            <article class="card thesis-card">
+              <div class="card-topline"><span>Core thesis</span><span>事实基线 01</span></div>
+              <div class="thesis-content">
+                <p class="thesis-quote">AI 改变的不是“职业是否存在”，而是职业内部任务如何被重新分配。</p>
+                <div class="mini-grid">
+                  <div class="mini-fact"><label>作者立场</label><strong>反对简单的“AI 替代人”叙事</strong></div>
+                  <div class="mini-fact"><label>目标受众</label><strong>正在使用 AI 的知识工作者与团队管理者</strong></div>
+                  <div class="mini-fact"><label>沟通任务</label><strong>建立更准确的人机协作认知</strong></div>
+                  <div class="mini-fact"><label>语气</label><strong>理性、克制、有判断力</strong></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-topline"><span>Protected claims</span><span>不可漂移</span></div>
+              <div class="lock-list">
+                <div class="lock-item"><span class="lock-icon">L</span><span>不把“任务重组”强化成“岗位必然消失”</span></div>
+                <div class="lock-item"><span class="lock-icon">L</span><span>不虚构效率数据、调研结果或成功案例</span></div>
+                <div class="lock-item"><span class="lock-icon">L</span><span>保留“最终责任仍由人承担”的判断</span></div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="card-topline"><span>Content units</span><span>4 units</span></div>
+              <div class="unit-list">
+                <div class="unit-item"><span class="unit-num">01</span><span>错误问题：AI 会不会取代我</span></div>
+                <div class="unit-item"><span class="unit-num">02</span><span>任务可以被拆分与重新组合</span></div>
+                <div class="unit-item"><span class="unit-num">03</span><span>人的核心：目标、判断、责任</span></div>
+                <div class="unit-item"><span class="unit-num">04</span><span>行动：识别不能外包的判断</span></div>
+              </div>
+            </article>
+          </div>
+
+          <div class="schema-band">
+            <div class="schema-cell">
+              <label>Summary</label>
+              <strong>职业不会作为整体突然消失，变化发生在岗位内部的任务重组。</strong>
+            </div>
+            <div class="schema-cell">
+              <label>Audience need</label>
+              <span>判断哪些任务适合 AI，哪些决定不能外包。</span>
+            </div>
+            <div class="schema-cell">
+              <label>Keywords</label>
+              <span>任务拆分 · 人机协作 · 判断 · 责任</span>
+            </div>
+            <div class="schema-cell flag">
+              <label>Uncertainty · review flag</label>
+              <span>“过去两年”缺少明确起止时间，保留原文措辞。</span>
+            </div>
+          </div>
+
+          <div class="approval-bar">
+            <div class="approval-copy">
+              <span class="approval-number">00</span>
+              <div><strong>事实基线已建立，仍可标记需要人工复核的源文主张</strong><small>BRIEF IS SHARED BY COPY AND VISUALS</small></div>
+            </div>
+            <button class="primary-button next-button" data-next="1">确认简报，选择平台</button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="1" data-screen-label="平台与语言">
+          <div class="section-head">
+            <div>
+              <h2>平台与语言市场</h2>
+            </div>
+          </div>
+
+          <div class="platform-tools">
+            <strong>初始选择为空，不默认全平台</strong>
+            <div class="tool-actions">
+              <button class="small-action" id="demoSelection">载入案例组合</button>
+              <button class="small-action" id="selectAllPlatforms">显式选择全部</button>
+            </div>
+          </div>
+
+          <div class="platform-grid">
+            <article class="platform-card" data-platform="xiaohongshu">
+              <div class="platform-monogram">RED</div>
+              <h3>小红书</h3>
+              <p>以认知反差开场，用可收藏的判断清单承接观点。</p>
+              <div class="platform-tags"><span>共鸣式标题</span><span>卡片结构</span><span>收藏 CTA</span></div>
+            </article>
+            <article class="platform-card" data-platform="douyin">
+              <div class="platform-monogram">DY</div>
+              <h3>抖音</h3>
+              <p>前三秒提出错误问题，用口语节奏完成观点转折。</p>
+              <div class="platform-tags"><span>3 秒钩子</span><span>60 秒脚本</span><span>评论 CTA</span></div>
+            </article>
+            <article class="platform-card" data-platform="linkedin" data-overseas="true">
+              <div class="platform-monogram">IN</div>
+              <h3>LinkedIn</h3>
+              <p>保留专业判断，强调组织如何重新划分人机职责。</p>
+              <div class="platform-tags"><span>需确认 locale</span><span>专业观点</span><span>讨论 CTA</span></div>
+            </article>
+            <article class="platform-card" data-platform="wechat">
+              <div class="platform-monogram">WX</div>
+              <h3>微信公众号</h3>
+              <p>以完整论证展开，适合承载方法与案例层次。</p>
+              <div class="platform-tags"><span>长文结构</span><span>章节标题</span><span>深度阅读</span></div>
+            </article>
+          </div>
+
+          <div class="platform-catalog">
+            <span>国内：视频号 / Bilibili / 快手</span>
+            <span>海外：TikTok / YouTube / Instagram / Facebook</span>
+            <span>海外：X / Threads / Pinterest / Snapchat</span>
+            <span>未列平台：创建 provisional adapter</span>
+          </div>
+
+          <div class="locale-panel" id="localePanel">
+            <div class="locale-field">
+              <label>Target language</label>
+              <div class="locale-options" data-locale-group="language">
+                <button data-value="source">保持源语言</button>
+                <button class="selected" data-value="en">English</button>
+              </div>
+            </div>
+            <div class="locale-field">
+              <label>Market</label>
+              <div class="locale-options" data-locale-group="market">
+                <button class="selected" data-value="global">Global</button>
+                <button data-value="us">US</button>
+                <button data-value="sg">Singapore</button>
+              </div>
+            </div>
+            <div class="locale-field">
+              <label>Localization rule</label>
+              <div class="file-meta">保留专有名词与证据锚点；按目标市场重写语境，不逐句机械翻译。</div>
+            </div>
+          </div>
+
+          <div class="approval-bar">
+            <div class="approval-copy">
+              <span class="approval-number">00</span>
+              <div><strong id="platformCount">尚未选择平台</strong><small id="localeAssumption">locale assumptions: none</small></div>
+            </div>
+            <button class="primary-button next-button" id="runAdapters" data-next="2" disabled>读取所选 adapters</button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="2" data-screen-label="文案审阅">
+          <div class="section-head">
+            <div>
+              <h2>独立的 Copy Packages</h2>
+            </div>
+          </div>
+
+          <div class="copy-layout">
+            <div class="copy-tabs">
+              <button class="copy-tab active" data-copy="red"><strong>小红书</strong><small>认知反差 · 收藏型</small></button>
+              <button class="copy-tab" data-copy="dy"><strong>抖音</strong><small>60 秒 · 口语脚本</small></button>
+              <button class="copy-tab" data-copy="in"><strong>LinkedIn</strong><small>EN · Professional</small></button>
+            </div>
+
+            <article class="copy-preview">
+              <div class="preview-toolbar">
+                <div><span id="copyPlatformLabel">小红书图文</span></div>
+                <div class="copy-actions"><button class="icon-button" title="编辑">ED</button><button class="icon-button" title="重新生成">RE</button></div>
+              </div>
+              <div class="document-sheet" id="copyContent"></div>
+            </article>
+          </div>
+
+          <div class="review-flags">
+            <span class="flag-mark">!</span>
+            <div>
+              <strong>Factual / editorial review flag</strong>
+              <small>没有来源支持具体效率提升数字，因此所有平台版本都不得添加百分比或成功案例。</small>
+            </div>
+            <span>1 FLAG</span>
+          </div>
+
+          <div class="approval-bar">
+            <div class="approval-copy">
+              <span class="approval-number">01</span>
+              <div><strong>Copy review gate：初稿必须停止并等待明确确认</strong><small>VISUAL DIRECTIONS ARE NOT SHOWN IN THIS RESPONSE</small></div>
+            </div>
+            <button class="primary-button next-button" data-next="3">文案可用，明确确认</button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="3" data-screen-label="配图意图">
+          <div class="section-head">
+            <div>
+              <h2>文案已确认，是否要基于这篇内容生成配图？</h2>
+            </div>
+            <div class="rule-tag">mandatory yes / no</div>
+          </div>
+
+          <div class="intent-grid">
+            <button class="intent-card" id="intentYes">
+              <span class="intent-index">OPTION 01</span>
+              <div>
+                <h3>是，生成配图</h3>
+                <p>进入行业与沟通任务分类，再选择视觉方向；不会立即调用生图工具。</p>
+              </div>
+              <footer>继续：visual direction gate</footer>
+            </button>
+            <button class="intent-card no" id="intentNo">
+              <span class="intent-index">OPTION 02</span>
+              <div>
+                <h3>否，暂不生成</h3>
+                <p>结束视觉流程，只保留文案编辑、再生成和交付整理等非视觉动作。</p>
+              </div>
+              <footer>结束：copy workflow only</footer>
+            </button>
+          </div>
+
+          <div class="nonvisual-actions" id="nonvisualActions">
+            <strong>视觉分支已停止</strong>
+            <div class="tool-actions">
+              <button class="small-action">继续编辑文案</button>
+              <button class="small-action">重新生成平台版本</button>
+            </div>
+          </div>
+
+          <div class="approval-bar">
+            <div class="approval-copy">
+              <span class="approval-number">02</span>
+              <div><strong>Image intent gate：必须是独立的用户决定</strong><small>COPY REQUEST DOES NOT IMPLY “NO IMAGES”</small></div>
+            </div>
+            <button class="primary-button" id="continueVisual" disabled>等待选择</button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="4" data-screen-label="视觉方向">
+          <div class="section-head">
+            <div>
+              <h2>内容特定的视觉方向</h2>
+            </div>
+            <div class="rule-tag">visual-handoff.md</div>
+          </div>
+
+          <div class="visual-route">
+            <div class="route-cell"><label>Primary industry</label><strong>Technology / AI / SaaS</strong></div>
+            <div class="route-cell"><label>Communication job</label><strong>认知重构 · 工作流关系</strong></div>
+            <div class="route-cell"><label>Guardrail</label><strong>不制作虚假 dashboard，不暗示自主替代人类</strong></div>
+          </div>
+
+          <div class="visual-toolbar">
+            <button class="small-action" id="refreshDirections">换一组推荐</button>
+            <button class="small-action" id="stopImages">暂不生成</button>
+          </div>
+
+          <div class="visual-grid">
+            <article class="visual-card selected" data-style="editorial">
+              <div class="visual-swatch swatch-editorial"></div>
+              <div class="visual-copy">
+                <h3>编辑部观点海报</h3>
+                <p>用强标题和克制排版承载“重新分工”的判断，适合观点型内容。</p>
+                <div class="fit-row"><span>小红书 / LinkedIn</span><span>推荐 <strong class="recommendation-score">92%</strong></span></div>
+                <div class="direction-meta">
+                  <span>风险：过度标题化会压缩文章中的限定条件。</span>
+                  <code class="sample-prompt">编辑部观点海报，任务被重新分配而非岗位消失，克制排版，保留判断与责任。</code>
+                </div>
+              </div>
+            </article>
+            <article class="visual-card" data-style="diagram">
+              <div class="visual-swatch swatch-diagram"></div>
+              <div class="visual-copy">
+                <h3>任务重组解释图</h3>
+                <p>把重复任务与人的判断拆成可见关系，降低抽象概念的理解成本。</p>
+                <div class="fit-row"><span>抖音 / 轮播页</span><span>推荐 <strong class="recommendation-score">88%</strong></span></div>
+                <div class="direction-meta">
+                  <span>风险：图示关系不能被误读为真实统计或组织架构。</span>
+                  <code class="sample-prompt">解释图，将重复任务、目标设定、价值判断和结果责任组织为清晰任务流。</code>
+                </div>
+              </div>
+            </article>
+            <article class="visual-card" data-style="collage">
+              <div class="visual-swatch swatch-collage"></div>
+              <div class="visual-copy">
+                <h3>人机协作拼贴</h3>
+                <p>用更有张力的纸张拼贴表现两种能力并存，但需避免“机器人替代人”俗套。</p>
+                <div class="fit-row"><span>封面 / 开场帧</span><span>推荐 <strong class="recommendation-score">79%</strong></span></div>
+                <div class="direction-meta">
+                  <span>风险：避免机器人与人对抗、失业恐慌等陈词滥调。</span>
+                  <code class="sample-prompt">纸张拼贴，人和 AI 处理不同层级任务，协作而非对抗，温和但有张力。</code>
+                </div>
+              </div>
+            </article>
+            <article class="visual-card" data-style="custom">
+              <div class="custom-direction">
+                <div>
+                  <div class="card-topline"><span>Custom prompt</span><span>平等选项</span></div>
+                  <h3>自定义提示词</h3>
+                  <p>保留用户意图，只针对事实、品牌与安全约束做必要澄清。</p>
+                </div>
+                <textarea id="customPrompt" placeholder="输入或修改你的视觉方向…"></textarea>
+              </div>
+            </article>
+          </div>
+
+          <div class="approval-bar">
+            <div class="approval-copy">
+              <span class="approval-number">03</span>
+              <div><strong>Visual direction gate：<span id="selectedStyleLabel">编辑部观点海报</span></strong><small>GLOBAL STYLE · ALLOW PLATFORM OVERRIDES</small></div>
+            </div>
+            <button class="primary-button next-button" data-next="5">确认方向，创建可编辑 manifest</button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="5" data-screen-label="资产清单">
+          <div class="section-head">
+            <div>
+              <h2>Editable Asset Manifest</h2>
+            </div>
+            <div class="rule-tag">planning_status: proposed</div>
+          </div>
+
+          <div class="manifest-summary">
+            <div><label>Global style</label><strong id="manifestStyle">editorial-poster</strong></div>
+            <div><label>Assets</label><strong>4 distinct assets</strong></div>
+            <div><label>Copy approval</label><strong>approved</strong></div>
+            <div><label>Visual approval</label><strong>pending</strong></div>
+          </div>
+
+          <div class="manifest-list">
+            <article class="manifest-row">
+              <div><h3>小红书首图</h3><p>xiaohongshu-cover-01</p></div>
+              <div class="manifest-purpose">用途：传达“任务重组”核心判断<br>anchor: core_thesis · text: AI 重新分配工作</div>
+              <span class="manifest-ratio">3:4</span>
+              <span class="manifest-status">PROPOSED</span>
+            </article>
+            <article class="manifest-row">
+              <div><h3>抖音开场帧</h3><p>douyin-opening-01</p></div>
+              <div class="manifest-purpose">用途：前三秒建立错误问题<br>anchor: content_unit_01 · safe zone required</div>
+              <span class="manifest-ratio">9:16</span>
+              <span class="manifest-status">PROPOSED</span>
+            </article>
+            <article class="manifest-row">
+              <div><h3>LinkedIn 横图</h3><p>linkedin-cover-01</p></div>
+              <div class="manifest-purpose">用途：职业任务重新组合<br>invariants: no fake metric · EN text</div>
+              <span class="manifest-ratio">1.91:1</span>
+              <span class="manifest-status">PROPOSED</span>
+            </article>
+            <article class="manifest-row">
+              <div><h3>解释卡片组</h3><p>xiaohongshu-carousel-01</p></div>
+              <div class="manifest-purpose">用途：解释四个内容单元<br>override: diagram · 4 carousel pages</div>
+              <span class="manifest-ratio">3:4</span>
+              <span class="manifest-status">PROPOSED</span>
+            </article>
+          </div>
+
+          <div class="approval-bar">
+            <div class="approval-copy">
+              <span class="approval-number">04</span>
+              <div><strong>Visual manifest gate：未批准前 generation_status 保持 not-requested</strong><small>PURPOSE · ANCHOR · RATIO · TEXT · INVARIANTS · AVOID</small></div>
+            </div>
+            <button class="primary-button next-button" data-next="6">批准 manifest，逐项生成</button>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="6" data-screen-label="生成交付">
+          <div class="section-head">
+            <div>
+              <h2>逐项生成、检查与交付</h2>
+            </div>
+            <div class="rule-tag">manifest.json · approved</div>
+          </div>
+
+          <div class="generation-run">
+            <strong>4 / 4 assets ready</strong>
+            <div class="run-track"><span></span></div>
+            <small>ONE DISTINCT ASSET AT A TIME</small>
+          </div>
+
+          <div class="asset-board">
+            <article class="asset-card">
+              <div class="asset-thumb tall">RED</div>
+              <div class="asset-body">
+                <div class="asset-line"><h3>小红书首图</h3><span class="ready-chip">READY</span></div>
+                <div class="asset-meta">3:4 · editorial-poster<br>anchor: core_thesis</div>
+                <div class="qa-row"><span>事实</span><span>文字</span><span>构图</span><span>风格</span></div>
+              </div>
+            </article>
+            <article class="asset-card">
+              <div class="asset-thumb tall">DY</div>
+              <div class="asset-body">
+                <div class="asset-line"><h3>抖音开场帧</h3><span class="ready-chip">READY</span></div>
+                <div class="asset-meta">9:16 · editorial-poster<br>anchor: content_unit_01</div>
+                <div class="qa-row"><span>事实</span><span>文字</span><span>安全区</span><span>风格</span></div>
+              </div>
+            </article>
+            <article class="asset-card">
+              <div class="asset-thumb wide">IN</div>
+              <div class="asset-body">
+                <div class="asset-line"><h3>LinkedIn 横图</h3><span class="ready-chip">READY</span></div>
+                <div class="asset-meta">1.91:1 · editorial-poster<br>anchor: protected_claim_03</div>
+                <div class="qa-row"><span>事实</span><span>英文</span><span>构图</span><span>风格</span></div>
+              </div>
+            </article>
+            <article class="asset-card">
+              <div class="asset-thumb wide">04</div>
+              <div class="asset-body">
+                <div class="asset-line"><h3>解释卡片组</h3><span class="ready-chip">READY</span></div>
+                <div class="asset-meta">4 pages · platform override<br>anchor: content_units_01–04</div>
+                <div class="qa-row"><span>顺序</span><span>文字</span><span>一致性</span><span>风格</span></div>
+              </div>
+            </article>
+          </div>
+
+          <div class="delivery-log">
+            <div><code>prepare_workspace.py</code><span>starter manifest + platform folders</span></div>
+            <div><code>validate_manifest.py</code><span>fields, ratios, duplicates, approval passed</span></div>
+            <div><code>build_delivery_index.py</code><span>copy and asset index ready</span></div>
+          </div>
+
+          <div class="delivery-actions">
+            <button class="ghost-button" id="inspectManifest">查看交付结构</button>
+          </div>
+        </section>
+      </main>
+
+      <aside class="trace-panel">
+        <div class="panel-heading">
+          <span>Skill trace</span>
+          <span id="traceCounter">03 events</span>
+        </div>
+        <div class="trace-body">
+          <div class="trace-context">
+            <strong>platform-connect / full</strong>
+            <span>展示 skill 的规则执行、用户决策与状态变化；不是通用聊天机器人。</span>
+          </div>
+          <div class="trace-stream" id="traceStream"></div>
+          <div class="decision-box">
+            <label>Current approval gate</label>
+            <div class="decision-text" id="decisionText">共享内容简报是否准确反映原文？</div>
+            <div class="decision-actions">
+              <button id="editDecision">需要调整</button>
+              <button class="confirm" id="confirmDecision">确认并继续</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const copyPackages = {
+      red: {
+        label: "小红书图文",
+        html: `
+          <h3><span class="hook">AI 不会直接抢走你的工作，但会先拿走其中一部分</span></h3>
+          <p>我们常把“工作”想成一个完整岗位，于是问题总是：AI 会不会取代我？</p>
+          <p>但更值得观察的是，你每天做的事情正在被重新拆分：重复、可描述、能快速验证的任务更适合交给 AI；目标设定、价值判断和结果责任仍然需要人。</p>
+          <p>真正要练习的，不只是写提示词，而是识别：<strong>哪些判断不能外包。</strong></p>
+          <p class="cta-line">收藏这份判断框架，也欢迎说说你工作中最不能交给 AI 的部分。</p>
+          <div class="copy-package-meta">
+            <div><label>Title options</label><strong>AI 先拿走的不是工作 / 真正不能外包的判断</strong></div>
+            <div><label>Cover phrase</label><strong>AI 正在重新分配工作</strong></div>
+            <div><label>Topics</label><strong>#AI协作 #职场判断 #未来工作</strong></div>
+            <div><label>CTA</label><strong>收藏并讨论不能外包的判断</strong></div>
+          </div>`
+      },
+      dy: {
+        label: "抖音 60 秒脚本",
+        html: `
+          <h3><span class="hook">AI 会不会取代你的工作？这个问题，可能从一开始就问错了。</span></h3>
+          <p>工作不是一个完整的盒子，它可以被拆成很多任务。</p>
+          <p>重复的、能说清楚的、结果可以快速检查的，AI 会越来越擅长。但目标怎么定、什么更重要、出了问题谁负责——这些判断仍然在人手里。</p>
+          <p>所以变化不是“一个职业突然消失”，而是职业内部重新分工。</p>
+          <p class="cta-line">你工作里哪一件事可以交给 AI，哪一个判断绝对不能？评论区聊聊。</p>
+          <div class="copy-package-meta">
+            <div><label>Hook variants</label><strong>问题问错了 / 工作不是一个盒子</strong></div>
+            <div><label>Cover phrase</label><strong>AI 不替代岗位，先重组任务</strong></div>
+            <div><label>Duration</label><strong>建议 45–60 秒</strong></div>
+            <div><label>Caption / CTA</label><strong>评论你的“不可外包判断”</strong></div>
+          </div>`
+      },
+      in: {
+        label: "LinkedIn post · EN",
+        html: `
+          <h3><span class="hook">AI may not replace your job. It will redistribute the tasks inside it.</span></h3>
+          <p>The “Will AI take my job?” debate treats a role as one indivisible unit. In practice, roles are bundles of tasks.</p>
+          <p>Generative AI is increasingly useful for work that is repetitive, describable, and quickly verifiable. People still need to set goals, exercise judgment, and own the outcome.</p>
+          <p>The useful question is therefore not only what AI can do, but which decisions a team must not outsource.</p>
+          <p class="cta-line">Which task in your role is ready for AI—and which judgment should remain human?</p>
+          <div class="copy-package-meta">
+            <div><label>Post opener</label><strong>AI redistributes tasks inside a role</strong></div>
+            <div><label>Carousel</label><strong>4-card decision framework</strong></div>
+            <div><label>Locale</label><strong>English · Global market</strong></div>
+            <div><label>Discussion prompt</label><strong>What judgment stays human?</strong></div>
+          </div>`
+      }
+    };
+
+    const traceByStep = [
+      [
+        { type: "user", mark: "U", who: "User input", time: "00:01", text: "把这篇文章适配成多平台内容，并生成配图。" },
+        { type: "agent", mark: "S", who: "Mode", time: "00:02", text: "用户明确要求配图，推断为 full；模式不会跳过任何审批门。", code: "mode: full\nsource_status: read" },
+        { type: "rule", mark: "R", who: "Brief schema", time: "00:04", text: "提取 thesis、stance、facts、protected claims、uncertainties 与 keywords。" }
+      ],
+      [
+        { type: "agent", mark: "S", who: "Skill", time: "00:08", text: "平台初始为空，等待明确选择；不会默认全平台。" },
+        { type: "user", mark: "U", who: "User decision", time: "00:12", text: "选择小红书、抖音和 LinkedIn；LinkedIn 使用 English / Global。" },
+        { type: "rule", mark: "R", who: "Adapter routing", time: "00:13", text: "仅读取所选 adapter；海外平台记录语言和市场假设。", code: "adapters: red, douyin, linkedin\nlocale: en-global" }
+      ],
+      [
+        { type: "agent", mark: "S", who: "Skill", time: "00:19", text: "每个平台生成独立 copy package，而不是只变化长度。" },
+        { type: "rule", mark: "R", who: "Copy gate 01", time: "00:20", text: "响应在 copy review gate 停止，不同时展示视觉方向。" },
+        { type: "user", mark: "U", who: "User approval", time: "00:26", text: "文案可用。" }
+      ],
+      [
+        { type: "agent", mark: "S", who: "Mandatory offer", time: "00:27", text: "文案已确认，是否要基于这篇内容生成配图？" },
+        { type: "rule", mark: "R", who: "Intent gate 02", time: "00:27", text: "只提供“是，生成配图”和“否，暂不生成”两个明确选择。" },
+        { type: "user", mark: "U", who: "User decision", time: "00:28", text: "是，生成配图。" }
+      ],
+      [
+        { type: "agent", mark: "S", who: "Visual routing", time: "00:30", text: "行业：Technology / AI / SaaS；沟通任务：认知重构。" },
+        { type: "agent", mark: "S", who: "Recommendations", time: "00:33", text: "生成内容特定方向、示例 prompt、适配理由与风险；自定义 prompt 是平等选项。" },
+        { type: "rule", mark: "R", who: "Direction gate 03", time: "00:34", text: "等待全局方向或平台覆盖选择。" }
+      ],
+      [
+        { type: "agent", mark: "S", who: "Manifest", time: "00:37", text: "为每个 distinct asset 记录用途、来源锚点、比例、文字与事实不变量。" },
+        { type: "rule", mark: "R", who: "Manifest gate 04", time: "00:38", text: "visual_approval 仍为 pending；不会调用生图工具。" },
+        { type: "user", mark: "U", who: "User approval", time: "00:41", text: "资产清单已确认。" }
+      ],
+      [
+        { type: "rule", mark: "R", who: "Validation", time: "00:42", text: "manifest 通过字段、比例、重复资产与审批状态检查。" },
+        { type: "agent", mark: "S", who: "Generation", time: "00:55", text: "每个 distinct asset 单独生成；修订时一次只改变一个变量。" },
+        { type: "agent", mark: "S", who: "Delivery", time: "01:02", text: "事实、文字、构图与风格 QA 通过，交付索引建立。", code: "copy_approval: approved\nvisual_approval: approved\ngeneration_status: ready" }
+      ]
+    ];
+
+    const decisionLabels = [
+      "检查事实、作者立场与需要人工复核的源文主张。",
+      "明确选择平台；海外平台必须确认语言与市场。",
+      "Copy review gate：文案是否可用？",
+      "文案已确认，是否要基于这篇内容生成配图？",
+      "Visual direction gate：选择全局方向或自定义提示词。",
+      "Visual manifest gate：是否批准可编辑资产清单？",
+      "交付完成：检查生成状态与 QA。"
+    ];
+
+    const styleLabels = {
+      editorial: "编辑部观点海报",
+      diagram: "任务重组解释图",
+      collage: "人机协作拼贴",
+      custom: "自定义提示词"
+    };
+
+    let currentStep = 0;
+    let toastTimer;
+
+    const stepButtons = [...document.querySelectorAll(".step")];
+    const screens = [...document.querySelectorAll(".screen")];
+    const traceStream = document.getElementById("traceStream");
+    const copyContent = document.getElementById("copyContent");
+    const copyPlatformLabel = document.getElementById("copyPlatformLabel");
+    const decisionText = document.getElementById("decisionText");
+    const toast = document.getElementById("toast");
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    function renderTrace(step) {
+      traceStream.innerHTML = traceByStep[step].map(event => `
+        <div class="trace-event ${event.type}">
+          <div class="event-mark">${event.mark}</div>
+          <div class="event-copy">
+            <label><span>${event.who}</span><span>${event.time}</span></label>
+            <p>${event.text}</p>
+            ${event.code ? `<code>${event.code}</code>` : ""}
+          </div>
+        </div>
+      `).join("");
+      document.getElementById("traceCounter").textContent = `${String(traceByStep[step].length).padStart(2, "0")} events`;
+    }
+
+    function goToStep(step, notify = true) {
+      currentStep = Math.max(0, Math.min(6, Number(step)));
+      stepButtons.forEach((button, index) => {
+        button.classList.toggle("active", index === currentStep);
+        button.classList.toggle("done", index < currentStep);
+      });
+      screens.forEach((screen, index) => screen.classList.toggle("active", index === currentStep));
+      decisionText.textContent = decisionLabels[currentStep];
+      const editButton = document.getElementById("editDecision");
+      const confirmButton = document.getElementById("confirmDecision");
+      editButton.textContent = currentStep === 3 ? "否，暂不生成" : currentStep === 6 ? "需要复检" : "需要调整";
+      confirmButton.textContent = currentStep === 3 ? "是，生成配图" : currentStep === 6 ? "交付已检查" : "确认并继续";
+      renderTrace(currentStep);
+      if (notify) showToast(`已切换到 ${String(currentStep + 1).padStart(2, "0")} · ${stepButtons[currentStep].querySelector(".step-label").textContent}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    stepButtons.forEach(button => button.addEventListener("click", () => goToStep(button.dataset.step)));
+    document.querySelectorAll(".next-button").forEach(button => button.addEventListener("click", () => goToStep(button.dataset.next)));
+
+    function updatePlatformState() {
+      const selectedCards = [...document.querySelectorAll(".platform-card.selected")];
+      const overseasSelected = selectedCards.some(card => card.dataset.overseas === "true");
+      const count = selectedCards.length;
+      document.getElementById("platformCount").textContent = count ? `已选择 ${count} 个平台` : "尚未选择平台";
+      document.getElementById("localePanel").classList.toggle("visible", overseasSelected);
+      document.getElementById("localeAssumption").textContent = overseasSelected ? "locale assumptions: English / Global" : "locale assumptions: source language";
+      document.getElementById("runAdapters").disabled = count === 0;
+    }
+
+    document.querySelectorAll(".platform-card").forEach(card => {
+      card.addEventListener("click", () => {
+        card.classList.toggle("selected");
+        updatePlatformState();
+        const count = document.querySelectorAll(".platform-card.selected").length;
+        showToast(count ? `平台选择已更新：${count} 个` : "至少需要选择一个平台");
+      });
+    });
+
+    document.getElementById("demoSelection").addEventListener("click", () => {
+      document.querySelectorAll(".platform-card").forEach((card, index) => card.classList.toggle("selected", index < 3));
+      updatePlatformState();
+      showToast("已载入案例组合：小红书、抖音、LinkedIn · English / Global");
+    });
+
+    document.getElementById("selectAllPlatforms").addEventListener("click", () => {
+      document.querySelectorAll(".platform-card").forEach(card => card.classList.add("selected"));
+      updatePlatformState();
+      showToast("已显式选择页面中的全部平台；完整执行会记录 all-platform 选择");
+    });
+
+    document.querySelectorAll(".locale-options button").forEach(button => {
+      button.addEventListener("click", () => {
+        const group = button.closest(".locale-options");
+        group.querySelectorAll("button").forEach(item => item.classList.remove("selected"));
+        button.classList.add("selected");
+        const language = document.querySelector('[data-locale-group="language"] .selected')?.textContent;
+        const market = document.querySelector('[data-locale-group="market"] .selected')?.textContent;
+        document.getElementById("localeAssumption").textContent = `locale assumptions: ${language} / ${market}`;
+      });
+    });
+
+    document.querySelectorAll(".copy-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".copy-tab").forEach(item => item.classList.remove("active"));
+        tab.classList.add("active");
+        const pkg = copyPackages[tab.dataset.copy];
+        copyPlatformLabel.textContent = pkg.label;
+        copyContent.innerHTML = pkg.html;
+      });
+    });
+
+    function selectIntent(choice) {
+      const yesCard = document.getElementById("intentYes");
+      const noCard = document.getElementById("intentNo");
+      const continueButton = document.getElementById("continueVisual");
+      yesCard.classList.toggle("selected", choice === "yes");
+      noCard.classList.toggle("selected", choice === "no");
+      document.getElementById("nonvisualActions").classList.toggle("visible", choice === "no");
+      continueButton.disabled = choice !== "yes";
+      continueButton.textContent = choice === "yes" ? "继续视觉方向" : choice === "no" ? "视觉流程已停止" : "等待选择";
+    }
+
+    document.getElementById("intentYes").addEventListener("click", () => {
+      selectIntent("yes");
+      showToast("已记录独立决策：是，生成配图");
+    });
+
+    document.getElementById("intentNo").addEventListener("click", () => {
+      selectIntent("no");
+      showToast("已记录独立决策：否，暂不生成");
+    });
+
+    document.getElementById("continueVisual").addEventListener("click", () => goToStep(4));
+
+    document.querySelectorAll(".visual-card").forEach(card => {
+      card.addEventListener("click", () => {
+        document.querySelectorAll(".visual-card").forEach(item => item.classList.remove("selected"));
+        card.classList.add("selected");
+        const selectedLabel = styleLabels[card.dataset.style];
+        document.getElementById("selectedStyleLabel").textContent = selectedLabel;
+        document.getElementById("manifestStyle").textContent = card.dataset.style === "custom" ? "custom-prompt" : `${card.dataset.style}-preset`;
+        showToast(`已选择视觉方向：${selectedLabel}`);
+      });
+    });
+
+    document.getElementById("customPrompt").addEventListener("input", event => {
+      if (event.target.value.trim()) {
+        document.getElementById("selectedStyleLabel").textContent = "自定义提示词（已编辑）";
+      }
+    });
+
+    document.getElementById("refreshDirections").addEventListener("click", () => {
+      showToast("展示态：重新基于文章行业、受众和沟通任务生成 3–5 个方向");
+    });
+
+    document.getElementById("stopImages").addEventListener("click", () => {
+      selectIntent("no");
+      goToStep(3);
+    });
+
+    document.getElementById("confirmDecision").addEventListener("click", () => {
+      if (currentStep === 1 && document.querySelectorAll(".platform-card.selected").length === 0) {
+        showToast("先明确选择至少一个平台");
+      } else if (currentStep === 3) {
+        selectIntent("yes");
+        goToStep(4);
+      } else if (currentStep < 6) {
+        goToStep(currentStep + 1);
+      } else {
+        showToast("案例回放完成：所有交付资产已通过 QA");
+      }
+    });
+
+    document.getElementById("editDecision").addEventListener("click", () => {
+      if (currentStep === 3) {
+        selectIntent("no");
+        showToast("视觉分支已停止，只提供非视觉后续动作");
+      } else {
+        showToast("展示态：修改意见会返回当前步骤，不会跨过审批门");
+      }
+    });
+
+    document.getElementById("restartDemo").addEventListener("click", () => {
+      document.querySelectorAll(".platform-card").forEach(card => card.classList.remove("selected"));
+      document.querySelectorAll(".visual-card").forEach(card => card.classList.toggle("selected", card.dataset.style === "editorial"));
+      document.getElementById("selectedStyleLabel").textContent = "编辑部观点海报";
+      document.getElementById("manifestStyle").textContent = "editorial-preset";
+      selectIntent(null);
+      updatePlatformState();
+      goToStep(0);
+    });
+
+    document.getElementById("toggleTrace").addEventListener("click", () => {
+      document.body.classList.toggle("trace-open");
+    });
+
+    document.getElementById("inspectManifest").addEventListener("click", () => {
+      showToast("manifest.json → 4 distinct assets · copy approved · visual approved · QA passed");
+    });
+
+    copyContent.innerHTML = copyPackages.red.html;
+    updatePlatformState();
+    renderTrace(0);
+  </script>
+</body>
+</html>
