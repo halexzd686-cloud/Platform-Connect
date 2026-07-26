@@ -6,23 +6,27 @@ Platform Connect 是一个可安装的 Agent Skill：直接读取用户粘贴的
 
 ## 快速安装
 
+当前最新正式版为 `v1.2.0`。普通用户建议安装带版本标签的正式版，以保证安装结果稳定、可复现。
+
 默认安装到当前项目：
 
 ```powershell
-npx skills add halexzd686-cloud/Platform-Connect `
+npx skills add halexzd686-cloud/Platform-Connect@v1.2.0 `
   --agent codex `
   --skill platform-connect `
-  --yes
+  --yes `
+  --copy
 ```
 
 安装到当前用户、供多个项目使用时，显式增加 `--global`：
 
 ```powershell
-npx skills add halexzd686-cloud/Platform-Connect `
+npx skills add halexzd686-cloud/Platform-Connect@v1.2.0 `
   --agent codex `
   --skill platform-connect `
   --global `
-  --yes
+  --yes `
+  --copy
 ```
 
 安装完成后，在新的 Agent 会话中使用 `$platform-connect`，直接发送文章文件、正文或链接即可。目标平台未指定时，Skill 会先推荐 2–3 个适合的平台和初步配图方向。项目级安装是默认选择；只有明确需要跨项目复用时才使用用户级安装。
@@ -188,13 +192,31 @@ python -X utf8 C:\Users\86188\.codex\skills\.system\skill-creator\scripts\quick_
 
 ## 更新与回退
 
-更新当前项目中的安装副本：
+### 升级到最新正式版
+
+需要安装或覆盖为当前最新正式版时，使用与快速安装相同的带标签命令：
+
+```powershell
+npx skills add halexzd686-cloud/Platform-Connect@v1.2.0 `
+  --agent codex `
+  --skill platform-connect `
+  --yes `
+  --copy
+```
+
+### 跟随最新开发内容
+
+以下命令会把当前项目中的安装副本更新到仓库的最新可用内容，适合希望跟随 `main` 的测试或开发场景：
 
 ```powershell
 npx skills update platform-connect --project --yes
 ```
 
-重新安装一个已经发布的明确版本：
+普通用户应优先安装上方带版本标签的最新正式版，而不是默认跟随开发分支。
+
+### 回退到旧版本
+
+如果 `v1.2.0` 执行异常，需要临时回退到上一稳定版，可明确安装 `v1.1.0`：
 
 ```powershell
 npx skills add halexzd686-cloud/Platform-Connect@v1.1.0 `
