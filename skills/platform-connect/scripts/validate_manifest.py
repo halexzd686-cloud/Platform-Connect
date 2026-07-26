@@ -4,12 +4,14 @@
 from __future__ import annotations
 
 import argparse
-import json
 import re
 from pathlib import Path
 
+from _shared import SCHEMA_VERSION, emit, fail, load_json_object
+
 
 RATIO = re.compile(r"^\d{1,2}:\d{1,2}$")
+SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 APPROVALS = {"pending", "approved", "needs-revision"}
 IMAGE_INTENTS = {"pending", "yes", "no"}
 QA_STATES = {"pending", "passed", "failed"}
@@ -57,8 +59,10 @@ def validate(data: dict) -> list[str]:
     if missing:
         errors.append(f"missing manifest fields: {', '.join(sorted(missing))}")
 
-    if data.get("schema_version") != "1.1":
-        errors.append("schema_version must be 1.1")
+    if data.get("schema_version") != SCHEMA_VERSION:
+        errors.append(f"schema_version must be {SCHEMA_VERSION}")
+    if not SEMVER.fullmatch(str(data.get("skill_version", ""))):
+        errors.append("skill_version must be semantic version text such as 1.0.0")
     if data.get("mode") not in {"plan", "copy", "full"}:
         errors.append("mode must be plan, copy, or full")
 
@@ -176,10 +180,9 @@ def main() -> int:
     parser.add_argument("manifest", type=Path)
     args = parser.parse_args()
     try:
-        data = json.loads(args.manifest.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        print(json.dumps({"status": "failed", "errors": [str(error)]}, ensure_ascii=False))
-        return 1
+        data = load_json_object(args.manifest)
+    except (OSError, ValueError) as error:
+        return fail(error, manifest=str(args.manifest.resolve()))
 
     errors = validate(data)
     payload = {
@@ -188,7 +191,7 @@ def main() -> int:
         "errors": errors,
         "asset_count": len(data.get("assets", [])) if isinstance(data, dict) else 0,
     }
-    print(json.dumps(payload, ensure_ascii=False))
+    emit(payload)
     return 1 if errors else 0
 
 

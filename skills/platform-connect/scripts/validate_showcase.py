@@ -9,6 +9,8 @@ import json
 from pathlib import Path
 import re
 
+from _shared import emit, fail
+
 
 REQUIRED_FILES = {"index.html", "app.js", "styles.css"}
 REMOTE_PATTERN = re.compile(r"""(?:https?:)?//""", re.IGNORECASE)
@@ -83,16 +85,16 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("showcase", type=Path)
     args = parser.parse_args()
-    errors = validate(args.showcase)
-    print(
-        json.dumps(
-            {
-                "status": "failed" if errors else "passed",
-                "showcase": str(args.showcase.resolve()),
-                "errors": errors,
-            },
-            ensure_ascii=False,
-        )
+    try:
+        errors = validate(args.showcase)
+    except OSError as error:
+        return fail(error, showcase=str(args.showcase.resolve()))
+    emit(
+        {
+            "status": "failed" if errors else "passed",
+            "showcase": str(args.showcase.resolve()),
+            "errors": errors,
+        }
     )
     return 1 if errors else 0
 

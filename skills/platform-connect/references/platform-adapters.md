@@ -2,6 +2,25 @@
 
 These are editorial defaults, not a substitute for checking current publishing specifications. Do not state volatile limits or policy details unless verified at task time.
 
+## Contents
+
+- [Douyin](#douyin)
+- [Xiaohongshu](#xiaohongshu)
+- [WeChat Channels](#wechat-channels)
+- [Bilibili](#bilibili)
+- [Kuaishou](#kuaishou)
+- [TikTok](#tiktok)
+- [YouTube Shorts](#youtube-shorts)
+- [YouTube long-form](#youtube-long-form)
+- [Instagram Reels](#instagram-reels)
+- [Facebook Reels](#facebook-reels)
+- [LinkedIn](#linkedin)
+- [X](#x)
+- [Threads](#threads)
+- [Pinterest](#pinterest)
+- [Snapchat Spotlight](#snapchat-spotlight)
+- [Cross-platform QA](#cross-platform-qa)
+
 ## Douyin
 
 - Lead with a conflict, misconception, result, or immediate question.

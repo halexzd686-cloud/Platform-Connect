@@ -47,6 +47,10 @@ class DeliveryPipelineTests(unittest.TestCase):
             prepared_payload = json.loads(prepared.stdout)
             run_root = Path(prepared_payload["workspace"])
             manifest_path = run_root / "manifest.json"
+            self.assertEqual(
+                json.loads(manifest_path.read_text(encoding="utf-8"))["skill_version"],
+                "1.0.0",
+            )
 
             (run_root / "source-brief.md").write_text(
                 "# AI 重新分配工作\n\nAI 改变岗位内部的任务组合。\n",
@@ -121,7 +125,7 @@ class DeliveryPipelineTests(unittest.TestCase):
     def test_generation_is_blocked_before_visual_approval(self) -> None:
         manifest = {
             "schema_version": "1.1",
-            "skill_version": "0.3.0",
+            "skill_version": "1.0.0",
             "article_slug": "blocked",
             "run_id": "blocked-001",
             "parent_run_id": None,
@@ -168,6 +172,46 @@ class DeliveryPipelineTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             errors = json.loads(result.stdout)["errors"]
             self.assertTrue(any("all visual gates" in error for error in errors))
+
+    def test_script_failures_are_structured_json(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            missing_manifest = Path(temp_dir) / "missing.json"
+            for script in (
+                "validate_manifest.py",
+                "render_showcase.py",
+                "build_delivery_index.py",
+            ):
+                result = run_script(script, str(missing_manifest))
+                self.assertNotEqual(result.returncode, 0, script)
+                self.assertEqual(result.stderr, "", script)
+                payload = json.loads(result.stdout)
+                self.assertEqual(payload["status"], "failed", script)
+                self.assertTrue(payload["errors"], script)
+
+            missing_showcase = Path(temp_dir) / "missing-showcase"
+            result = run_script("validate_showcase.py", str(missing_showcase))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(json.loads(result.stdout)["status"], "failed")
+
+    def test_prepare_workspace_refuses_overwrite_with_json_error(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            arguments = (
+                "immutable-run",
+                "--platforms",
+                "linkedin",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "same-run",
+            )
+            first = run_script("prepare_workspace.py", *arguments)
+            second = run_script("prepare_workspace.py", *arguments)
+            self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+            self.assertNotEqual(second.returncode, 0)
+            self.assertEqual(second.stderr, "")
+            payload = json.loads(second.stdout)
+            self.assertEqual(payload["status"], "failed")
+            self.assertTrue(any("will not be overwritten" in item for item in payload["errors"]))
 
 
 if __name__ == "__main__":

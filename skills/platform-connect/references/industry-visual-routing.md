@@ -2,6 +2,25 @@
 
 Choose the primary industry from the source itself. If two industries materially overlap, combine no more than two entries and state the combination. These routes suggest visual vocabulary and QA; they do not prescribe a single style.
 
+## Contents
+
+- [Knowledge, education, research](#knowledge-education-research)
+- [Technology, AI, SaaS](#technology-ai-saas)
+- [Finance, business, consulting](#finance-business-consulting)
+- [Healthcare, wellness, life science](#healthcare-wellness-life-science)
+- [Law, policy, public affairs](#law-policy-public-affairs)
+- [Product, retail, ecommerce](#product-retail-ecommerce)
+- [Food, beverage, hospitality](#food-beverage-hospitality)
+- [Travel, local culture, geography](#travel-local-culture-geography)
+- [Real estate, architecture, interiors](#real-estate-architecture-interiors)
+- [Fashion, beauty, lifestyle](#fashion-beauty-lifestyle)
+- [Automotive, mobility, manufacturing](#automotive-mobility-manufacturing)
+- [Career, HR, workplace](#career-hr-workplace)
+- [Culture, history, publishing](#culture-history-publishing)
+- [Entertainment, gaming, sports](#entertainment-gaming-sports)
+- [Environment, agriculture, nonprofit, public service](#environment-agriculture-nonprofit-public-service)
+- [Fallback for unlisted industries](#fallback-for-unlisted-industries)
+
 ## Knowledge, education, research
 
 - Useful jobs: concept explanation, comparison, process, evidence map, chapter transition.

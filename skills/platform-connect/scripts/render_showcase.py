@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import shutil
 
+from _shared import emit, fail, load_json_object
 from validate_manifest import validate
 
 
@@ -143,46 +144,39 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
+        manifest = load_json_object(args.manifest)
         errors = validate(manifest)
         if errors:
             raise ValueError("; ".join(errors))
         display = load_display_data(args.data)
     except (OSError, json.JSONDecodeError, ValueError) as error:
-        print(json.dumps({"status": "failed", "errors": [str(error)]}, ensure_ascii=False))
-        return 1
+        return fail(error, manifest=str(args.manifest.resolve()))
 
     run_root = args.manifest.resolve().parent
     output_dir = (args.output_dir or run_root / "showcase").resolve()
-    output_dir.mkdir(parents=True, exist_ok=True)
 
     skill_root = Path(__file__).resolve().parents[1]
     template_root = skill_root / "assets" / "static-showcase"
     template = read_text(template_root / "index.html")
     if TOKEN not in template:
-        print(
-            json.dumps(
-                {"status": "failed", "errors": ["showcase template token is missing"]},
-                ensure_ascii=False,
-            )
-        )
-        return 1
+        return fail("showcase template token is missing")
 
     case = build_case(manifest, run_root, display)
     encoded = json.dumps(case, ensure_ascii=False).replace("</", "<\\/")
     rendered = template.replace(TOKEN, encoded)
-    (output_dir / "index.html").write_text(rendered, encoding="utf-8")
-    shutil.copyfile(template_root / "app.js", output_dir / "app.js")
-    shutil.copyfile(template_root / "styles.css", output_dir / "styles.css")
-    print(
-        json.dumps(
-            {
-                "status": "created",
-                "showcase": str((output_dir / "index.html").resolve()),
-                "files": ["index.html", "app.js", "styles.css"],
-            },
-            ensure_ascii=False,
-        )
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        (output_dir / "index.html").write_text(rendered, encoding="utf-8")
+        shutil.copyfile(template_root / "app.js", output_dir / "app.js")
+        shutil.copyfile(template_root / "styles.css", output_dir / "styles.css")
+    except OSError as error:
+        return fail(error, showcase=str(output_dir))
+    emit(
+        {
+            "status": "created",
+            "showcase": str((output_dir / "index.html").resolve()),
+            "files": ["index.html", "app.js", "styles.css"],
+        }
     )
     return 0
 

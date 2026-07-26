@@ -1,5 +1,14 @@
 # Delivery schema
 
+## Contents
+
+- [Run directory](#run-directory)
+- [Manifest](#manifest)
+- [Asset](#asset)
+- [Optional showcase data](#optional-showcase-data)
+
+## Run directory
+
 Use one immutable run directory per execution:
 
 ```text
@@ -25,7 +34,7 @@ The manifest is the machine-readable source of truth:
 ```json
 {
   "schema_version": "1.1",
-  "skill_version": "0.3.0",
+  "skill_version": "1.0.0",
   "article_slug": "example",
   "run_id": "20260726-143500",
   "parent_run_id": null,

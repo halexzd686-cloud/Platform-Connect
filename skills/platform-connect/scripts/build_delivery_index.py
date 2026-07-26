@@ -4,9 +4,9 @@
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 
+from _shared import emit, fail, load_json_object
 from validate_manifest import validate
 
 
@@ -15,15 +15,13 @@ def main() -> int:
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
-    data = json.loads(args.manifest.read_text(encoding="utf-8"))
+    try:
+        data = load_json_object(args.manifest)
+    except (OSError, ValueError) as error:
+        return fail(error, manifest=str(args.manifest.resolve()))
     errors = validate(data)
     if errors:
-        print(
-            json.dumps(
-                {"status": "failed", "errors": errors},
-                ensure_ascii=False,
-            )
-        )
+        emit({"status": "failed", "errors": errors})
         return 1
 
     locale = data["locale_assumptions"]
@@ -79,17 +77,17 @@ def main() -> int:
     )
 
     out = args.out or args.manifest.with_name("index.md")
-    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(
-        json.dumps(
-            {
-                "status": "created",
-                "index": str(out.resolve()),
-                "platform_count": len(data["platforms"]),
-                "asset_count": len(data["assets"]),
-            },
-            ensure_ascii=False,
-        )
+    try:
+        out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    except OSError as error:
+        return fail(error, index=str(out.resolve()))
+    emit(
+        {
+            "status": "created",
+            "index": str(out.resolve()),
+            "platform_count": len(data["platforms"]),
+            "asset_count": len(data["assets"]),
+        }
     )
     return 0
 

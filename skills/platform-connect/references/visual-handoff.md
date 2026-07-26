@@ -1,12 +1,12 @@
 # Visual handoff
 
-Use this only after reading the full source and producing platform copy.
+Use this after reading the full source. In `plan` mode, use it to propose directions and assets without generating copy or images. In `full` mode, enter it only after copy approval and explicit image intent.
 
 ## Interaction sequence
 
-1. Enter this sequence only after the user has selected `是，生成配图` at the copy-approved image-intent gate.
+1. Enter the planning branch after the shared brief and platform strategy. Enter the generation branch only after the user selects `是，生成配图` at the copy-approved image-intent gate.
 2. Summarize the visual problem: audience, emotional register, abstract concepts, and platform contexts.
-3. Classify the source's primary industry and communication job, then read the matching entry in [industry-visual-routing.md](industry-visual-routing.md).
+3. Classify the source's primary industry and communication job, then apply the industry route already selected through `SKILL.md`.
 4. Recommend three to five distinct visual directions. Explain why each direction fits this particular article and include one concise editable sample prompt per direction.
 5. Let the user choose one global main style or choose `自定义提示词`.
 6. Allow per-platform overrides for style, aspect ratio, or asset type.
@@ -14,9 +14,9 @@ Use this only after reading the full source and producing platform copy.
    - refresh recommendations;
    - custom prompt input;
    - no-images option.
-8. Build an editable asset manifest. Recommend the number of images dynamically; do not force a fixed count.
-9. Ask the user to confirm the manifest.
-10. Only then call an image-generation tool, one asset at a time.
+8. Build an editable proposed asset list or manifest. Recommend the number of images dynamically; do not force a fixed count.
+9. In `plan` mode, ask for plan review and stop. In `full` mode, ask the user to confirm the manifest.
+10. Only after full-mode manifest approval, call an image-generation tool one asset at a time.
 
 ## Style recommendation fields
 
@@ -73,4 +73,4 @@ Keep one prompt per distinct asset. For revisions, change one variable at a time
 
 ## Xiaohei preset
 
-Xiaohei can be offered when hand-drawn explanatory diagrams suit the source. It should remain optional. Before adapting its style rules, prompts, or examples, read [third-party-notices.md](third-party-notices.md).
+Xiaohei can be offered when hand-drawn explanatory diagrams suit the source. It should remain optional and may be used only after the attribution requirements routed through `SKILL.md` have been checked.

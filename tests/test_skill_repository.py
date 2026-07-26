@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import ast
+import json
 from pathlib import Path
 import re
 import subprocess
@@ -45,6 +47,50 @@ class SkillRepositoryTests(unittest.TestCase):
         self.assertEqual(fields["name"], SKILL.name)
         self.assertRegex(fields["name"], re.compile(r"^[a-z0-9-]{1,64}$"))
         self.assertTrue(fields["description"])
+        self.assertTrue(fields["description"].startswith("Adapts "))
+        self.assertLessEqual(len(fields["description"]), 1024)
+
+    def test_long_references_have_contents_and_no_nested_routes(self) -> None:
+        references = SKILL / "references"
+        markdown_link = re.compile(r"\]\((?!https?://)([^)]+\.md)(?:#[^)]+)?\)")
+        for path in references.glob("*.md"):
+            text = path.read_text(encoding="utf-8")
+            if len(text.splitlines()) > 100:
+                self.assertIn("## Contents", text, str(path))
+            self.assertEqual(
+                markdown_link.findall(text),
+                [],
+                f"reference-to-reference routing belongs in SKILL.md: {path}",
+            )
+
+    def test_shared_versions_match_delivery_example(self) -> None:
+        shared = (SKILL / "scripts" / "_shared.py").read_text(encoding="utf-8")
+        tree = ast.parse(shared)
+        constants = {}
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and len(node.targets) == 1:
+                target = node.targets[0]
+                if isinstance(target, ast.Name) and target.id in {
+                    "SCHEMA_VERSION",
+                    "SKILL_VERSION",
+                }:
+                    constants[target.id] = ast.literal_eval(node.value)
+        schema = (SKILL / "references" / "output-schema.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(f'"schema_version": "{constants["SCHEMA_VERSION"]}"', schema)
+        self.assertIn(f'"skill_version": "{constants["SKILL_VERSION"]}"', schema)
+
+    def test_behavior_eval_catalog_is_actionable(self) -> None:
+        path = REPO_ROOT / "tests" / "evals" / "platform-connect.json"
+        cases = json.loads(path.read_text(encoding="utf-8"))
+        self.assertGreaterEqual(len(cases), 3)
+        self.assertEqual(len({case["id"] for case in cases}), len(cases))
+        for case in cases:
+            self.assertIn(case["mode"], {"plan", "copy", "full"})
+            self.assertTrue(case["prompt"])
+            self.assertTrue(case["expected_behavior"])
+            self.assertTrue(case["forbidden_behavior"])
 
     def test_repository_text_is_utf8(self) -> None:
         roots = [SKILL, REPO_ROOT / "README.md"]
