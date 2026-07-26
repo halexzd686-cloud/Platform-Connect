@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "platform-connect": {
+      "source": "halexzd686-cloud/Platform-Connect",
+      "sourceType": "github",
+      "skillPath": "skills/platform-connect/SKILL.md",
+      "computedHash": "c260a20654c7174697c55faa35712340e8e71c8932b6f8878d4d7267854e2bf9"
+    }
+  }
+}

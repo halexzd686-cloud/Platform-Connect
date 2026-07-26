@@ -4,6 +4,29 @@ Platform Connect 是一个可安装的 Agent Skill：读取用户提供的完整
 
 它不是 React/FastAPI AI 应用。Agent 负责理解、写作、决策协作与图像工具调用；仓库中的脚本只负责确定性的目录创建、Manifest 校验、交付索引和静态页面渲染。
 
+## 快速安装
+
+默认安装到当前项目：
+
+```powershell
+npx skills add halexzd686-cloud/Platform-Connect `
+  --agent codex `
+  --skill platform-connect `
+  --yes
+```
+
+安装到当前用户、供多个项目使用时，显式增加 `--global`：
+
+```powershell
+npx skills add halexzd686-cloud/Platform-Connect `
+  --agent codex `
+  --skill platform-connect `
+  --global `
+  --yes
+```
+
+安装完成后，在新的 Agent 会话中使用 `$platform-connect`，并提供完整文章、目标平台及需要的运行模式。项目级安装是默认选择；只有明确需要跨项目复用时才使用用户级安装。
+
 ## 核心流程
 
 ```text
@@ -42,6 +65,15 @@ skills/platform-connect/
 ```
 
 `.agents/` 和 `.claude/` 是安装目标，不作为仓库源码维护。
+
+三类目录承担不同职责：
+
+- `skills/platform-connect/`：GitHub 仓库中的唯一源码，所有修复从这里开始。
+- `.agents/skills/platform-connect/` 或 Agent 对应目录：项目级安装副本，可删除、可重装，不提交 Git。
+- `skills-lock.json`：项目级安装来源与内容哈希，可提交 Git，用于依赖核对和恢复。
+- 用户级 Skill 目录：跨项目安装副本，不属于本仓库。
+
+不要直接修改安装副本。需要修复时修改唯一源码、运行测试并重新安装。
 
 ## 运行模式
 
@@ -110,6 +142,34 @@ python -X utf8 C:\Users\86188\.codex\skills\.system\skill-creator\scripts\quick_
 - Python 3.10+
 - Node.js 20+（仅用于仓库级页面回归测试）
 - 支持 Agent Skills 的 Agent 环境
+
+## 更新与回退
+
+更新当前项目中的安装副本：
+
+```powershell
+npx skills update platform-connect --project --yes
+```
+
+重新安装一个已经发布的明确版本：
+
+```powershell
+npx skills add halexzd686-cloud/Platform-Connect@v1.0.0 `
+  --agent codex `
+  --skill platform-connect `
+  --yes `
+  --copy
+```
+
+执行或升级出现问题时：
+
+1. 保留失败运行的 `outputs/<article-slug>/<run-id>/`，不要覆盖已确认产物。
+2. 在仓库中定位最后一个通过测试的 Git tag 或 commit。
+3. 修复 `skills/platform-connect/` 下的源码，不直接修补 `.agents/`、`.claude/` 或生成后的展示页。
+4. 重新运行仓库测试与官方 Skill 校验。
+5. 删除或更新项目级安装副本，再从已确认的 GitHub 版本重新安装。
+
+发布版本、Git tag 和安装副本应保持一一对应，便于确认当前项目实际运行的是哪一版 Skill。
 
 ## 设计原则
 

@@ -106,6 +106,29 @@ class SkillRepositoryTests(unittest.TestCase):
         self.assertIn("skills/platform-connect", readme)
         self.assertNotIn("skills/adapt-content-for-platforms", readme)
 
+    def test_readme_documents_project_install_without_tracking_copies(self) -> None:
+        readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn(
+            "npx skills add halexzd686-cloud/Platform-Connect",
+            readme,
+        )
+        self.assertIn("--agent codex", readme)
+        self.assertIn("--skill platform-connect", readme)
+        self.assertIn("--global", readme)
+        self.assertIn("不要直接修改安装副本", readme)
+
+    def test_project_skill_lock_targets_the_canonical_skill(self) -> None:
+        lock = json.loads(
+            (REPO_ROOT / "skills-lock.json").read_text(encoding="utf-8")
+        )
+        entry = lock["skills"]["platform-connect"]
+        self.assertEqual(entry["source"], "halexzd686-cloud/Platform-Connect")
+        self.assertEqual(
+            entry["skillPath"],
+            "skills/platform-connect/SKILL.md",
+        )
+        self.assertRegex(entry["computedHash"], re.compile(r"^[0-9a-f]{64}$"))
+
 
 if __name__ == "__main__":
     unittest.main()
