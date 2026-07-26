@@ -119,3 +119,7 @@ python -X utf8 C:\Users\86188\.codex\skills\.system\skill-creator\scripts\quick_
 - 海外平台明确记录目标语言和市场。
 - 自定义提示词与推荐视觉方向地位相同。
 - 静态展示页可通过 `file://` 直接打开，无 CDN、无远程请求、无服务器。
+
+## 许可证
+
+本项目采用 [MIT License](LICENSE)。第三方来源与署名要求见 Skill 内的 `references/third-party-notices.md`。
