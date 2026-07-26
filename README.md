@@ -1,6 +1,12 @@
 # Platform Connect
 
 <p align="center">
+  <a href="https://skills.sh/halexzd686-cloud/Platform-Connect">
+    <img src="https://skills.sh/b/halexzd686-cloud/Platform-Connect" alt="skills.sh">
+  </a>
+</p>
+
+<p align="center">
   <strong>把一篇文章，变成面向不同平台的完整图文交付。</strong>
 </p>
 
@@ -63,19 +69,17 @@ outputs/<article-slug>/<run-id>/
 
 ## 快速开始
 
-### 1. 安装最新正式版
+### 1. 通过 skills.sh 安装
 
-当前最新正式版为 `v1.2.0`。默认安装到当前项目：
+按照 [skills.sh](https://skills.sh/halexzd686-cloud/Platform-Connect) 的标准命令安装：
 
-```powershell
-npx skills add halexzd686-cloud/Platform-Connect@v1.2.0 `
-  --agent codex `
-  --skill platform-connect `
-  --yes `
-  --copy
+```bash
+npx skills add https://github.com/halexzd686-cloud/Platform-Connect --skill platform-connect
 ```
 
-项目级安装是默认选择。只有明确需要在多个项目间复用时，才增加 `--global` 安装到当前用户。
+安装程序会引导选择 Agent 和安装范围。项目级安装是默认选择；只有明确需要在多个项目间复用时，
+才选择全局安装；需要直接指定用户级安装时，可在命令末尾增加 `--global`。当前正式发布版本为
+`v1.2.0`。
 
 ### 2. 交给 Agent
 
@@ -181,16 +185,12 @@ Platform-Connect/
 
 ## 更新与回退
 
-### 升级到当前正式版
+### 重新安装最新版本
 
-重复执行带明确版本标签的安装命令，可以把项目级副本覆盖为当前正式版：
+重复执行 skills.sh 提供的标准命令，可以重新选择 Agent 和安装范围并覆盖现有副本：
 
-```powershell
-npx skills add halexzd686-cloud/Platform-Connect@v1.2.0 `
-  --agent codex `
-  --skill platform-connect `
-  --yes `
-  --copy
+```bash
+npx skills add https://github.com/halexzd686-cloud/Platform-Connect --skill platform-connect
 ```
 
 ### 跟随最新开发内容
@@ -199,7 +199,8 @@ npx skills add halexzd686-cloud/Platform-Connect@v1.2.0 `
 npx skills update platform-connect --project --yes
 ```
 
-此命令适合希望跟随仓库最新内容的测试或开发场景。普通用户应优先安装带版本标签的正式版。
+此命令适合已经安装 Skill、希望直接更新项目级副本的场景。首次安装优先使用 skills.sh 展示的
+标准 `npx skills add` 命令。
 
 ### 回退到上一稳定版
 
