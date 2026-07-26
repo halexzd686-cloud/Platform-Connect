@@ -1,22 +1,22 @@
 # Visual handoff
 
-Use this after reading the full source. In `plan` mode, use it to propose directions and assets without generating copy or images. In `full` mode, enter it only after copy approval and explicit image intent.
+Use this after reading the full source. In `plan`, propose directions and assets without generating copy or images. In `full`, enter the planning branch as part of a compact review, a strict visual gate, or an autopilot run with recorded image authorization.
 
 ## Interaction sequence
 
-1. Enter the planning branch after the shared brief and platform strategy. Enter the generation branch only after the user selects `是，生成配图` at the copy-approved image-intent gate.
+1. Enter the planning branch after the shared brief and platform strategy. Enter generation only when `image_intent=yes` has explicit, bundled, profile, or preauthorized provenance.
 2. Summarize the visual problem: audience, emotional register, abstract concepts, and platform contexts.
 3. Classify the source's primary industry and communication job, then apply the industry route already selected through `SKILL.md`.
 4. Recommend three to five distinct visual directions. Explain why each direction fits this particular article and include one concise editable sample prompt per direction.
-5. Let the user choose one global main style or choose `自定义提示词`.
+5. In `strict`, let the user choose one global main style or `自定义提示词`. In `compact`, include the recommended choice in the combined review. In `autopilot`, select it only under recorded delegation.
 6. Allow per-platform overrides for style, aspect ratio, or asset type.
 7. Always include:
    - refresh recommendations;
    - custom prompt input;
    - no-images option.
 8. Build an editable proposed asset list or manifest. Recommend the number of images dynamically; do not force a fixed count.
-9. In `plan` mode, ask for plan review and stop. In `full` mode, ask the user to confirm the manifest.
-10. Only after full-mode manifest approval, call an image-generation tool one asset at a time.
+9. In `plan`, apply the selected review policy and stop before generation.
+10. In `full`, call an image-generation tool one asset at a time only after the manifest records valid approval or preauthorization.
 
 ## Style recommendation fields
 

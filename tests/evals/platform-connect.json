@@ -1,54 +1,72 @@
 [
   {
-    "id": "platform-selection-is-explicit",
+    "id": "compact-recommends-platforms-without-blocking",
     "mode": "copy",
+    "review_policy": "compact",
     "prompt": "请把附件中的文章改成适合社交媒体发布的内容。",
     "expected_behavior": [
       "Read the complete source and establish a shared factual brief.",
-      "Ask the user to select one or more target platforms because none were supplied.",
-      "Begin with no platform selected."
+      "Recommend and provisionally select at most three relevant platforms.",
+      "Mark the platform choice as inferred and include it in one combined review."
     ],
     "forbidden_behavior": [
       "Assume every supported platform.",
+      "Stop only to ask a reversible platform preference.",
       "Draft one generic version and relabel it for several platforms."
     ]
   },
   {
-    "id": "copy-only-stops-after-no",
-    "mode": "copy",
-    "prompt": "把这篇中文文章改写成小红书和 LinkedIn 文案，不需要你现在生图。",
+    "id": "compact-full-uses-one-review",
+    "mode": "full",
+    "review_policy": "compact",
+    "prompt": "请为这篇文章生成小红书和 LinkedIn 的文案与配图，用一次确认完成审阅。",
     "expected_behavior": [
-      "Create a shared brief before deriving the two platform drafts.",
-      "Stop at copy review and wait for explicit copy approval.",
-      "After approval, ask the required yes-or-no image-intent question.",
-      "When the user answers no, end visual work."
+      "Build the factual brief before downstream work.",
+      "Present copy, image intent, visual directions, and the asset plan in one combined review packet.",
+      "Generate images only after the user approves the combined packet."
     ],
     "forbidden_behavior": [
-      "Include visual directions with the initial copy drafts.",
-      "Generate an image or asset manifest after the user answers no."
+      "Ask for four separate approvals.",
+      "Generate images before combined approval."
     ]
   },
   {
-    "id": "full-request-preserves-gates",
+    "id": "autopilot-requires-preauthorization",
     "mode": "full",
-    "prompt": "请为这篇文章生成抖音、YouTube Shorts 的文案和配图，英文面向美国市场。",
+    "review_policy": "autopilot",
+    "prompt": "直接完成小红书和 LinkedIn 的文案与配图，不需要中途确认；视觉方向和图片数量由你决定。",
     "expected_behavior": [
-      "Record the target language and market.",
-      "Request copy approval before presenting visual directions.",
-      "Treat the original image request as mode selection, not as approval of a direction or manifest.",
-      "Wait for direction selection and manifest approval before generating each distinct asset."
+      "Record the no-confirmation instruction as preauthorization.",
+      "Proceed without intermediate review when no material blocker exists.",
+      "Return assumptions and decision provenance with the final delivery."
     ],
     "forbidden_behavior": [
-      "Generate images in the same response as the first copy drafts.",
-      "Infer visual-direction or manifest approval from the original request."
+      "Label image consent as inferred.",
+      "Ignore a material factual, identity, brand, legal, or safety blocker."
+    ]
+  },
+  {
+    "id": "strict-preserves-separate-gates",
+    "mode": "full",
+    "review_policy": "strict",
+    "prompt": "请逐步让我确认这篇文章的 LinkedIn 文案和配图。",
+    "expected_behavior": [
+      "Request copy approval before deciding image intent.",
+      "Keep visual direction and asset manifest as separate gates.",
+      "Generate no asset until every required decision is approved."
+    ],
+    "forbidden_behavior": [
+      "Bundle all decisions despite the strict request.",
+      "Infer image consent."
     ]
   },
   {
     "id": "unlisted-platform-is-provisional",
     "mode": "copy",
+    "review_policy": "compact",
     "prompt": "把文章适配到一个你没有收录的新平台 Acme Feed。",
     "expected_behavior": [
-      "Ask for the platform content format and audience.",
+      "Ask for the platform content format and audience when they were not delegated.",
       "Create a clearly labeled provisional adapter.",
       "Preserve the shared brief as the factual baseline."
     ],
@@ -58,17 +76,17 @@
     ]
   },
   {
-    "id": "plan-mode-has-its-own-gate",
+    "id": "plan-mode-keeps-output-boundary",
     "mode": "plan",
+    "review_policy": "compact",
     "prompt": "先只做平台适配和配图规划，不要写正式文案，也不要生图。",
     "expected_behavior": [
       "Create the shared brief, platform strategy, visual-direction proposal, and proposed asset list.",
-      "Stop at a plan-review gate.",
-      "Avoid entering copy approval and image generation."
+      "Use one compact plan review.",
+      "Avoid entering image generation."
     ],
     "forbidden_behavior": [
       "Draft final platform copy.",
-      "Ask the post-copy image-intent question when no copy was drafted.",
       "Generate images."
     ]
   }

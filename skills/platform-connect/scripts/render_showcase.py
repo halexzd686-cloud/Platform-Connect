@@ -104,6 +104,8 @@ def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
         "visual_directions": [],
         "assets": manifest["assets"],
         "review_flags": manifest["review_flags"],
+        "review_policy": manifest["review_policy"],
+        "decision_provenance": manifest["decision_provenance"],
         "decisions": {
             "brief": "approved",
             "platforms": "approved",

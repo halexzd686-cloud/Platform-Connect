@@ -14,6 +14,23 @@ RATIO = re.compile(r"^\d{1,2}:\d{1,2}$")
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 APPROVALS = {"pending", "approved", "needs-revision"}
 IMAGE_INTENTS = {"pending", "yes", "no"}
+REVIEW_POLICIES = {"strict", "compact", "autopilot"}
+PROVENANCE = {
+    "pending",
+    "explicit",
+    "inferred",
+    "profile",
+    "bundled",
+    "preauthorized",
+}
+DECISION_FIELDS = {
+    "brief",
+    "platforms",
+    "copy_approval",
+    "image_intent",
+    "visual_direction_approval",
+    "visual_manifest_approval",
+}
 QA_STATES = {"pending", "passed", "failed"}
 REQUIRED = {
     "schema_version",
@@ -22,12 +39,14 @@ REQUIRED = {
     "run_id",
     "parent_run_id",
     "mode",
+    "review_policy",
     "platforms",
     "locale_assumptions",
     "copy_approval",
     "image_intent",
     "visual_direction_approval",
     "visual_manifest_approval",
+    "decision_provenance",
     "copy_files",
     "showcase_file",
     "assets",
@@ -65,6 +84,8 @@ def validate(data: dict) -> list[str]:
         errors.append("skill_version must be semantic version text such as 1.0.0")
     if data.get("mode") not in {"plan", "copy", "full"}:
         errors.append("mode must be plan, copy, or full")
+    if data.get("review_policy") not in REVIEW_POLICIES:
+        errors.append("review_policy must be strict, compact, or autopilot")
 
     platforms = data.get("platforms", [])
     if not isinstance(platforms, list) or not platforms:
@@ -90,8 +111,61 @@ def validate(data: dict) -> list[str]:
             errors.append(f"{field} must be pending, approved, or needs-revision")
     if data.get("image_intent") not in IMAGE_INTENTS:
         errors.append("image_intent must be pending, yes, or no")
-    if data.get("image_intent") != "pending" and data.get("copy_approval") != "approved":
+    if data.get("mode") == "copy" and data.get("image_intent") == "yes":
+        errors.append("copy mode must change to full before visual work")
+    if (
+        data.get("review_policy") == "strict"
+        and data.get("image_intent") != "pending"
+        and data.get("copy_approval") != "approved"
+    ):
         errors.append("image_intent cannot be decided before copy approval")
+
+    provenance = data.get("decision_provenance")
+    if not isinstance(provenance, dict):
+        errors.append("decision_provenance must be an object")
+        provenance = {}
+    else:
+        missing_provenance = DECISION_FIELDS - provenance.keys()
+        if missing_provenance:
+            errors.append(
+                "decision_provenance missing: "
+                + ", ".join(sorted(missing_provenance))
+            )
+        for field in DECISION_FIELDS:
+            if field in provenance and provenance[field] not in PROVENANCE:
+                errors.append(f"decision_provenance.{field} is invalid")
+    if provenance.get("platforms") == "pending":
+        errors.append("selected platforms must record decision provenance")
+    if (
+        data.get("image_intent") == "yes"
+        and provenance.get("image_intent") in {"pending", "inferred", None}
+    ):
+        errors.append("image generation requires explicit or delegated consent")
+    for field in (
+        "copy_approval",
+        "visual_direction_approval",
+        "visual_manifest_approval",
+    ):
+        if (
+            data.get(field) == "approved"
+            and provenance.get(field) in {"pending", "inferred", None}
+        ):
+            errors.append(f"{field} approval provenance is required")
+    if data.get("review_policy") == "autopilot":
+        allowed_autopilot = {"explicit", "profile", "preauthorized"}
+        for field in (
+            "copy_approval",
+            "image_intent",
+            "visual_direction_approval",
+            "visual_manifest_approval",
+        ):
+            if (
+                data.get(field) in {"approved", "yes"}
+                and provenance.get(field) not in allowed_autopilot
+            ):
+                errors.append(
+                    f"autopilot {field} must be explicit, profile, or preauthorized"
+                )
 
     copy_files = data.get("copy_files")
     if not isinstance(copy_files, dict):
@@ -105,12 +179,15 @@ def validate(data: dict) -> list[str]:
     if not isinstance(assets, list):
         errors.append("assets must be a list")
         assets = []
+    if data.get("mode") == "copy" and assets:
+        errors.append("copy mode cannot contain visual assets")
     if data.get("image_intent") == "no" and assets:
         errors.append("assets must be empty when image_intent is no")
 
     seen: set[str] = set()
     generation_allowed = (
-        data.get("copy_approval") == "approved"
+        data.get("mode") == "full"
+        and data.get("copy_approval") == "approved"
         and data.get("image_intent") == "yes"
         and data.get("visual_direction_approval") == "approved"
         and data.get("visual_manifest_approval") == "approved"

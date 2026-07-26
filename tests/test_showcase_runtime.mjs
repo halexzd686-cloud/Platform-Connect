@@ -42,6 +42,15 @@ test("runtime exposes all seven skill stages", () => {
   assert.match(styles, /repeat\(7,/);
 });
 
+test("showcase is a read-only decision record with review provenance", () => {
+  assert.match(html, /OFFLINE REPORT/);
+  assert.match(html, /DECISION RECORD/);
+  assert.match(app, /review_policy/);
+  assert.match(app, /decision_provenance/);
+  assert.match(app, /本次适配平台与语言市场/);
+  assert.doesNotMatch(app, /classList\.toggle\("selected"\)/);
+});
+
 
 test("visual language uses the green gray brown system", () => {
   assert.match(styles, /--forest:/);

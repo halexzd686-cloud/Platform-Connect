@@ -33,12 +33,13 @@ The manifest is the machine-readable source of truth:
 
 ```json
 {
-  "schema_version": "1.1",
-  "skill_version": "1.0.0",
+  "schema_version": "1.2",
+  "skill_version": "1.1.0",
   "article_slug": "example",
   "run_id": "20260726-143500",
   "parent_run_id": null,
   "mode": "full",
+  "review_policy": "compact",
   "platforms": ["douyin", "linkedin"],
   "locale_assumptions": {
     "source_language": "zh-CN",
@@ -49,6 +50,14 @@ The manifest is the machine-readable source of truth:
   "image_intent": "pending",
   "visual_direction_approval": "pending",
   "visual_manifest_approval": "pending",
+  "decision_provenance": {
+    "brief": "pending",
+    "platforms": "explicit",
+    "copy_approval": "pending",
+    "image_intent": "pending",
+    "visual_direction_approval": "pending",
+    "visual_manifest_approval": "pending"
+  },
   "global_style_id": null,
   "platform_overrides": {},
   "copy_files": {
@@ -66,15 +75,16 @@ Allowed decision values:
 - approval fields: `pending`, `approved`, or `needs-revision`;
 - `image_intent`: `pending`, `yes`, or `no`;
 - `mode`: `plan`, `copy`, or `full`.
+- `review_policy`: `strict`, `compact`, or `autopilot`.
 
-Treat these as four independent decisions:
+Keep these as separate audit records even when one bundled reply or preauthorization resolves several decisions:
 
 1. `copy_approval`;
 2. `image_intent`;
 3. `visual_direction_approval`;
 4. `visual_manifest_approval`.
 
-Do not infer one decision from another.
+Each decision records provenance as `pending`, `explicit`, `inferred`, `profile`, `bundled`, or `preauthorized`. Never use `inferred` for `image_intent=yes`. Under `autopilot`, approved or affirmative decisions must be `explicit`, `profile`, or `preauthorized`.
 
 ## Asset
 
@@ -112,6 +122,7 @@ Allowed asset states:
 
 An asset cannot be `generating` or `ready` unless:
 
+- `mode` is `full`;
 - `copy_approval` is `approved`;
 - `image_intent` is `yes`;
 - `visual_direction_approval` is `approved`;

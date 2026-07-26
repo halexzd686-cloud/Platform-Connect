@@ -6,15 +6,24 @@
   const $ = id => document.getElementById(id);
   const safe = value => value ?? "未记录";
   const list = value => Array.isArray(value) ? value : [];
+  const provenanceLabels = {
+    pending: "待确认",
+    explicit: "用户明确指定",
+    inferred: "Agent 推断",
+    profile: "用户配置",
+    bundled: "联合确认",
+    preauthorized: "预授权",
+    system: "系统校验",
+  };
 
   const steps = [
-    { key: "brief", label: "内容简报", gate: "确认事实基线与作者立场" },
-    { key: "platforms", label: "平台与语言", gate: "确认目标平台、语言和市场" },
-    { key: "copies", label: "文案审阅", gate: "确认平台文案是否可用" },
-    { key: "intent", label: "配图意图", gate: "明确选择是否生成配图" },
-    { key: "directions", label: "视觉方向", gate: "选择全局方向或自定义提示词" },
-    { key: "assets", label: "资产清单", gate: "确认每张资产的用途与约束" },
-    { key: "delivery", label: "生成交付", gate: "检查生成状态与 QA" },
+    { key: "brief", label: "内容简报", gate: "事实基线与作者立场记录" },
+    { key: "platforms", label: "平台与语言", gate: "本次适配范围记录" },
+    { key: "copies", label: "文案审阅", gate: "文案决策记录" },
+    { key: "intent", label: "配图意图", gate: "图片授权记录" },
+    { key: "directions", label: "视觉方向", gate: "视觉方向决策记录" },
+    { key: "assets", label: "资产清单", gate: "资产计划决策记录" },
+    { key: "delivery", label: "生成交付", gate: "生成状态与 QA 记录" },
   ];
 
   let currentStep = 0;
@@ -25,10 +34,11 @@
     return `<ul class="list">${items.map(item => `<li>${item}</li>`).join("")}</ul>`;
   }
 
-  function approval(label, value) {
+  function approval(label, value, field) {
+    const provenance = field ? data.decision_provenance?.[field] || "pending" : "system";
     return `
       <div class="approval-bar">
-        <div><strong>${label}</strong><small>审批决定保持独立，不从其他步骤推断</small></div>
+        <div><strong>${label}</strong><small>${safe(data.review_policy)} · ${safe(provenanceLabels[provenance] || provenance)}</small></div>
         <span class="status">${safe(value)}</span>
       </div>`;
   }
@@ -59,7 +69,7 @@
           </article>
         </div>
       </div>
-      ${approval("内容简报", data.decisions?.brief || "approved")}`;
+      ${approval("内容简报", data.decisions?.brief || "approved", "brief")}`;
   }
 
   function renderPlatforms() {
@@ -75,9 +85,9 @@
         </div>
       </article>`).join("");
     return `
-      <h2>平台与语言市场</h2>
+      <h2>本次适配平台与语言市场</h2>
       <div class="card-grid">${cards || '<div class="empty">尚未选择平台</div>'}</div>
-      ${approval("平台选择", data.decisions?.platforms || "approved")}`;
+      ${approval("平台范围", data.decisions?.platforms || "approved", "platforms")}`;
   }
 
   function renderCopies() {
@@ -98,26 +108,20 @@
           <pre>${safe(copies[currentCopy].content)}</pre>
         </div>
       </article>
-      ${approval("文案审阅", data.manifest.copy_approval)}`;
+      ${approval("文案审阅", data.manifest.copy_approval, "copy_approval")}`;
   }
 
   function renderIntent() {
     const intent = data.manifest.image_intent;
+    const yes = intent === "yes";
     return `
-      <h2>是否基于内容生成配图</h2>
-      <div class="decision-grid">
-        <article class="decision yes">
-          <span class="chip">YES</span>
-          <h3>是，生成配图</h3>
-          <p>继续行业路由、视觉方向、资产清单和逐张生成。</p>
-        </article>
-        <article class="decision no">
-          <span class="chip" style="background:var(--brown)">NO</span>
-          <h3>否，暂不生成</h3>
-          <p>结束视觉分支，只保留文案编辑、导出和重新适配。</p>
-        </article>
-      </div>
-      ${approval("本次配图意图", intent)}`;
+      <h2>本次配图决定</h2>
+      <article class="panel">
+        <span class="chip" style="${yes ? "" : "background:var(--brown)"}">${yes ? "YES" : "NO"}</span>
+        <p class="thesis">${yes ? "生成与平台内容匹配的视觉资产" : "本次交付不生成视觉资产"}</p>
+        <p>${yes ? "已进入视觉方向、资产计划、逐张生成和 QA。" : "视觉分支已结束，仅交付平台文案。"}</p>
+      </article>
+      ${approval("本次配图意图", intent, "image_intent")}`;
   }
 
   function renderDirections() {
@@ -135,7 +139,7 @@
     return `
       <h2>内容特定的视觉方向</h2>
       <div class="card-grid">${cards || '<div class="empty">尚未进入视觉方向阶段</div>'}</div>
-      ${approval("视觉方向", data.manifest.visual_direction_approval)}`;
+      ${approval("视觉方向", data.manifest.visual_direction_approval, "visual_direction_approval")}`;
   }
 
   function renderAssets() {
@@ -155,7 +159,7 @@
     return `
       <h2>可追溯的资产清单</h2>
       <div class="card-grid">${cards || '<div class="empty">当前没有视觉资产</div>'}</div>
-      ${approval("Visual manifest", data.manifest.visual_manifest_approval)}`;
+      ${approval("Visual manifest", data.manifest.visual_manifest_approval, "visual_manifest_approval")}`;
   }
 
   function renderDelivery() {
@@ -219,13 +223,13 @@
     renderTrace();
   }
 
-  $("runtimeLabel").textContent = `${safe(data.manifest.mode).toUpperCase()} · ${safe(data.manifest.run_id)}`;
+  $("runtimeLabel").textContent = `${safe(data.manifest.mode).toUpperCase()} · ${safe(data.manifest.review_policy).toUpperCase()} · ${safe(data.manifest.run_id)}`;
   $("runMeta").innerHTML = `SCHEMA ${safe(data.manifest.schema_version)}<br>SKILL ${safe(data.manifest.skill_version)}`;
   $("sourceTitle").textContent = safe(data.source?.file_name || `${data.manifest.article_slug}.md`);
   $("sourceMeta").textContent = `${safe(data.source?.language || data.locale_assumptions?.source_language)} · 完整读取`;
   $("sourceHeadline").textContent = safe(data.source?.title || data.manifest.article_slug);
   $("sourceSummary").innerHTML = list(data.source?.summary_paragraphs).map(item => `<p>${item}</p>`).join("");
-  $("caseId").innerHTML = `CASE REPLAY<br>${safe(data.manifest.run_id)}<br>${safe(data.manifest.mode)} MODE`;
+  $("caseId").innerHTML = `CASE REPLAY<br>${safe(data.manifest.run_id)}<br>${safe(data.manifest.review_policy)} REVIEW`;
 
   $("stepper").innerHTML = steps.map((step, index) => `
     <button class="step ${index === 0 ? "active" : ""}" data-step="${index}">

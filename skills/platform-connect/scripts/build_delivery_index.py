@@ -39,6 +39,7 @@ def main() -> int:
         f"- 父运行：`{data['parent_run_id'] or 'none'}`",
         f"- Skill：`{data['skill_version']}`",
         f"- 模式：`{data['mode']}`",
+        f"- 审阅策略：`{data['review_policy']}`",
         f"- 原文语言：`{locale['source_language']}`",
         f"- 目标语言：`{locale.get('target_language') or 'source-language'}`",
         f"- 目标市场：`{locale.get('market') or 'not-specified'}`",
@@ -49,6 +50,13 @@ def main() -> int:
         f"- 配图意图：`{data['image_intent']}`",
         f"- 视觉方向：`{data['visual_direction_approval']}`",
         f"- 资产清单：`{data['visual_manifest_approval']}`",
+        "",
+        "## 决策来源",
+        "",
+        *(
+            f"- {field}：`{source}`"
+            for field, source in data["decision_provenance"].items()
+        ),
         "",
         "## 平台",
         "",

@@ -49,7 +49,7 @@ class DeliveryPipelineTests(unittest.TestCase):
             manifest_path = run_root / "manifest.json"
             self.assertEqual(
                 json.loads(manifest_path.read_text(encoding="utf-8"))["skill_version"],
-                "1.0.0",
+                "1.1.0",
             )
 
             (run_root / "source-brief.md").write_text(
@@ -71,6 +71,14 @@ class DeliveryPipelineTests(unittest.TestCase):
                     "image_intent": "yes",
                     "visual_direction_approval": "approved",
                     "visual_manifest_approval": "approved",
+                    "decision_provenance": {
+                        "brief": "bundled",
+                        "platforms": "explicit",
+                        "copy_approval": "bundled",
+                        "image_intent": "bundled",
+                        "visual_direction_approval": "bundled",
+                        "visual_manifest_approval": "bundled",
+                    },
                     "global_style_id": "editorial-poster",
                     "assets": [
                         {
@@ -126,12 +134,13 @@ class DeliveryPipelineTests(unittest.TestCase):
 
     def test_generation_is_blocked_before_visual_approval(self) -> None:
         manifest = {
-            "schema_version": "1.1",
-            "skill_version": "1.0.0",
+            "schema_version": "1.2",
+            "skill_version": "1.1.0",
             "article_slug": "blocked",
             "run_id": "blocked-001",
             "parent_run_id": None,
             "mode": "full",
+            "review_policy": "compact",
             "platforms": ["douyin"],
             "locale_assumptions": {
                 "source_language": "zh-CN",
@@ -142,6 +151,14 @@ class DeliveryPipelineTests(unittest.TestCase):
             "image_intent": "yes",
             "visual_direction_approval": "approved",
             "visual_manifest_approval": "pending",
+            "decision_provenance": {
+                "brief": "bundled",
+                "platforms": "explicit",
+                "copy_approval": "bundled",
+                "image_intent": "bundled",
+                "visual_direction_approval": "bundled",
+                "visual_manifest_approval": "pending",
+            },
             "copy_files": {"douyin": "douyin/copy.md"},
             "showcase_file": "showcase/index.html",
             "assets": [
@@ -198,6 +215,14 @@ class DeliveryPipelineTests(unittest.TestCase):
                     "image_intent": "yes",
                     "visual_direction_approval": "approved",
                     "visual_manifest_approval": "approved",
+                    "decision_provenance": {
+                        "brief": "bundled",
+                        "platforms": "explicit",
+                        "copy_approval": "bundled",
+                        "image_intent": "bundled",
+                        "visual_direction_approval": "bundled",
+                        "visual_manifest_approval": "bundled",
+                    },
                     "assets": [
                         {
                             "id": "linkedin-cover-01",
@@ -227,6 +252,130 @@ class DeliveryPipelineTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             errors = json.loads(result.stdout)["errors"]
             self.assertTrue(any("does not exist" in error for error in errors))
+
+    def test_compact_policy_accepts_one_bundled_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = run_script(
+                "prepare_workspace.py",
+                "compact-review",
+                "--platforms",
+                "xiaohongshu",
+                "--mode",
+                "full",
+                "--review-policy",
+                "compact",
+                "--platform-source",
+                "inferred",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "compact-001",
+            )
+            self.assertEqual(prepared.returncode, 0, prepared.stdout + prepared.stderr)
+            manifest_path = Path(json.loads(prepared.stdout)["manifest"])
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest.update(
+                {
+                    "copy_approval": "approved",
+                    "image_intent": "yes",
+                    "visual_direction_approval": "approved",
+                    "visual_manifest_approval": "approved",
+                    "decision_provenance": {
+                        "brief": "bundled",
+                        "platforms": "inferred",
+                        "copy_approval": "bundled",
+                        "image_intent": "bundled",
+                        "visual_direction_approval": "bundled",
+                        "visual_manifest_approval": "bundled",
+                    },
+                }
+            )
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            result = run_script("validate_manifest.py", str(manifest_path))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_autopilot_rejects_inferred_image_consent(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = run_script(
+                "prepare_workspace.py",
+                "autopilot-review",
+                "--platforms",
+                "linkedin",
+                "--mode",
+                "full",
+                "--review-policy",
+                "autopilot",
+                "--platform-source",
+                "preauthorized",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "autopilot-001",
+            )
+            self.assertEqual(prepared.returncode, 0, prepared.stdout + prepared.stderr)
+            manifest_path = Path(json.loads(prepared.stdout)["manifest"])
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest.update(
+                {
+                    "copy_approval": "approved",
+                    "image_intent": "yes",
+                    "visual_direction_approval": "approved",
+                    "visual_manifest_approval": "approved",
+                    "decision_provenance": {
+                        "brief": "preauthorized",
+                        "platforms": "preauthorized",
+                        "copy_approval": "preauthorized",
+                        "image_intent": "inferred",
+                        "visual_direction_approval": "preauthorized",
+                        "visual_manifest_approval": "preauthorized",
+                    },
+                }
+            )
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            result = run_script("validate_manifest.py", str(manifest_path))
+            self.assertNotEqual(result.returncode, 0)
+            errors = json.loads(result.stdout)["errors"]
+            self.assertTrue(any("consent" in error for error in errors))
+
+    def test_autopilot_accepts_recorded_preauthorization(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = run_script(
+                "prepare_workspace.py",
+                "autopilot-valid",
+                "--platforms",
+                "linkedin",
+                "--mode",
+                "full",
+                "--review-policy",
+                "autopilot",
+                "--platform-source",
+                "preauthorized",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "autopilot-002",
+            )
+            manifest_path = Path(json.loads(prepared.stdout)["manifest"])
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest.update(
+                {
+                    "copy_approval": "approved",
+                    "image_intent": "yes",
+                    "visual_direction_approval": "approved",
+                    "visual_manifest_approval": "approved",
+                    "decision_provenance": {
+                        "brief": "preauthorized",
+                        "platforms": "preauthorized",
+                        "copy_approval": "preauthorized",
+                        "image_intent": "explicit",
+                        "visual_direction_approval": "preauthorized",
+                        "visual_manifest_approval": "preauthorized",
+                    },
+                }
+            )
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            result = run_script("validate_manifest.py", str(manifest_path))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_script_failures_are_structured_json(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

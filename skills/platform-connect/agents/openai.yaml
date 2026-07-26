@@ -1,4 +1,4 @@
 interface:
   display_name: "Platform Connect"
   short_description: "将完整文章适配为多平台原生文案、视觉资产与离线执行展示页"
-  default_prompt: "使用 $platform-connect 将这篇文章适配为所选平台的原生文案、经确认的视觉资产和离线执行展示页。"
+  default_prompt: "使用 $platform-connect 的 compact 审阅策略，将这篇文章适配为平台原生文案；如需配图，把文案、视觉方向和资产清单合并为一次确认。"

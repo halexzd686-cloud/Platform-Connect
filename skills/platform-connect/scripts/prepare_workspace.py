@@ -24,6 +24,16 @@ def main() -> int:
     parser.add_argument("slug")
     parser.add_argument("--platforms", nargs="+", required=True)
     parser.add_argument("--mode", choices=("plan", "copy", "full"), default="copy")
+    parser.add_argument(
+        "--review-policy",
+        choices=("strict", "compact", "autopilot"),
+        default="compact",
+    )
+    parser.add_argument(
+        "--platform-source",
+        choices=("explicit", "inferred", "profile", "preauthorized"),
+        default="explicit",
+    )
     parser.add_argument("--root", default="outputs")
     parser.add_argument("--run-id", default=default_run_id())
     parser.add_argument("--parent-run-id")
@@ -62,6 +72,7 @@ def main() -> int:
         "run_id": args.run_id,
         "parent_run_id": args.parent_run_id,
         "mode": args.mode,
+        "review_policy": args.review_policy,
         "platforms": platforms,
         "locale_assumptions": {
             "source_language": args.source_language,
@@ -72,6 +83,14 @@ def main() -> int:
         "image_intent": "pending",
         "visual_direction_approval": "pending",
         "visual_manifest_approval": "pending",
+        "decision_provenance": {
+            "brief": "pending",
+            "platforms": args.platform_source,
+            "copy_approval": "pending",
+            "image_intent": "pending",
+            "visual_direction_approval": "pending",
+            "visual_manifest_approval": "pending",
+        },
         "global_style_id": None,
         "platform_overrides": {},
         "copy_files": {
@@ -101,6 +120,7 @@ def main() -> int:
             "manifest": str(manifest_path),
             "platforms": platforms,
             "run_id": args.run_id,
+            "review_policy": args.review_policy,
         }
     )
     return 0

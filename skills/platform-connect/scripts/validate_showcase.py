@@ -75,7 +75,7 @@ def validate(showcase: Path) -> list[str]:
         errors.append(f"embedded case data is invalid JSON: {error}")
         case = {}
     manifest = case.get("manifest", {}) if isinstance(case, dict) else {}
-    for field in ("run_id", "mode", "schema_version"):
+    for field in ("run_id", "mode", "review_policy", "schema_version"):
         if not manifest.get(field):
             errors.append(f"embedded manifest missing {field}")
     return errors

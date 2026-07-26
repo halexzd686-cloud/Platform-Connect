@@ -81,6 +81,17 @@ class SkillRepositoryTests(unittest.TestCase):
         self.assertIn(f'"schema_version": "{constants["SCHEMA_VERSION"]}"', schema)
         self.assertIn(f'"skill_version": "{constants["SKILL_VERSION"]}"', schema)
 
+    def test_review_policies_are_routed_and_default_to_compact(self) -> None:
+        skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+        policy = (
+            SKILL / "references" / "interaction-policy.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("[interaction-policy.md](references/interaction-policy.md)", skill)
+        self.assertIn("`compact` is the default", skill)
+        for name in ("Compact", "Strict", "Autopilot"):
+            self.assertIn(f"## {name}", policy)
+        self.assertIn("Never use `inferred` for `image_intent=yes`", policy)
+
     def test_behavior_eval_catalog_is_actionable(self) -> None:
         path = REPO_ROOT / "tests" / "evals" / "platform-connect.json"
         cases = json.loads(path.read_text(encoding="utf-8"))
@@ -88,6 +99,10 @@ class SkillRepositoryTests(unittest.TestCase):
         self.assertEqual(len({case["id"] for case in cases}), len(cases))
         for case in cases:
             self.assertIn(case["mode"], {"plan", "copy", "full"})
+            self.assertIn(
+                case["review_policy"],
+                {"strict", "compact", "autopilot"},
+            )
             self.assertTrue(case["prompt"])
             self.assertTrue(case["expected_behavior"])
             self.assertTrue(case["forbidden_behavior"])

@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Any
 
 
-SCHEMA_VERSION = "1.1"
-SKILL_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.2"
+SKILL_VERSION = "1.1.0"
 PLATFORMS = frozenset(
     {
         "douyin",

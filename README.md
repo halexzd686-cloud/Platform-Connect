@@ -1,6 +1,6 @@
 # Platform Connect
 
-Platform Connect 是一个可安装的 Agent Skill：读取用户提供的完整文章，建立共享事实基线，再为明确选择的平台生成独立文案、视觉方向、可编辑资产清单、确认后的图片和离线执行展示页。
+Platform Connect 是一个可安装的 Agent Skill：读取用户提供的完整文章，建立共享事实基线，再生成平台原生文案、经授权的视觉资产和离线执行展示页。默认使用一次联合确认，也支持逐步审批和明确预授权的自动执行。
 
 它不是 React/FastAPI AI 应用。Agent 负责理解、写作、决策协作与图像工具调用；仓库中的脚本只负责确定性的目录创建、Manifest 校验、交付索引和静态页面渲染。
 
@@ -32,17 +32,14 @@ npx skills add halexzd686-cloud/Platform-Connect `
 ```text
 完整读取原文
   → 共享内容简报
-  → 平台与语言市场
+  → 明确或推荐平台与语言市场
   → 独立平台文案
-  → 文案确认
-  → 明确选择是否配图
-  → 视觉方向确认
-  → 资产清单确认
+  → 联合确认文案、配图意图、视觉方向与资产清单
   → 逐张生成与 QA
   → 离线展示页和交付索引
 ```
 
-四个决策保持独立：
+四个决定保持独立记录，但不要求分别进行四轮对话：
 
 1. 文案审批；
 2. 配图意图；
@@ -50,6 +47,15 @@ npx skills add halexzd686-cloud/Platform-Connect `
 4. 视觉资产清单审批。
 
 未批准视觉资产清单时，Skill 不得生成图片。
+
+默认 `compact` 流程只要求一次联合确认：
+
+```text
+用户发送文章
+  → Agent 返回完整审阅包
+  → 用户一次确认或集中修改
+  → Agent 完成图文与看板交付
+```
 
 ## Skill 目录
 
@@ -75,17 +81,41 @@ skills/platform-connect/
 
 不要直接修改安装副本。需要修复时修改唯一源码、运行测试并重新安装。
 
-## 运行模式
+## 输出范围与审阅策略
 
 - `plan`：内容简报、适配策略、视觉方向和拟议资产，不生成最终文案或图片。
-- `copy`：内容简报和平台文案；文案确认后必须询问是否生成配图。
-- `full`：执行文案、视觉规划、Manifest、图片生成和 QA，但不跳过任何审批门。
+- `copy`：内容简报和平台文案，不进入视觉分支。
+- `full`：执行文案、视觉规划、Manifest、图片生成和 QA。
+
+审阅策略独立于输出范围：
+
+- `compact`：默认；用一次联合确认解决平台假设、文案、配图意图、视觉方向和资产清单。
+- `strict`：高风险或用户要求逐步控制时，保留分步确认。
+- `autopilot`：仅在用户明确要求无需中途确认时直接交付；生图必须有明确授权，不能推断。
+
+推荐用法：
+
+```text
+使用 $platform-connect 的 full + compact 处理这篇文章。
+自动推荐最多三个平台，把文案、视觉方向和资产清单放在一次确认中。
+```
+
+明确授权自动执行时：
+
+```text
+使用 $platform-connect 的 full + autopilot。
+发布到小红书和 LinkedIn，需要配图，无需中途确认，直接完成最终交付。
+```
+
+高频用户可以在工作目录创建 `platform-connect.profile.json` 保存默认平台、语言、市场、图片意图和审阅策略；当前请求始终优先于配置。
 
 ## 确定性脚本
 
 ```powershell
 python skills/platform-connect/scripts/prepare_workspace.py demo `
   --platforms xiaohongshu linkedin `
+  --mode full `
+  --review-policy compact `
   --run-id 20260726-143500 `
   --target-language en `
   --market global
@@ -154,7 +184,7 @@ npx skills update platform-connect --project --yes
 重新安装一个已经发布的明确版本：
 
 ```powershell
-npx skills add halexzd686-cloud/Platform-Connect@v1.0.0 `
+npx skills add halexzd686-cloud/Platform-Connect@v1.1.0 `
   --agent codex `
   --skill platform-connect `
   --yes `
@@ -177,8 +207,10 @@ npx skills add halexzd686-cloud/Platform-Connect@v1.0.0 `
 - 不默认选择所有平台。
 - 平台适配改变开场、节奏、结构与 CTA，不改变事实。
 - 海外平台明确记录目标语言和市场。
+- 默认使用一次联合确认；只有高风险歧义或用户要求时才拆分审批。
+- 图片生成必须有明确、联合、配置或预授权来源，不能由 Agent 推断。
 - 自定义提示词与推荐视觉方向地位相同。
-- 静态展示页可通过 `file://` 直接打开，无 CDN、无远程请求、无服务器。
+- 静态展示页是只读执行报告，可通过 `file://` 直接打开，无 CDN、无远程请求、无服务器。
 
 ## 许可证
 
