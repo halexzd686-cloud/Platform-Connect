@@ -92,6 +92,33 @@ class SkillRepositoryTests(unittest.TestCase):
             self.assertIn(f"## {name}", policy)
         self.assertIn("Never use `inferred` for `image_intent=yes`", policy)
 
+    def test_direct_source_intake_and_recommendations_are_routed(self) -> None:
+        skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+        intake = (SKILL / "references" / "source-intake.md").read_text(
+            encoding="utf-8"
+        )
+        policy = (
+            SKILL / "references" / "interaction-policy.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("[source-intake.md](references/source-intake.md)", skill)
+        for extension in (".txt", ".md", ".docx", ".pdf", ".html"):
+            self.assertIn(extension, intake)
+        self.assertIn("Article URL", intake)
+        self.assertIn("two platforms by default", skill)
+        self.assertIn("platform selection, image intent", policy)
+
+    def test_showcase_is_outcome_first(self) -> None:
+        html = (
+            SKILL / "assets" / "static-showcase" / "index.html"
+        ).read_text(encoding="utf-8")
+        app = (
+            SKILL / "assets" / "static-showcase" / "app.js"
+        ).read_text(encoding="utf-8")
+        self.assertIn("OUTCOME CONSOLE", html)
+        self.assertIn("最终平台图文", html)
+        self.assertIn("<img", app)
+        self.assertIn("platform_recommendations", app)
+
     def test_behavior_eval_catalog_is_actionable(self) -> None:
         path = REPO_ROOT / "tests" / "evals" / "platform-connect.json"
         cases = json.loads(path.read_text(encoding="utf-8"))

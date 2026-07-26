@@ -1,0 +1,1804 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Platform Connect — Outcome Console V4</title>
+  <style>
+    :root {
+      --forest-950: #1f2923;
+      --forest-900: #26332b;
+      --forest-800: #314238;
+      --forest-700: #52695a;
+      --forest-500: #78917e;
+      --sage-300: #b8c3ba;
+      --sage-100: #dde2dc;
+      --paper: #eceee9;
+      --paper-warm: #f6f4ef;
+      --paper-deep: #dfe2dc;
+      --ink: #26312a;
+      --muted: #747b76;
+      --line: #c3c9c3;
+      --brown: #8a684f;
+      --brown-soft: #ded3c8;
+      --white: #fbfaf6;
+      --success: #617d68;
+      --serif: "Iowan Old Style", "Palatino Linotype", "Songti SC", "Noto Serif SC", serif;
+      --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --shadow: 0 18px 48px rgba(32, 42, 36, .08);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      background: var(--paper);
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 78% 0%, rgba(120, 145, 126, .10), transparent 28rem),
+        var(--paper);
+      font-family: var(--sans);
+    }
+
+    button { font: inherit; color: inherit; }
+    button:focus-visible, a:focus-visible {
+      outline: 2px solid var(--brown);
+      outline-offset: 3px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      height: 68px;
+      display: grid;
+      grid-template-columns: minmax(230px, 1fr) auto minmax(230px, 1fr);
+      align-items: center;
+      gap: 24px;
+      padding: 0 28px;
+      color: #eef0eb;
+      border-bottom: 1px solid #46534b;
+      background: rgba(31, 41, 35, .97);
+      box-shadow: 0 6px 20px rgba(23, 31, 26, .12);
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      flex: 0 0 auto;
+      place-items: center;
+      color: #f4f1eb;
+      border: 1px solid #6d7a71;
+      background: #344139;
+      font: 10px/1 var(--mono);
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 15px;
+      letter-spacing: -.02em;
+    }
+
+    .brand small {
+      display: block;
+      margin-top: 2px;
+      color: #aeb8b1;
+      font: 9px/1 var(--mono);
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .runtime {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #bdc6bf;
+      font: 10px/1 var(--mono);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .runtime-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #91aa97;
+      box-shadow: 0 0 0 4px rgba(145, 170, 151, .14);
+    }
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .button {
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 15px;
+      border: 1px solid #59675e;
+      border-radius: 0;
+      cursor: pointer;
+      transition: background .18s ease, transform .18s ease, border-color .18s ease;
+    }
+
+    .button:hover { transform: translateY(-1px); }
+
+    .button-quiet {
+      color: #d1d7d2;
+      background: transparent;
+      font-size: 12px;
+    }
+
+    .button-solid {
+      color: #faf7f1;
+      border-color: #a78365;
+      background: #8c694f;
+      font-weight: 700;
+    }
+
+    .button-solid:hover { background: #9a7657; }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 268px minmax(0, 1fr);
+      min-height: calc(100vh - 68px);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 68px;
+      align-self: start;
+      height: calc(100vh - 68px);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--line);
+      background: #e2e4df;
+      overflow: auto;
+    }
+
+    .sidebar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      font: 10px/1 var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .sidebar-head span:last-child { color: var(--muted); }
+
+    .side-body {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 24px;
+      padding: 22px 18px;
+    }
+
+    .file-ticket {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 12px;
+      padding: 14px;
+      border: 1px solid #adb4ae;
+      background: #f3f3ef;
+    }
+
+    .file-type {
+      width: 40px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      color: #eef0eb;
+      background: var(--forest-700);
+      font: 9px/1 var(--mono);
+    }
+
+    .file-ticket strong {
+      display: block;
+      margin: 2px 0 7px;
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .file-ticket small {
+      color: var(--muted);
+      font: 9px/1.5 var(--mono);
+    }
+
+    .side-section {
+      display: grid;
+      gap: 12px;
+    }
+
+    .side-label {
+      color: var(--muted);
+      font: 9px/1 var(--mono);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .side-title {
+      margin: 0;
+      color: #2b352e;
+      font: 700 23px/1.18 var(--serif);
+      letter-spacing: -.025em;
+    }
+
+    .side-copy {
+      margin: 0;
+      color: #5e665f;
+      font-size: 12px;
+      line-height: 1.75;
+    }
+
+    .side-facts {
+      display: grid;
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .side-fact {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 11px;
+    }
+
+    .side-fact span { color: var(--muted); }
+    .side-fact strong { text-align: right; }
+
+    .side-status {
+      margin-top: auto;
+      padding: 14px;
+      color: #edf1ed;
+      background: var(--forest-900);
+    }
+
+    .side-status small {
+      display: block;
+      margin-bottom: 8px;
+      color: #9eaca2;
+      font: 9px/1 var(--mono);
+      letter-spacing: .1em;
+    }
+
+    .side-status strong {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 34px clamp(26px, 4vw, 62px) 72px;
+    }
+
+    .content {
+      width: min(1280px, 100%);
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(330px, .8fr);
+      gap: clamp(30px, 5vw, 72px);
+      align-items: end;
+      padding: 12px 0 30px;
+      border-bottom: 1px solid var(--ink);
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      color: #87674f;
+      font: 10px/1 var(--mono);
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 24px;
+      height: 1px;
+      background: currentColor;
+    }
+
+    .hero h1 {
+      max-width: 780px;
+      margin: 0;
+      color: var(--forest-900);
+      font: 700 clamp(38px, 4.7vw, 66px)/.98 var(--serif);
+      letter-spacing: -.055em;
+      text-wrap: balance;
+    }
+
+    .hero h1 em {
+      color: var(--forest-700);
+      font-style: normal;
+    }
+
+    .hero-summary {
+      padding: 22px 0 5px;
+    }
+
+    .hero-summary p {
+      margin: 0;
+      color: #4e5750;
+      font-size: 14px;
+      line-height: 1.85;
+    }
+
+    .hero-summary strong { color: var(--ink); }
+
+    .case-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-top: 18px;
+      color: var(--muted);
+      font: 9px/1 var(--mono);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      margin: 24px 0 42px;
+      border: 1px solid #b8beb8;
+      background: #f6f6f2;
+      box-shadow: var(--shadow);
+    }
+
+    .summary-item {
+      min-height: 92px;
+      display: grid;
+      align-content: center;
+      gap: 7px;
+      padding: 17px 18px;
+      border-right: 1px solid #d0d4cf;
+    }
+
+    .summary-item:last-child { border-right: 0; }
+
+    .summary-label {
+      color: var(--muted);
+      font: 9px/1 var(--mono);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .summary-value {
+      color: var(--forest-900);
+      font: 700 18px/1.15 var(--serif);
+    }
+
+    .summary-value.ready {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--success);
+      font-family: var(--mono);
+      font-size: 13px;
+      letter-spacing: .05em;
+    }
+
+    .summary-value.ready::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .section {
+      margin-top: 46px;
+      scroll-margin-top: 96px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 18px;
+    }
+
+    .section-kicker {
+      margin-bottom: 8px;
+      color: var(--brown);
+      font: 9px/1 var(--mono);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .section h2 {
+      margin: 0;
+      color: var(--forest-900);
+      font: 700 clamp(27px, 3vw, 38px)/1.05 var(--serif);
+      letter-spacing: -.035em;
+    }
+
+    .section-note {
+      max-width: 420px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.65;
+      text-align: right;
+    }
+
+    .package-switcher {
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr);
+      min-height: 600px;
+      border: 1px solid #b9c0ba;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+
+    .package-tabs {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #b9c0ba;
+      background: #eff1ed;
+    }
+
+    .package-tab {
+      position: relative;
+      min-height: 118px;
+      display: grid;
+      align-content: center;
+      gap: 7px;
+      padding: 20px;
+      border: 0;
+      border-bottom: 1px solid #c9cec9;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      transition: color .2s ease, background .2s ease;
+    }
+
+    .package-tab:hover { background: #e4e7e2; }
+
+    .package-tab.active {
+      color: #f2f4f1;
+      background: var(--forest-800);
+    }
+
+    .package-tab.active::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: -1px;
+      bottom: 0;
+      width: 4px;
+      background: var(--brown);
+    }
+
+    .package-tab strong {
+      font: 700 20px/1 var(--serif);
+    }
+
+    .package-tab span {
+      color: var(--muted);
+      font: 9px/1.4 var(--mono);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .package-tab.active span { color: #b9c5bc; }
+
+    .package-state {
+      margin-top: auto;
+      padding: 18px 20px;
+      color: var(--muted);
+      font: 9px/1.55 var(--mono);
+    }
+
+    .package-panel {
+      display: none;
+      grid-template-columns: minmax(340px, .9fr) minmax(360px, 1.1fr);
+      min-width: 0;
+    }
+
+    .package-panel.active {
+      display: grid;
+      animation: reveal .28s ease both;
+    }
+
+    @keyframes reveal {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .copy-column {
+      min-width: 0;
+      padding: 30px;
+      border-right: 1px solid #ccd1cc;
+    }
+
+    .panel-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 26px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 0 8px;
+      color: #5e675f;
+      background: #e7eae5;
+      font: 9px/1 var(--mono);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .chip-strong {
+      color: #f2f4f0;
+      background: var(--forest-700);
+    }
+
+    .copy-title {
+      margin: 0 0 23px;
+      color: var(--forest-900);
+      font: 700 clamp(25px, 2.6vw, 37px)/1.13 var(--serif);
+      letter-spacing: -.035em;
+      text-wrap: balance;
+    }
+
+    .copy-body {
+      color: #454e47;
+      font-size: 13px;
+      line-height: 1.85;
+      white-space: pre-line;
+    }
+
+    .copy-body strong { color: var(--ink); }
+
+    .copy-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid #cbd0cb;
+    }
+
+    .copy-footer small {
+      color: var(--muted);
+      font: 9px/1.5 var(--mono);
+    }
+
+    .copy-button {
+      min-height: 34px;
+      padding: 0 13px;
+      color: var(--forest-800);
+      border: 1px solid #aeb6af;
+      background: transparent;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .copy-button:hover { background: #ecefe9; }
+
+    .visual-column {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      padding: 22px;
+      background: #e8ebe6;
+    }
+
+    .visual-stage {
+      min-height: 455px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.28fr) minmax(130px, .72fr);
+      gap: 12px;
+    }
+
+    .poster {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid #96a097;
+      background: #d9ddd6;
+      cursor: zoom-in;
+      isolation: isolate;
+      transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .poster:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(38, 49, 42, .13);
+    }
+
+    .poster-main { min-height: 455px; }
+
+    .poster-stack {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .poster-kicker {
+      position: absolute;
+      z-index: 4;
+      top: 18px;
+      left: 18px;
+      font: 9px/1 var(--mono);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .poster-number {
+      position: absolute;
+      z-index: 2;
+      right: -5%;
+      bottom: -10%;
+      color: rgba(38, 49, 42, .08);
+      font: 700 clamp(150px, 17vw, 270px)/.75 var(--serif);
+      letter-spacing: -.12em;
+    }
+
+    .poster-title {
+      position: absolute;
+      z-index: 4;
+      left: 18px;
+      right: 18px;
+      bottom: 22px;
+      color: var(--forest-950);
+      font: 700 clamp(26px, 3.2vw, 48px)/.97 var(--serif);
+      letter-spacing: -.05em;
+    }
+
+    .poster-title small {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--brown);
+      font: 10px/1 var(--mono);
+      letter-spacing: .1em;
+    }
+
+    .poster-line {
+      position: absolute;
+      z-index: 1;
+      background: rgba(38, 49, 42, .13);
+    }
+
+    .poster-line.one {
+      top: 0;
+      bottom: 0;
+      left: 35%;
+      width: 1px;
+    }
+
+    .poster-line.two {
+      right: 0;
+      bottom: 31%;
+      left: 0;
+      height: 1px;
+    }
+
+    .poster-label {
+      position: absolute;
+      z-index: 5;
+      top: 18px;
+      right: 18px;
+      max-width: 100px;
+      padding: 8px 9px;
+      color: #f7f4ee;
+      background: var(--brown);
+      font: 9px/1.35 var(--mono);
+      transform: rotate(2deg);
+    }
+
+    .poster-small .poster-title {
+      font-size: clamp(17px, 1.6vw, 24px);
+      line-height: 1.05;
+    }
+
+    .poster-small .poster-label {
+      top: auto;
+      right: 12px;
+      bottom: 12px;
+      max-width: 88px;
+    }
+
+    .poster-dark {
+      border-color: #46564b;
+      background:
+        linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px),
+        var(--forest-950);
+      background-size: 28px 28px;
+    }
+
+    .poster-dark .poster-kicker,
+    .poster-dark .poster-title { color: #eff2ed; }
+    .poster-dark .poster-title small { color: #b89a81; }
+
+    .poster-split {
+      background: linear-gradient(90deg, #aebbb1 0 50%, #ded8cf 50%);
+    }
+
+    .poster-split::after {
+      content: "HUMAN × MACHINE";
+      position: absolute;
+      top: 28%;
+      left: 14px;
+      right: 14px;
+      color: var(--forest-950);
+      font: 800 clamp(18px, 2.4vw, 36px)/.92 var(--sans);
+      letter-spacing: -.06em;
+      word-spacing: 100vw;
+    }
+
+    .visual-caption {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 15px;
+      color: #586159;
+      font: 9px/1.4 var(--mono);
+    }
+
+    .visual-caption strong {
+      color: var(--forest-800);
+      font-size: 10px;
+    }
+
+    .baseline-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr);
+      gap: 14px;
+    }
+
+    .baseline-card {
+      padding: 28px;
+      border: 1px solid #bcc2bc;
+      background: var(--white);
+    }
+
+    .baseline-card h3 {
+      margin: 0 0 17px;
+      color: var(--forest-900);
+      font: 700 26px/1.2 var(--serif);
+      letter-spacing: -.03em;
+    }
+
+    .baseline-card p {
+      margin: 0;
+      color: #4f5851;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .baseline-list {
+      display: grid;
+      gap: 0;
+      margin: 20px 0 0;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid #cbd0cb;
+    }
+
+    .baseline-list li {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid #cbd0cb;
+      color: #424b44;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .baseline-list span {
+      color: var(--brown);
+      font: 9px/1.7 var(--mono);
+    }
+
+    .claim-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .claim {
+      display: grid;
+      grid-template-columns: 26px 1fr;
+      gap: 11px;
+      align-items: start;
+      padding: 12px;
+      background: #edf0eb;
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .claim b {
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      color: #f1f3ef;
+      background: var(--forest-700);
+      font: 9px/1 var(--mono);
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .asset {
+      min-width: 0;
+      border: 1px solid #bac1bb;
+      background: var(--white);
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .asset.is-hidden { display: none; }
+
+    .asset .poster {
+      aspect-ratio: 4 / 5;
+      min-height: 0;
+      border: 0;
+      border-bottom: 1px solid #bac1bb;
+    }
+
+    .asset .poster-title {
+      font-size: clamp(21px, 2.2vw, 34px);
+    }
+
+    .asset-body {
+      display: grid;
+      gap: 13px;
+      padding: 15px;
+    }
+
+    .asset-heading {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .asset-heading strong {
+      font: 700 16px/1.25 var(--serif);
+    }
+
+    .asset-id {
+      color: var(--muted);
+      font: 9px/1 var(--mono);
+    }
+
+    .asset-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid #d1d5d0;
+      border-left: 1px solid #d1d5d0;
+    }
+
+    .asset-meta span {
+      min-height: 31px;
+      display: flex;
+      align-items: center;
+      padding: 6px 8px;
+      color: #5f6861;
+      border-right: 1px solid #d1d5d0;
+      border-bottom: 1px solid #d1d5d0;
+      font: 9px/1.25 var(--mono);
+    }
+
+    .asset-meta .pass { color: var(--success); font-weight: 700; }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter {
+      min-height: 31px;
+      padding: 0 11px;
+      border: 1px solid #b9c0ba;
+      background: transparent;
+      font-size: 10px;
+      cursor: pointer;
+    }
+
+    .filter:hover { background: #e1e5df; }
+
+    .filter.active {
+      color: #f2f4f1;
+      border-color: var(--forest-800);
+      background: var(--forest-800);
+    }
+
+    .delivery-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 310px;
+      border: 1px solid #b9c0ba;
+      background: var(--white);
+    }
+
+    .delivery-files { padding: 26px; }
+
+    .file-row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 0;
+      border-bottom: 1px solid #d0d4cf;
+    }
+
+    .file-row:first-child { padding-top: 0; }
+    .file-row:last-child { padding-bottom: 0; border-bottom: 0; }
+
+    .file-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      color: #ecf0ec;
+      background: var(--forest-700);
+      font: 9px/1 var(--mono);
+    }
+
+    .file-row strong {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 12px;
+    }
+
+    .file-row small {
+      color: var(--muted);
+      font: 9px/1.4 var(--mono);
+    }
+
+    .file-row > span:last-child {
+      color: var(--success);
+      font: 9px/1 var(--mono);
+      letter-spacing: .05em;
+    }
+
+    .delivery-summary {
+      display: grid;
+      align-content: center;
+      gap: 18px;
+      padding: 28px;
+      color: #eef1ed;
+      background: var(--forest-900);
+    }
+
+    .delivery-summary .big-number {
+      color: #d3ddd5;
+      font: italic 700 70px/.8 var(--serif);
+      letter-spacing: -.06em;
+    }
+
+    .delivery-summary h3 {
+      margin: 0;
+      font: 700 24px/1.12 var(--serif);
+    }
+
+    .delivery-summary p {
+      margin: 0;
+      color: #b7c2b9;
+      font-size: 11px;
+      line-height: 1.7;
+    }
+
+    .trace {
+      border: 1px solid #b9c0ba;
+      background: #e3e6e1;
+    }
+
+    .trace-button {
+      width: 100%;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 0 20px;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .trace-button strong { font: 700 16px/1 var(--serif); }
+
+    .trace-button span {
+      color: var(--muted);
+      font: 9px/1 var(--mono);
+    }
+
+    .trace-icon {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border: 1px solid #aeb5ae;
+      transition: transform .2s ease;
+    }
+
+    .trace.open .trace-icon { transform: rotate(45deg); }
+
+    .trace-content {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows .28s ease;
+    }
+
+    .trace.open .trace-content { grid-template-rows: 1fr; }
+
+    .trace-inner { min-height: 0; overflow: hidden; }
+
+    .trace-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+      margin: 0;
+      padding: 0 20px 20px;
+      list-style: none;
+    }
+
+    .trace-list li {
+      min-height: 92px;
+      padding: 15px;
+      border-top: 1px solid #bfc5bf;
+      border-right: 1px solid #bfc5bf;
+    }
+
+    .trace-list li:last-child { border-right: 0; }
+
+    .trace-list span {
+      display: block;
+      margin-bottom: 9px;
+      color: var(--brown);
+      font: 9px/1 var(--mono);
+    }
+
+    .trace-list strong {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 11px;
+    }
+
+    .trace-list small {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      margin-top: 48px;
+      padding-top: 18px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      font: 9px/1.5 var(--mono);
+    }
+
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      place-items: center;
+      padding: 28px;
+      background: rgba(22, 29, 24, .88);
+      backdrop-filter: blur(7px);
+    }
+
+    .lightbox.open { display: grid; }
+
+    .lightbox-card {
+      width: min(920px, 94vw);
+      max-height: 90vh;
+      display: grid;
+      grid-template-columns: minmax(300px, 1fr) 290px;
+      background: var(--paper-warm);
+      box-shadow: 0 30px 90px rgba(0,0,0,.36);
+      animation: reveal .22s ease both;
+    }
+
+    .lightbox-visual {
+      min-height: min(78vh, 720px);
+      display: grid;
+      place-items: center;
+      padding: 32px;
+      background: #dfe3de;
+    }
+
+    .lightbox-visual .poster {
+      width: min(450px, 100%);
+      aspect-ratio: 4 / 5;
+      min-height: 0;
+      cursor: default;
+    }
+
+    .lightbox-info {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding: 26px;
+      border-left: 1px solid var(--line);
+    }
+
+    .lightbox-info h3 {
+      margin: 0;
+      font: 700 25px/1.12 var(--serif);
+    }
+
+    .lightbox-info p {
+      margin: 0;
+      color: #5e665f;
+      font-size: 11px;
+      line-height: 1.7;
+    }
+
+    .lightbox-close {
+      align-self: flex-end;
+      width: 34px;
+      height: 34px;
+      border: 1px solid #aab2ab;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 110;
+      padding: 13px 16px;
+      color: #eef1ed;
+      background: var(--forest-900);
+      font-size: 11px;
+      box-shadow: 0 12px 35px rgba(22, 29, 24, .24);
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1180px) {
+      .shell { grid-template-columns: 230px minmax(0, 1fr); }
+      .main { padding-right: 26px; padding-left: 26px; }
+      .package-switcher { grid-template-columns: 146px minmax(0, 1fr); }
+      .package-tab { padding: 16px; }
+      .package-panel { grid-template-columns: minmax(280px, .85fr) minmax(330px, 1.15fr); }
+      .copy-column { padding: 24px; }
+      .visual-column { padding: 16px; }
+      .visual-stage { grid-template-columns: minmax(0, 1.35fr) minmax(105px, .65fr); gap: 9px; }
+      .poster-stack { gap: 9px; }
+    }
+
+    @media (max-width: 860px) {
+      .topbar { grid-template-columns: 1fr auto; padding: 0 18px; }
+      .runtime { display: none; }
+      .top-actions .button-quiet { display: none; }
+      .shell { display: block; }
+      .sidebar { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .side-body { display: grid; grid-template-columns: 1fr 1fr; }
+      .side-section, .side-status { margin: 0; }
+      .hero { grid-template-columns: 1fr; align-items: start; }
+      .hero-summary { padding-top: 0; }
+      .summary-strip { grid-template-columns: repeat(2, 1fr); }
+      .summary-item { border-bottom: 1px solid #d0d4cf; }
+      .summary-item:nth-child(2n) { border-right: 0; }
+      .summary-item:last-child { grid-column: 1 / -1; border-bottom: 0; }
+      .package-switcher { grid-template-columns: 1fr; }
+      .package-tabs { display: grid; grid-template-columns: 1fr 1fr; border-right: 0; border-bottom: 1px solid #b9c0ba; }
+      .package-state { display: none; }
+      .package-tab { min-height: 84px; border-bottom: 0; border-right: 1px solid #c9cec9; }
+      .package-tab.active::after { top: auto; right: 0; bottom: -1px; left: 0; width: auto; height: 4px; }
+      .package-panel { grid-template-columns: 1fr; }
+      .copy-column { border-right: 0; border-bottom: 1px solid #ccd1cc; }
+      .baseline-grid, .delivery-grid { grid-template-columns: 1fr; }
+      .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .delivery-summary { min-height: 260px; }
+      .trace-list { grid-template-columns: 1fr 1fr; }
+      .trace-list li:nth-child(2) { border-right: 0; }
+      .lightbox-card { grid-template-columns: 1fr; overflow: auto; }
+      .lightbox-info { border-top: 1px solid var(--line); border-left: 0; }
+    }
+
+    @media (max-width: 580px) {
+      .topbar { height: 62px; }
+      .brand small { display: none; }
+      .top-actions .button { min-height: 34px; padding: 0 11px; font-size: 11px; }
+      .side-body { grid-template-columns: 1fr; }
+      .main { padding: 24px 16px 48px; }
+      .hero h1 { font-size: 39px; }
+      .summary-strip { grid-template-columns: 1fr; }
+      .summary-item, .summary-item:nth-child(2n) { border-right: 0; }
+      .summary-item:last-child { grid-column: auto; }
+      .section-head { align-items: start; flex-direction: column; }
+      .section-note { text-align: left; }
+      .copy-column { padding: 22px; }
+      .visual-stage { grid-template-columns: 1fr; }
+      .poster-stack { grid-template-columns: 1fr 1fr; grid-template-rows: none; }
+      .poster-small { min-height: 210px; }
+      .gallery { grid-template-columns: 1fr; }
+      .trace-list { grid-template-columns: 1fr; }
+      .trace-list li { border-right: 0; }
+      .footer { flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">PC</div>
+      <div>
+        <strong>Platform Connect</strong>
+        <small>Outcome Console · V4</small>
+      </div>
+    </div>
+    <div class="runtime" aria-label="交付状态">
+      <span class="runtime-dot"></span>
+      <span>Delivery ready · case complete</span>
+    </div>
+    <div class="top-actions">
+      <button class="button button-quiet" data-scroll-to="trace">查看过程</button>
+      <button class="button button-solid" data-scroll-to="delivery">查看交付包</button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <span>Source</span>
+        <span>01 / 01</span>
+      </div>
+      <div class="side-body">
+        <div class="file-ticket">
+          <div class="file-type">PDF</div>
+          <div>
+            <strong>AI 不会替代你的工作.pdf</strong>
+            <small>12 页 · 中文 · 已完整读取</small>
+          </div>
+        </div>
+
+        <section class="side-section">
+          <div class="side-label">Original thesis</div>
+          <h2 class="side-title">AI 不会替代你的工作，但会重新分配你的工作</h2>
+          <p class="side-copy">真正发生变化的，不是岗位突然消失，而是职业内部的任务被重新组合。</p>
+        </section>
+
+        <div class="side-facts">
+          <div class="side-fact"><span>发布平台</span><strong>小红书 · X</strong></div>
+          <div class="side-fact"><span>文案版本</span><strong>2 份</strong></div>
+          <div class="side-fact"><span>视觉资产</span><strong>4 张</strong></div>
+          <div class="side-fact"><span>质量检查</span><strong>全部通过</strong></div>
+        </div>
+
+        <div class="side-status">
+          <small>PACKAGE STATUS</small>
+          <strong><span class="runtime-dot"></span> 可以交付</strong>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="content">
+        <section class="hero" data-screen-label="交付摘要">
+          <div>
+            <div class="eyebrow">A finished story, ready to travel</div>
+            <h1>这一次，文章已经走向<em>它该去的地方</em></h1>
+          </div>
+          <div class="hero-summary">
+            <p>本次读取了<strong>《AI 不会替代你的工作》</strong>，最终选择<strong>小红书与 X</strong>，完成 2 份平台原生文案和 4 张视觉资产；事实、文字、构图与平台适配均已通过检查。</p>
+            <div class="case-meta">
+              <span>Case PC-2026-0217</span>
+              <span>Zh-CN / En</span>
+              <span>Ready</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="summary-strip" aria-label="交付概览">
+          <div class="summary-item">
+            <span class="summary-label">Input</span>
+            <span class="summary-value">PDF · 12 页</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Platforms</span>
+            <span class="summary-value">小红书 · X</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Copy</span>
+            <span class="summary-value">2 份定稿</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Visuals</span>
+            <span class="summary-value">4 张配图</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">QA</span>
+            <span class="summary-value ready">PASSED</span>
+          </div>
+        </section>
+
+        <section class="section" id="packages" data-screen-label="最终平台图文">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">01 / Final packages</div>
+              <h2>最终平台图文</h2>
+            </div>
+            <p class="section-note">这里展示已经确认的结果。切换平台只改变查看对象，不会重新触发生成。</p>
+          </div>
+
+          <div class="package-switcher">
+            <nav class="package-tabs" aria-label="平台成品切换">
+              <button class="package-tab active" data-package="xiaohongshu" aria-pressed="true">
+                <strong>小红书</strong>
+                <span>中文 · 收藏型图文</span>
+              </button>
+              <button class="package-tab" data-package="x" aria-pressed="false">
+                <strong>X</strong>
+                <span>English · 5-post thread</span>
+              </button>
+              <div class="package-state">2 / 2 PACKAGES<br>FINAL COPY + VISUALS</div>
+            </nav>
+
+            <article class="package-panel active" data-package-panel="xiaohongshu">
+              <div class="copy-column">
+                <div class="panel-meta">
+                  <span class="chip chip-strong">FINAL</span>
+                  <span class="chip">收藏型</span>
+                  <span class="chip">中文</span>
+                </div>
+                <h3 class="copy-title">AI 不会直接抢走你的工作，但会先拿走其中一部分</h3>
+                <div class="copy-body" data-copy-content>我们常把“工作”想成一个完整岗位，于是问题总是：AI 会不会取代我？
+
+但更值得观察的是，你每天做的事情正在被重新拆分：<strong>重复、可描述、能快速验证</strong>的任务，更适合交给 AI；目标设定、价值判断和结果责任仍然需要人。
+
+真正要练习的，不只是写提示词，而是识别：<strong>哪些判断不能外包。</strong>
+
+收藏这份判断框架，也欢迎说说你工作中最不能交给 AI 的部分。</div>
+                <div class="copy-footer">
+                  <small>612 字符 · 5 个段落<br>#AI协作 #职场判断</small>
+                  <button class="copy-button" data-copy>复制文案</button>
+                </div>
+              </div>
+              <div class="visual-column">
+                <div class="visual-stage">
+                  <div class="poster poster-main" data-asset-title="小红书封面｜任务正在重组">
+                    <span class="poster-kicker">WORK / AI / JUDGMENT</span>
+                    <span class="poster-label">不是替代<br>是重新分工</span>
+                    <span class="poster-line one"></span>
+                    <span class="poster-line two"></span>
+                    <span class="poster-number">01</span>
+                    <div class="poster-title"><small>AI 时代的工作判断</small>被拿走的<br>不是工作<br>是其中一部分</div>
+                  </div>
+                  <div class="poster-stack">
+                    <div class="poster poster-small poster-dark" data-asset-title="小红书内页｜任务分解">
+                      <span class="poster-kicker">TASK MAP</span>
+                      <div class="poster-title"><small>01</small>重复任务<br>交给机器</div>
+                    </div>
+                    <div class="poster poster-small poster-split" data-asset-title="小红书内页｜人机协作">
+                      <span class="poster-label">判断<br>不能外包</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="visual-caption">
+                  <span>封面 3:4 · 内页 3:4 · 视觉方向：编辑部观点海报</span>
+                  <strong>3 ASSETS · QA PASSED</strong>
+                </div>
+              </div>
+            </article>
+
+            <article class="package-panel" data-package-panel="x">
+              <div class="copy-column">
+                <div class="panel-meta">
+                  <span class="chip chip-strong">FINAL</span>
+                  <span class="chip">THREAD</span>
+                  <span class="chip">ENGLISH</span>
+                </div>
+                <h3 class="copy-title">AI may not replace your job. It will unbundle it first.</h3>
+                <div class="copy-body" data-copy-content>1/ We keep asking whether AI will replace entire jobs. That framing hides the change already underway.
+
+2/ Jobs are bundles of tasks. The repetitive, describable and quickly verifiable parts are the first to move.
+
+3/ What stays human longer: setting goals, judging trade-offs and carrying responsibility for outcomes.
+
+4/ The useful AI skill is not prompting alone. It is knowing <strong>which judgments you should never outsource.</strong>
+
+5/ Before automating your role, map the decisions that make the role yours.</div>
+                <div class="copy-footer">
+                  <small>5 posts · 541 characters<br>Professional / concise</small>
+                  <button class="copy-button" data-copy>Copy thread</button>
+                </div>
+              </div>
+              <div class="visual-column">
+                <div class="visual-stage">
+                  <div class="poster poster-main poster-dark" data-asset-title="X 配图｜Unbundle the job">
+                    <span class="poster-kicker">FIELD NOTE / 0217</span>
+                    <span class="poster-label">KEEP THE<br>JUDGMENT</span>
+                    <span class="poster-number">AI</span>
+                    <div class="poster-title"><small>HUMAN × MACHINE</small>AI won’t take<br>the whole job.<br>It unbundles it.</div>
+                  </div>
+                  <div class="poster-stack">
+                    <div class="poster poster-small" data-asset-title="X 详情图｜Three layers">
+                      <span class="poster-kicker">TASK / GOAL / VALUE</span>
+                      <span class="poster-line one"></span>
+                      <span class="poster-line two"></span>
+                      <div class="poster-title"><small>FRAMEWORK</small>Automate tasks.<br>Keep judgment.</div>
+                    </div>
+                    <div class="poster poster-small poster-split" data-asset-title="X 详情图｜Human × Machine">
+                      <span class="poster-label">RESPONSIBILITY<br>STAYS HUMAN</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="visual-caption">
+                  <span>Lead image 16:9 · Editorial system card</span>
+                  <strong>1 PRIMARY · QA PASSED</strong>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" data-screen-label="事实基线">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">02 / Source fidelity</div>
+              <h2>这组内容从哪里来</h2>
+            </div>
+            <p class="section-note">平台表达不同，但共享同一组核心事实与不可漂移的判断。</p>
+          </div>
+
+          <div class="baseline-grid">
+            <article class="baseline-card">
+              <div class="section-kicker">Core thesis</div>
+              <h3>AI 改变的不是“职业是否存在”，而是职业内部任务如何被重新分配。</h3>
+              <p>文章把工作拆成任务、判断与责任三层，主张先识别可自动化部分，再明确必须由人承担的价值选择。</p>
+              <ol class="baseline-list">
+                <li><span>01</span><div>错误问题：AI 会不会取代我？</div></li>
+                <li><span>02</span><div>任务可以被拆分与重新组合。</div></li>
+                <li><span>03</span><div>人的核心仍是目标、判断与责任。</div></li>
+              </ol>
+            </article>
+            <article class="baseline-card">
+              <div class="section-kicker">Protected claims</div>
+              <div class="claim-list">
+                <div class="claim"><b>L</b><div>不把“任务重组”强化成“岗位必然消失”。</div></div>
+                <div class="claim"><b>L</b><div>不虚构效率数据、调研结果或成功案例。</div></div>
+                <div class="claim"><b>L</b><div>保留“最终责任仍由人承担”的判断。</div></div>
+                <div class="claim"><b>L</b><div>平台改写不改变原文因果关系。</div></div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="gallery" data-screen-label="图片画廊">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">03 / Asset gallery</div>
+              <h2>最终图片</h2>
+            </div>
+            <div class="filter-row" aria-label="图片平台筛选">
+              <button class="filter active" data-filter="all">全部 4</button>
+              <button class="filter" data-filter="xiaohongshu">小红书 3</button>
+              <button class="filter" data-filter="x">X 1</button>
+            </div>
+          </div>
+
+          <div class="gallery">
+            <article class="asset" data-platform="xiaohongshu">
+              <div class="poster" data-asset-title="小红书封面｜任务正在重组">
+                <span class="poster-kicker">WORK / AI / JUDGMENT</span>
+                <span class="poster-label">不是替代<br>是重新分工</span>
+                <span class="poster-line one"></span>
+                <span class="poster-line two"></span>
+                <span class="poster-number">01</span>
+                <div class="poster-title"><small>AI 时代的工作判断</small>被拿走的<br>不是工作</div>
+              </div>
+              <div class="asset-body">
+                <div class="asset-heading"><strong>观点封面</strong><span class="asset-id">XHS-01</span></div>
+                <div class="asset-meta">
+                  <span>小红书</span><span>3:4</span>
+                  <span>封面</span><span class="pass">QA ✓</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="asset" data-platform="xiaohongshu">
+              <div class="poster poster-dark" data-asset-title="小红书内页｜任务分解">
+                <span class="poster-kicker">TASK MAP / 01</span>
+                <span class="poster-label">可描述<br>可验证</span>
+                <div class="poster-title"><small>先拆任务，再谈替代</small>重复任务<br>交给机器</div>
+              </div>
+              <div class="asset-body">
+                <div class="asset-heading"><strong>任务分解页</strong><span class="asset-id">XHS-02</span></div>
+                <div class="asset-meta">
+                  <span>小红书</span><span>3:4</span>
+                  <span>内页</span><span class="pass">QA ✓</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="asset" data-platform="xiaohongshu">
+              <div class="poster poster-split" data-asset-title="小红书内页｜人机协作">
+                <span class="poster-kicker">NEW DIVISION OF LABOR</span>
+                <span class="poster-label">判断<br>不能外包</span>
+              </div>
+              <div class="asset-body">
+                <div class="asset-heading"><strong>人机协作页</strong><span class="asset-id">XHS-03</span></div>
+                <div class="asset-meta">
+                  <span>小红书</span><span>3:4</span>
+                  <span>内页</span><span class="pass">QA ✓</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="asset" data-platform="x">
+              <div class="poster poster-dark" data-asset-title="X 配图｜Unbundle the job">
+                <span class="poster-kicker">FIELD NOTE / 0217</span>
+                <span class="poster-label">KEEP THE<br>JUDGMENT</span>
+                <span class="poster-number">AI</span>
+                <div class="poster-title"><small>HUMAN × MACHINE</small>Unbundle<br>the job.</div>
+              </div>
+              <div class="asset-body">
+                <div class="asset-heading"><strong>Thread lead image</strong><span class="asset-id">X-01</span></div>
+                <div class="asset-meta">
+                  <span>X</span><span>16:9</span>
+                  <span>Lead image</span><span class="pass">QA ✓</span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="delivery" data-screen-label="交付清单">
+          <div class="section-head">
+            <div>
+              <div class="section-kicker">04 / Delivery</div>
+              <h2>可带走的全部成果</h2>
+            </div>
+            <p class="section-note">文件清单与可视化结果对应，便于复核、下载或继续编辑。</p>
+          </div>
+
+          <div class="delivery-grid">
+            <div class="delivery-files">
+              <div class="file-row">
+                <div class="file-icon">MD</div>
+                <div><strong>xiaohongshu-final.md</strong><small>最终文案 · 中文 · 收藏型</small></div>
+                <span>READY</span>
+              </div>
+              <div class="file-row">
+                <div class="file-icon">MD</div>
+                <div><strong>x-thread-final.md</strong><small>Final thread · English · 5 posts</small></div>
+                <span>READY</span>
+              </div>
+              <div class="file-row">
+                <div class="file-icon">IMG</div>
+                <div><strong>visual-assets/</strong><small>4 images · platform-sized · QA passed</small></div>
+                <span>READY</span>
+              </div>
+              <div class="file-row">
+                <div class="file-icon">JSON</div>
+                <div><strong>manifest.json</strong><small>来源锚点、用途、尺寸与检查状态</small></div>
+                <span>READY</span>
+              </div>
+            </div>
+            <aside class="delivery-summary">
+              <div class="big-number">04</div>
+              <h3>四类成果，已经归档</h3>
+              <p>从原始文档到平台文案、视觉资产与来源记录，这次内容工作已经形成完整交付闭环。</p>
+              <button class="button button-solid" data-toast="原型演示：交付包已准备完成">下载交付包</button>
+            </aside>
+          </div>
+        </section>
+
+        <section class="section trace" id="trace" data-screen-label="执行记录">
+          <button class="trace-button" aria-expanded="false">
+            <span><strong>查看本次执行记录</strong>　过程信息默认折叠，不干扰成果阅读</span>
+            <span class="trace-icon">＋</span>
+          </button>
+          <div class="trace-content">
+            <div class="trace-inner">
+              <ol class="trace-list">
+                <li><span>01 / READ</span><strong>读取原始文档</strong><small>完成全文解析并建立事实基线。</small></li>
+                <li><span>02 / DECIDE</span><strong>确定发布平台</strong><small>最终选择小红书与 X。</small></li>
+                <li><span>03 / ADAPT</span><strong>完成平台文案</strong><small>两份文案已确认定稿。</small></li>
+                <li><span>04 / DELIVER</span><strong>生成并检查配图</strong><small>四张视觉资产通过 QA。</small></li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <span>PLATFORM CONNECT · OUTCOME CONSOLE V4</span>
+          <span>STATIC HIGH-FIDELITY PROTOTYPE · NO LIVE GENERATION</span>
+        </footer>
+      </div>
+    </main>
+  </div>
+
+  <div class="lightbox" role="dialog" aria-modal="true" aria-label="图片预览">
+    <div class="lightbox-card">
+      <div class="lightbox-visual"></div>
+      <div class="lightbox-info">
+        <button class="lightbox-close" aria-label="关闭图片预览">×</button>
+        <div class="section-kicker">Asset preview</div>
+        <h3></h3>
+        <p>此处用于查看最终视觉资产，不会重新生成图片。正式交付中将同时提供原始文件、平台尺寸与来源锚点。</p>
+        <div class="asset-meta">
+          <span>事实 ✓</span><span>文字 ✓</span>
+          <span>构图 ✓</span><span>风格 ✓</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const packageTabs = document.querySelectorAll("[data-package]");
+    const packagePanels = document.querySelectorAll("[data-package-panel]");
+    const toast = document.querySelector(".toast");
+    let toastTimer;
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    packageTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const target = tab.dataset.package;
+        packageTabs.forEach((item) => {
+          const isActive = item === tab;
+          item.classList.toggle("active", isActive);
+          item.setAttribute("aria-pressed", String(isActive));
+        });
+        packagePanels.forEach((panel) => {
+          panel.classList.toggle("active", panel.dataset.packagePanel === target);
+        });
+      });
+    });
+
+    document.querySelectorAll("[data-copy]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const content = button.closest(".copy-column").querySelector("[data-copy-content]").innerText.trim();
+        try {
+          await navigator.clipboard.writeText(content);
+          showToast("文案已复制");
+        } catch (error) {
+          showToast("浏览器未授权复制，可直接选中文案");
+        }
+      });
+    });
+
+    document.querySelectorAll("[data-scroll-to]").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.getElementById(button.dataset.scrollTo).scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+
+    document.querySelectorAll("[data-toast]").forEach((button) => {
+      button.addEventListener("click", () => showToast(button.dataset.toast));
+    });
+
+    const filters = document.querySelectorAll("[data-filter]");
+    const assets = document.querySelectorAll(".asset[data-platform]");
+
+    filters.forEach((filter) => {
+      filter.addEventListener("click", () => {
+        const target = filter.dataset.filter;
+        filters.forEach((item) => item.classList.toggle("active", item === filter));
+        assets.forEach((asset) => {
+          asset.classList.toggle("is-hidden", target !== "all" && asset.dataset.platform !== target);
+        });
+      });
+    });
+
+    const trace = document.querySelector(".trace");
+    const traceButton = document.querySelector(".trace-button");
+
+    traceButton.addEventListener("click", () => {
+      const isOpen = trace.classList.toggle("open");
+      traceButton.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    const lightbox = document.querySelector(".lightbox");
+    const lightboxVisual = document.querySelector(".lightbox-visual");
+    const lightboxTitle = document.querySelector(".lightbox-info h3");
+
+    function openLightbox(poster) {
+      const clone = poster.cloneNode(true);
+      clone.classList.remove("poster-main", "poster-small");
+      lightboxVisual.replaceChildren(clone);
+      lightboxTitle.textContent = poster.dataset.assetTitle || "视觉资产预览";
+      lightbox.classList.add("open");
+      document.body.style.overflow = "hidden";
+      document.querySelector(".lightbox-close").focus();
+    }
+
+    function closeLightbox() {
+      lightbox.classList.remove("open");
+      document.body.style.overflow = "";
+    }
+
+    document.querySelectorAll(".poster[data-asset-title]").forEach((poster) => {
+      poster.setAttribute("tabindex", "0");
+      poster.setAttribute("role", "button");
+      poster.setAttribute("aria-label", `放大查看 ${poster.dataset.assetTitle}`);
+      poster.addEventListener("click", () => openLightbox(poster));
+      poster.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openLightbox(poster);
+        }
+      });
+    });
+
+    document.querySelector(".lightbox-close").addEventListener("click", closeLightbox);
+    lightbox.addEventListener("click", (event) => {
+      if (event.target === lightbox) closeLightbox();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && lightbox.classList.contains("open")) closeLightbox();
+    });
+  </script>
+</body>
+</html>

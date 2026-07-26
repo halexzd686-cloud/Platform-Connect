@@ -2,22 +2,46 @@
 
 Use output scope to decide what to produce and review policy to decide how many user turns are required.
 
+## Contents
+
+- Compact
+- Strict
+- Autopilot
+- Decision provenance
+- Project profile
+- Blocking questions
+
 ## Compact
 
 Use by default.
 
 1. Read the full source and build the factual brief.
-2. Use explicitly named platforms. If none are named, recommend and provisionally select at most three platforms from the content, audience, and communication job.
-3. State inferred platform, language, and market assumptions visibly.
-4. Produce one combined review packet:
+2. Use explicitly named platforms. If none are named, return one compact recommendation packet with two or three candidates. Prefer a useful domestic and overseas mix when the article and audience support both.
+3. For each candidate, include platform fit, audience, language and market, a preliminary article-specific visual direction, and one trade-off. Do not draft every candidate before the user chooses.
+4. Ask for platform selection, image intent, and completion preference in the same reply. Accept natural language; a compact reply such as `小红书 + X；配图；按推荐直接完成` is sufficient.
+5. If the user authorizes direct completion, continue under `autopilot` with the recorded scope. Otherwise produce one combined review packet:
    - factual brief and review flags;
    - platform and locale assumptions;
    - editable platform copy;
    - for `full`, image intent, visual directions, and proposed assets.
-5. Ask for one combined approval or one consolidated set of revisions.
-6. Record approved decisions with provenance `bundled`.
+6. Ask for one combined approval or one consolidated set of revisions.
+7. Record approved decisions with provenance `bundled`.
 
 Do not ask a question that can be handled as a visible, reversible default.
+
+### Recommendation packet
+
+Keep this packet short and decision-ready:
+
+```text
+推荐发布
+1. 小红书 — 适合原因；初步配图方向；主要取舍
+2. X — 适合原因；初步配图方向；主要取舍
+
+请一次回复：选择哪些平台；是否配图；审阅后继续，还是按推荐直接完成。
+```
+
+Recommend two platforms by default. Use three only when the third adds a genuinely different audience or format.
 
 ## Strict
 

@@ -40,6 +40,14 @@ def main() -> int:
     parser.add_argument("--source-language", default="zh-CN")
     parser.add_argument("--target-language")
     parser.add_argument("--market")
+    parser.add_argument(
+        "--source-type",
+        choices=("pasted", "file", "url"),
+        default="pasted",
+    )
+    parser.add_argument("--source-ref")
+    parser.add_argument("--source-title")
+    parser.add_argument("--source-media-type", default="text/plain")
     args = parser.parse_args()
 
     if not SLUG.fullmatch(args.slug):
@@ -74,6 +82,14 @@ def main() -> int:
         "mode": args.mode,
         "review_policy": args.review_policy,
         "platforms": platforms,
+        "source": {
+            "input_type": args.source_type,
+            "reference": args.source_ref,
+            "media_type": args.source_media_type,
+            "title": args.source_title or args.slug,
+            "read_status": "complete",
+        },
+        "platform_recommendations": [],
         "locale_assumptions": {
             "source_language": args.source_language,
             "target_language": args.target_language,

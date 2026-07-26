@@ -1,11 +1,11 @@
 ---
 name: platform-connect
-description: Adapts a user-provided article into a fact-preserving content brief, platform-native copy, approved visual assets, and an offline execution showcase with strict, compact, or preauthorized review. Use when the user asks to repurpose, localize, rewrite, script, illustrate, or package an article for Chinese or overseas social platforms including TikTok, YouTube, Instagram, Facebook, LinkedIn, X, Threads, Pinterest, and Snapchat.
+description: Adapts a pasted article, TXT, Markdown, Word, PDF, HTML file, or article URL into a fact-preserving brief, 2–3 platform recommendations when targets are unspecified, platform-native copy, approved visual assets, and an outcome-first offline delivery board. Use when the user asks to repurpose, localize, rewrite, script, illustrate, or package an article for Chinese or overseas social platforms including Xiaohongshu, Douyin, WeChat, Bilibili, TikTok, YouTube, Instagram, Facebook, LinkedIn, X, Threads, Pinterest, and Snapchat.
 ---
 
 # Platform Connect
 
-Turn one source article into selected platform-native content packages without changing its factual claims or author stance.
+Turn one source article into selected platform-native content packages without changing its factual claims or author stance. Accept the source directly; do not require a specially formatted prompt.
 
 ## Output scopes
 
@@ -27,23 +27,25 @@ Keep output scope and review policy independent. Record both in the manifest.
 
 ## Required flow
 
-1. Read the entire source before drafting.
+1. Read [source-intake.md](references/source-intake.md), identify the input type, and read the entire source before drafting. Use the host document, PDF, web, or browser capability that matches the input.
 2. Build one shared content brief using [content-brief-schema.md](references/content-brief-schema.md). Treat it as the factual baseline for every downstream output.
-3. If `platform-connect.profile.json` exists in the working directory, read it as a user-authored default profile. Resolve platforms, language, market, image intent, and review policy from the request or profile, with the current request taking precedence. In `compact`, recommend at most three platforms when unspecified and mark them as inferred instead of stopping. In `strict`, ask. In `autopilot`, auto-select only when the user delegated platform choice.
-4. Ask one consolidated blocking question only when missing information would materially change factual accuracy, localization, brand safety, or image authorization. Keep the source language when localization is not requested. For an unlisted platform, ask for its format and audience unless the user explicitly delegates a provisional adapter.
-5. Read only the selected platform entries in [platform-adapters.md](references/platform-adapters.md).
-6. In `plan`, produce strategy, visual directions, and a proposed asset list, then apply the selected review policy without drafting final copy or generating images.
-7. In `copy` or `full`, generate visibly different platform versions from the shared brief. Present every version as editable.
-8. For `full`, read [visual-handoff.md](references/visual-handoff.md) and the relevant industry entry in [industry-visual-routing.md](references/industry-visual-routing.md). Recommend 3–5 article-specific directions with editable prompts, plus `自定义提示词` as an equal option, then create the editable asset manifest using [output-schema.md](references/output-schema.md).
-9. Apply the review policy: use one combined approval in `compact`, separate gates in `strict`, or recorded preauthorization in `autopilot`. Treat requested revisions as replacing approval for the affected decision.
-10. Generate no image unless `image_intent` is `yes` and its provenance is explicit, bundled, profile-based, or preauthorized. Never use inferred image consent.
-11. After authorization, use the available image-generation tool once per distinct asset. Inspect every output, apply the QA checklist in [visual-handoff.md](references/visual-handoff.md), and change one variable at a time when revising.
-12. When filesystem output is requested, follow the deterministic delivery loop below. Create a new immutable run directory for every revision; never overwrite a prior approved run.
-13. Render the bundled offline showcase from the completed run when a visible execution artifact is useful. Treat it as a read-only execution report, not a control surface or a separate AI application.
+3. If `platform-connect.profile.json` exists in the working directory, read it as a user-authored default profile. Resolve platforms, language, market, image intent, and review policy from the request or profile, with the current request taking precedence.
+4. If platforms are unspecified, apply [interaction-policy.md](references/interaction-policy.md): recommend two platforms by default and at most three, prefer a useful domestic and overseas mix, and include a preliminary article-specific visual direction for each. Ask once for platform choice, image intent, and whether to review or complete directly. Do not draft every candidate before selection.
+5. Ask one consolidated blocking question only when missing information would materially change factual accuracy, localization, brand safety, source completeness, or image authorization. Keep the source language when localization is not requested. For an unlisted platform, ask for its format and audience unless the user delegates a provisional adapter.
+6. Read only the selected platform entries in [platform-adapters.md](references/platform-adapters.md).
+7. In `plan`, produce strategy, visual directions, and a proposed asset list, then apply the selected review policy without drafting final copy or generating images.
+8. In `copy` or `full`, generate visibly different platform versions from the shared brief. Present every version as editable.
+9. For `full`, read [visual-handoff.md](references/visual-handoff.md) and the relevant industry entry in [industry-visual-routing.md](references/industry-visual-routing.md). Recommend 3–4 article-specific directions with editable prompts, plus `自定义提示词` as an equal option, then create the editable asset manifest using [output-schema.md](references/output-schema.md).
+10. Apply the review policy: use one combined approval in `compact`, separate gates in `strict`, or recorded preauthorization in `autopilot`. Treat requested revisions as replacing approval for the affected decision.
+11. Generate no image unless `image_intent` is `yes` and its provenance is explicit, bundled, profile-based, or preauthorized. Never use inferred image consent.
+12. After authorization, use the available image-generation tool once per distinct asset. Inspect every output, apply the QA checklist in [visual-handoff.md](references/visual-handoff.md), and change one variable at a time when revising.
+13. When filesystem output is requested, follow the deterministic delivery loop below. Create a new immutable run directory for every revision; never overwrite a prior approved run.
+14. Render the bundled offline showcase from the completed run. Make final copy and ready images the primary content; keep recommendations, decisions, and execution trace secondary or collapsed. Treat the board as a read-only delivery report, not a control surface or a separate AI application.
 
 ## Non-negotiable boundaries
 
 - Preserve names, numbers, dates, causal claims, quotations, examples, and the author's stated position.
+- Do not claim the source was completely read when a file, page, OCR passage, or URL body is missing.
 - Do not invent evidence, success claims, credentials, product capabilities, or platform rules.
 - Adapt the angle, opening, pacing, structure, duration, CTA, and packaging—not the underlying facts.
 - Mark unclear source claims for human review instead of silently repairing them.
@@ -55,6 +57,7 @@ Keep output scope and review policy independent. Record both in the manifest.
 - A user-written custom prompt is a first-class visual direction. Keep it editable, record it in the manifest, and reconcile it with factual invariants instead of replacing it wholesale.
 - Route the visual plan through the source article's industry and communication job; industry determines factual risks and visual vocabulary, not a fixed aesthetic.
 - Treat Xiaohei as one optional visual preset, not the product's default identity or industry scope.
+- Do not make the final board look interactive in ways that imply platform selection, approval, or image generation. Board interactions may only switch, filter, copy, preview, or open delivered results.
 
 ## Output order
 
@@ -68,6 +71,8 @@ For `copy` and `full`, return results in this order:
 6. one next action appropriate to the review policy.
 
 Keep platform labels explicit. Do not merge several platform scripts into one generic version.
+
+When platforms were unspecified, return the recommendation packet before this output order. After the user chooses, continue from item 1 without asking them to repeat the article.
 
 In `compact`, make the next action one combined approval or one consolidated revision. In `autopilot`, proceed to final delivery without requesting a reply unless a blocking ambiguity appears. In `strict`, expose only the current gate.
 
@@ -100,6 +105,7 @@ Treat nonzero exit codes and JSON with `"status": "failed"` as blocking. Report 
 ## Reference routing
 
 - Always read [content-brief-schema.md](references/content-brief-schema.md) before creating the shared brief.
+- Always read [source-intake.md](references/source-intake.md) before extracting an attached file, pasted article, or URL.
 - Always read [interaction-policy.md](references/interaction-policy.md) before choosing review cadence, inferring platforms, or recording bundled or preauthorized decisions.
 - Search [platform-adapters.md](references/platform-adapters.md) by its exact `##` heading and read only the selected platform sections plus Cross-platform QA.
 - Read [visual-handoff.md](references/visual-handoff.md) only for `plan` visual proposals or after image intent is `yes`.

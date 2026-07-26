@@ -32,6 +32,7 @@ def main() -> int:
         return 1
 
     locale = data["locale_assumptions"]
+    source = data["source"]
     lines = [
         f"# {data['article_slug']} 交付索引",
         "",
@@ -40,6 +41,10 @@ def main() -> int:
         f"- Skill：`{data['skill_version']}`",
         f"- 模式：`{data['mode']}`",
         f"- 审阅策略：`{data['review_policy']}`",
+        f"- 来源类型：`{source['input_type']}`",
+        f"- 来源标题：{source['title']}",
+        f"- 来源引用：`{source.get('reference') or 'pasted-content'}`",
+        f"- 读取状态：`{source['read_status']}`",
         f"- 原文语言：`{locale['source_language']}`",
         f"- 目标语言：`{locale.get('target_language') or 'source-language'}`",
         f"- 目标市场：`{locale.get('market') or 'not-specified'}`",
@@ -67,6 +72,16 @@ def main() -> int:
             1 for asset in data["assets"] if asset.get("platform") == platform
         )
         lines.append(f"- **{platform}**：文案 `{copy_path}`；视觉资产 {count} 张")
+
+    if data["platform_recommendations"]:
+        lines.extend(["", "## 平台推荐记录", ""])
+        for recommendation in data["platform_recommendations"]:
+            lines.append(
+                f"- **{recommendation['platform']}** · "
+                f"`{recommendation['selection_status']}`："
+                f"{recommendation['rationale']}；"
+                f"视觉方向：{recommendation['visual_direction']}"
+            )
 
     lines.extend(["", "## 视觉资产", ""])
     if not data["assets"]:

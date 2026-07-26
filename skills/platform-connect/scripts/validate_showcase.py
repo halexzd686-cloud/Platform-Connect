@@ -64,8 +64,19 @@ def validate(showcase: Path) -> list[str]:
         errors.append("showcase must not call fetch()")
     if "Platform Connect" not in html:
         errors.append("showcase title is missing")
-    if "repeat(7" not in css:
-        errors.append("seven-step layout contract is missing")
+    for marker in (
+        "summary-strip",
+        "package-shell",
+        "asset-gallery",
+        "delivery-board",
+        "trace-toggle",
+    ):
+        if marker not in combined:
+            errors.append(f"outcome-first showcase marker is missing: {marker}")
+    if "<img" not in app:
+        errors.append("showcase runtime must render delivered images")
+    if "data-platform-tab" not in app:
+        errors.append("showcase runtime must expose platform result switching")
 
     parser = CaseDataParser()
     parser.feed(html)
@@ -78,6 +89,9 @@ def validate(showcase: Path) -> list[str]:
     for field in ("run_id", "mode", "review_policy", "schema_version"):
         if not manifest.get(field):
             errors.append(f"embedded manifest missing {field}")
+    source = case.get("source", {}) if isinstance(case, dict) else {}
+    if source.get("read_status") != "complete":
+        errors.append("embedded source must record complete intake")
     return errors
 
 

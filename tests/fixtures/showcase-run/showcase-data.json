@@ -1,7 +1,10 @@
 {
   "source": {
-    "file_name": "AI 不会替代你的工作.md",
+    "file_name": "AI 不会替代你的工作.pdf",
     "title": "AI 不会替代你的工作，但会重新分配你的工作",
+    "input_type": "file",
+    "read_status": "complete",
+    "unit_label": "12 页",
     "summary_paragraphs": [
       "这篇文章讨论生成式 AI 如何改变知识工作的任务分配。",
       "真正需要保护的不是每项具体任务，而是目标、判断和最终责任。"
@@ -35,27 +38,18 @@
       "rationale": "保留专业判断，强调团队如何重新划分人机职责。"
     }
   ],
-  "visual_directions": [
+  "platform_recommendations": [
     {
-      "id": "EDITORIAL",
-      "name": "编辑部观点海报",
-      "fit": "用强标题和克制排版承载重新分工的判断。",
-      "platforms": "小红书 / LinkedIn",
-      "score": "92%"
+      "platform": "xiaohongshu",
+      "rationale": "以认知反差开场，用可收藏的判断框架承接观点。",
+      "visual_direction": "用强标题和克制排版承载重新分工的判断。",
+      "selection_status": "selected"
     },
     {
-      "id": "DIAGRAM",
-      "name": "任务重组解释图",
-      "fit": "把重复任务与人的判断拆成清晰关系。",
-      "platforms": "LinkedIn / 轮播页",
-      "score": "88%"
-    },
-    {
-      "id": "COLLAGE",
-      "name": "人机协作拼贴",
-      "fit": "表现两种能力并存，但避免机器人替代人的俗套。",
-      "platforms": "封面 / 开场帧",
-      "score": "79%"
+      "platform": "linkedin",
+      "rationale": "保留专业判断，强调团队如何重新划分人机职责。",
+      "visual_direction": "把重复任务与人的判断拆成清晰关系。",
+      "selection_status": "selected"
     }
   ],
   "decisions": {

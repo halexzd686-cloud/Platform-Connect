@@ -3,56 +3,113 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Platform Connect — Skill Execution</title>
+  <title>Platform Connect — Outcome Console</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark">PC</span>
-      <span>Platform Connect<small>SKILL EXECUTION · OFFLINE REPORT</small></span>
+      <span>Platform Connect<small>OUTCOME CONSOLE · OFFLINE REPORT</small></span>
     </div>
-    <div class="runtime"><i></i><span id="runtimeLabel">RUN LOADED</span></div>
+    <div class="runtime"><i></i><span id="runtimeLabel">DELIVERY LOADED</span></div>
     <div class="run-meta" id="runMeta"></div>
   </header>
 
-  <aside class="source-rail">
-    <div class="rail-label">SOURCE</div>
-    <div class="source-card">
-      <span class="file-mark">MD</span>
-      <div><strong id="sourceTitle">Source article</strong><small id="sourceMeta"></small></div>
-    </div>
-    <h2 id="sourceHeadline"></h2>
-    <div class="source-summary" id="sourceSummary"></div>
-    <footer>原文始终是事实来源；展示层不修改作者立场。</footer>
-  </aside>
-
-  <main class="stage">
-    <section class="hero">
-      <div>
-        <p class="eyebrow">A visible skill, not another AI app</p>
-        <h1>让一篇文章，沿着不同平台<br><em>生长出各自的表达</em></h1>
+  <div class="shell">
+    <aside class="source-rail">
+      <div class="rail-label"><span>SOURCE</span><span>01 / 01</span></div>
+      <div class="source-card">
+        <span class="file-mark" id="sourceType">DOC</span>
+        <div><strong id="sourceTitle">Source article</strong><small id="sourceMeta"></small></div>
       </div>
-      <div class="case-id" id="caseId"></div>
-    </section>
+      <p class="side-kicker">ORIGINAL THESIS</p>
+      <h2 id="sourceHeadline"></h2>
+      <div class="source-summary" id="sourceSummary"></div>
+      <div class="side-facts" id="sideFacts"></div>
+      <footer><span></span> 事实基线已锁定</footer>
+    </aside>
 
-    <nav class="stepper" id="stepper" aria-label="Skill execution steps"></nav>
-    <section class="screen" id="screen" aria-live="polite"></section>
-  </main>
+    <main class="stage">
+      <section class="hero" data-screen-label="交付摘要">
+        <div>
+          <p class="eyebrow">A finished story, ready to travel</p>
+          <h1>这一次，内容已经抵达<br><em>它该去的地方</em></h1>
+        </div>
+        <div class="outcome-copy">
+          <p id="outcomeSentence"></p>
+          <div class="case-id" id="caseId"></div>
+        </div>
+      </section>
 
-  <aside class="trace-rail">
-    <div class="rail-label">SKILL TRACE</div>
-    <div class="trace-summary">
-      <strong id="traceTitle"></strong>
-      <small>规则执行、决策来源与状态变化</small>
+      <section class="summary-strip" id="summaryStrip" aria-label="交付概览"></section>
+
+      <section class="section" data-screen-label="最终平台图文">
+        <div class="section-head">
+          <div><p>01 / FINAL PACKAGES</p><h2>最终平台图文</h2></div>
+          <span>切换只改变查看对象，不会重新触发生成。</span>
+        </div>
+        <div class="package-shell">
+          <nav class="package-tabs" id="packageTabs" aria-label="平台成品切换"></nav>
+          <div class="package-view" id="packageView"></div>
+        </div>
+      </section>
+
+      <section class="section" data-screen-label="事实基线">
+        <div class="section-head">
+          <div><p>02 / SOURCE FIDELITY</p><h2>这组内容从哪里来</h2></div>
+          <span>不同平台，共享同一组核心事实与作者立场。</span>
+        </div>
+        <div class="baseline-grid" id="baselineGrid"></div>
+      </section>
+
+      <section class="section" data-screen-label="最终图片">
+        <div class="section-head gallery-head">
+          <div><p>03 / ASSET GALLERY</p><h2>最终图片</h2></div>
+          <div class="filters" id="assetFilters" aria-label="图片平台筛选"></div>
+        </div>
+        <div class="asset-gallery" id="assetGallery"></div>
+      </section>
+
+      <section class="section" data-screen-label="交付清单">
+        <div class="section-head">
+          <div><p>04 / DELIVERY</p><h2>可带走的全部成果</h2></div>
+          <span>文件清单与可视化结果一一对应。</span>
+        </div>
+        <div class="delivery-board">
+          <div class="delivery-list" id="deliveryList"></div>
+          <aside class="delivery-status" id="deliveryStatus"></aside>
+        </div>
+      </section>
+
+      <section class="trace" id="trace">
+        <button class="trace-toggle" id="traceToggle" aria-expanded="false">
+          <span><strong>查看本次执行记录</strong><small>推荐、决策来源与执行过程默认折叠</small></span>
+          <b>＋</b>
+        </button>
+        <div class="trace-content"><div class="trace-inner" id="traceContent"></div></div>
+      </section>
+
+      <footer class="page-footer">
+        <span>PLATFORM CONNECT · OUTCOME CONSOLE</span>
+        <span>READ-ONLY DELIVERY REPORT · NO LIVE GENERATION</span>
+      </footer>
+    </main>
+  </div>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="图片预览">
+    <div class="lightbox-card">
+      <div class="lightbox-visual"><img id="lightboxImage" alt=""></div>
+      <div class="lightbox-info">
+        <button id="lightboxClose" aria-label="关闭图片预览">×</button>
+        <p>ASSET PREVIEW</p>
+        <h3 id="lightboxTitle"></h3>
+        <div id="lightboxMeta"></div>
+      </div>
     </div>
-    <div class="trace-list" id="traceList"></div>
-    <div class="gate-card">
-      <span>DECISION RECORD</span>
-      <strong id="gateLabel"></strong>
-    </div>
-  </aside>
+  </div>
 
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script id="case-data" type="application/json">__PLATFORM_CONNECT_CASE_JSON__</script>
   <script src="app.js"></script>
 </body>

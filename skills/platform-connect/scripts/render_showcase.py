@@ -56,6 +56,7 @@ def load_display_data(path: Path | None) -> dict:
 def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
     brief_text = read_text(run_root / "source-brief.md")
     brief_lines = clean_lines(brief_text)
+    manifest_source = manifest.get("source", {})
     copies = []
     for platform in manifest["platforms"]:
         copy_path = run_root / manifest["copy_files"][platform]
@@ -71,15 +72,36 @@ def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
         )
 
     locale = manifest["locale_assumptions"]
+    assets = manifest["assets"]
+    ready_assets = [
+        asset for asset in assets if asset.get("generation_status") == "ready"
+    ]
+    qa_passed = [
+        asset
+        for asset in ready_assets
+        if all(value == "passed" for value in asset.get("qa", {}).values())
+    ]
+    visual_ready = (
+        manifest.get("image_intent") != "yes"
+        or (
+            bool(ready_assets)
+            and len(ready_assets) == len(qa_passed)
+        )
+    )
     case = {
         "manifest": manifest,
         "locale_assumptions": locale,
         "source": {
-            "file_name": f"{manifest['article_slug']}.md",
+            "file_name": manifest_source.get("reference")
+            or f"{manifest['article_slug']}.md",
             "title": display.get("source", {}).get(
                 "title",
-                brief_lines[0] if brief_lines else manifest["article_slug"],
+                manifest_source.get("title")
+                or (brief_lines[0] if brief_lines else manifest["article_slug"]),
             ),
+            "input_type": manifest_source.get("input_type", "pasted"),
+            "media_type": manifest_source.get("media_type"),
+            "read_status": manifest_source.get("read_status"),
             "language": locale.get("source_language"),
             "summary_paragraphs": brief_lines[1:4],
         },
@@ -101,8 +123,20 @@ def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
             for platform in manifest["platforms"]
         ],
         "copies": copies,
-        "visual_directions": [],
-        "assets": manifest["assets"],
+        "platform_recommendations": manifest.get("platform_recommendations", []),
+        "assets": assets,
+        "outcome": {
+            "platform_count": len(manifest["platforms"]),
+            "copy_count": len(copies),
+            "asset_count": len(ready_assets),
+            "qa_passed_count": len(qa_passed),
+            "status": (
+                "ready"
+                if manifest.get("copy_approval") == "approved"
+                and visual_ready
+                else "in-progress"
+            ),
+        },
         "review_flags": manifest["review_flags"],
         "review_policy": manifest["review_policy"],
         "decision_provenance": manifest["decision_provenance"],
@@ -125,7 +159,8 @@ def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
         "brief",
         "platforms",
         "copies",
-        "visual_directions",
+        "platform_recommendations",
+        "outcome",
         "decisions",
         "trace",
         "deliverables",

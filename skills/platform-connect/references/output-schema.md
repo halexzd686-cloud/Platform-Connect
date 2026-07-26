@@ -33,14 +33,35 @@ The manifest is the machine-readable source of truth:
 
 ```json
 {
-  "schema_version": "1.2",
-  "skill_version": "1.1.0",
+  "schema_version": "1.3",
+  "skill_version": "1.2.0",
   "article_slug": "example",
   "run_id": "20260726-143500",
   "parent_run_id": null,
   "mode": "full",
   "review_policy": "compact",
   "platforms": ["douyin", "linkedin"],
+  "source": {
+    "input_type": "file",
+    "reference": "article.pdf",
+    "media_type": "application/pdf",
+    "title": "Example article",
+    "read_status": "complete"
+  },
+  "platform_recommendations": [
+    {
+      "platform": "douyin",
+      "rationale": "The article has a clear conflict suitable for a short spoken script.",
+      "visual_direction": "Task cards split between human judgment and automation.",
+      "selection_status": "selected"
+    },
+    {
+      "platform": "linkedin",
+      "rationale": "The argument addresses professional role design.",
+      "visual_direction": "Editorial diagram showing tasks unbundling from a role.",
+      "selection_status": "selected"
+    }
+  ],
   "locale_assumptions": {
     "source_language": "zh-CN",
     "target_language": "en",
@@ -85,6 +106,15 @@ Keep these as separate audit records even when one bundled reply or preauthoriza
 4. `visual_manifest_approval`.
 
 Each decision records provenance as `pending`, `explicit`, `inferred`, `profile`, `bundled`, or `preauthorized`. Never use `inferred` for `image_intent=yes`. Under `autopilot`, approved or affirmative decisions must be `explicit`, `profile`, or `preauthorized`.
+
+`source.input_type` is `pasted`, `file`, or `url`. Delivery requires
+`source.read_status: complete`; use `blocked` when pages, OCR passages, or the
+article body could not be retrieved.
+
+Keep `platform_recommendations` empty when platforms were explicit. Otherwise
+record two recommendations by default and no more than three. Every item needs a
+platform, rationale, preliminary article-specific visual direction, and
+`selection_status` of `selected` or `not-selected`.
 
 ## Asset
 
@@ -140,6 +170,9 @@ When `image_intent` is `no`, keep `assets` empty and offer only non-visual follo
   "source": {
     "file_name": "article.md",
     "title": "source title",
+    "input_type": "file",
+    "read_status": "complete",
+    "unit_label": "12 pages",
     "summary_paragraphs": []
   },
   "brief": {
@@ -152,7 +185,7 @@ When `image_intent` is `no`, keep `assets` empty and offer only non-visual follo
   },
   "platforms": [],
   "copies": [],
-  "visual_directions": [],
+  "platform_recommendations": [],
   "decisions": {},
   "trace": {},
   "deliverables": []
@@ -160,3 +193,7 @@ When `image_intent` is `no`, keep `assets` empty and offer only non-visual follo
 ```
 
 Showcase data is a presentation projection. It must not override decision states, asset states, run metadata, or review flags stored in `manifest.json`.
+
+The rendered board is outcome-first: final copy and ready image files are
+primary; brief, recommendations, decisions, and trace are supporting audit
+information. Do not add controls that imply selection, approval, or generation.

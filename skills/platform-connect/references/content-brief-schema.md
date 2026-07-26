@@ -2,6 +2,9 @@
 
 Create this brief once. Every platform version must derive from it.
 
+Before creating it, complete source intake using
+`source-intake.md` as routed from `SKILL.md`.
+
 ```yaml
 summary: faithful two-to-four sentence summary
 core_thesis: the single claim the content must deliver

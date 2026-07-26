@@ -49,7 +49,7 @@ class DeliveryPipelineTests(unittest.TestCase):
             manifest_path = run_root / "manifest.json"
             self.assertEqual(
                 json.loads(manifest_path.read_text(encoding="utf-8"))["skill_version"],
-                "1.1.0",
+                "1.2.0",
             )
 
             (run_root / "source-brief.md").write_text(
@@ -134,14 +134,22 @@ class DeliveryPipelineTests(unittest.TestCase):
 
     def test_generation_is_blocked_before_visual_approval(self) -> None:
         manifest = {
-            "schema_version": "1.2",
-            "skill_version": "1.1.0",
+            "schema_version": "1.3",
+            "skill_version": "1.2.0",
             "article_slug": "blocked",
             "run_id": "blocked-001",
             "parent_run_id": None,
             "mode": "full",
             "review_policy": "compact",
             "platforms": ["douyin"],
+            "source": {
+                "input_type": "pasted",
+                "reference": None,
+                "media_type": "text/plain",
+                "title": "Blocked example",
+                "read_status": "complete",
+            },
+            "platform_recommendations": [],
             "locale_assumptions": {
                 "source_language": "zh-CN",
                 "target_language": None,
@@ -376,6 +384,109 @@ class DeliveryPipelineTests(unittest.TestCase):
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             result = run_script("validate_manifest.py", str(manifest_path))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_file_source_and_platform_recommendations_are_recorded(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = run_script(
+                "prepare_workspace.py",
+                "document-intake",
+                "--platforms",
+                "xiaohongshu",
+                "x",
+                "--platform-source",
+                "inferred",
+                "--source-type",
+                "file",
+                "--source-ref",
+                "article.pdf",
+                "--source-title",
+                "AI 与工作重组",
+                "--source-media-type",
+                "application/pdf",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "source-001",
+            )
+            self.assertEqual(prepared.returncode, 0, prepared.stdout + prepared.stderr)
+            manifest_path = Path(json.loads(prepared.stdout)["manifest"])
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["source"]["input_type"], "file")
+            self.assertEqual(manifest["source"]["reference"], "article.pdf")
+            manifest["platform_recommendations"] = [
+                {
+                    "platform": "xiaohongshu",
+                    "rationale": "适合用收藏型结构拆解判断框架",
+                    "visual_direction": "编辑部观点海报",
+                    "selection_status": "selected",
+                },
+                {
+                    "platform": "x",
+                    "rationale": "适合用短线程表达核心观点",
+                    "visual_direction": "双语任务拆解图",
+                    "selection_status": "selected",
+                },
+            ]
+            manifest_path.write_text(
+                json.dumps(manifest, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            result = run_script("validate_manifest.py", str(manifest_path))
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_incomplete_source_blocks_delivery(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = run_script(
+                "prepare_workspace.py",
+                "blocked-source",
+                "--platforms",
+                "linkedin",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "source-002",
+            )
+            manifest_path = Path(json.loads(prepared.stdout)["manifest"])
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["source"]["read_status"] = "blocked"
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            result = run_script("validate_manifest.py", str(manifest_path))
+            self.assertNotEqual(result.returncode, 0)
+            errors = json.loads(result.stdout)["errors"]
+            self.assertTrue(any("completely read" in error for error in errors))
+
+    def test_single_platform_recommendation_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = run_script(
+                "prepare_workspace.py",
+                "weak-recommendation",
+                "--platforms",
+                "x",
+                "--platform-source",
+                "inferred",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "recommendation-001",
+            )
+            manifest_path = Path(json.loads(prepared.stdout)["manifest"])
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["platform_recommendations"] = [
+                {
+                    "platform": "x",
+                    "rationale": "适合短观点",
+                    "visual_direction": "观点卡片",
+                    "selection_status": "selected",
+                }
+            ]
+            manifest_path.write_text(
+                json.dumps(manifest, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            result = run_script("validate_manifest.py", str(manifest_path))
+            self.assertNotEqual(result.returncode, 0)
+            errors = json.loads(result.stdout)["errors"]
+            self.assertTrue(any("two or three" in error for error in errors))
 
     def test_script_failures_are_structured_json(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

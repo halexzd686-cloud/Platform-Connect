@@ -7,7 +7,7 @@ import argparse
 import re
 from pathlib import Path
 
-from _shared import SCHEMA_VERSION, emit, fail, load_json_object
+from _shared import PLATFORMS, SCHEMA_VERSION, emit, fail, load_json_object
 
 
 RATIO = re.compile(r"^\d{1,2}:\d{1,2}$")
@@ -15,6 +15,9 @@ SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
 APPROVALS = {"pending", "approved", "needs-revision"}
 IMAGE_INTENTS = {"pending", "yes", "no"}
 REVIEW_POLICIES = {"strict", "compact", "autopilot"}
+SOURCE_TYPES = {"pasted", "file", "url"}
+SOURCE_READ_STATES = {"pending", "complete", "blocked"}
+RECOMMENDATION_STATES = {"selected", "not-selected"}
 PROVENANCE = {
     "pending",
     "explicit",
@@ -41,6 +44,8 @@ REQUIRED = {
     "mode",
     "review_policy",
     "platforms",
+    "source",
+    "platform_recommendations",
     "locale_assumptions",
     "copy_approval",
     "image_intent",
@@ -87,6 +92,21 @@ def validate(data: dict) -> list[str]:
     if data.get("review_policy") not in REVIEW_POLICIES:
         errors.append("review_policy must be strict, compact, or autopilot")
 
+    source = data.get("source")
+    if not isinstance(source, dict):
+        errors.append("source must be an object")
+    else:
+        if source.get("input_type") not in SOURCE_TYPES:
+            errors.append("source.input_type must be pasted, file, or url")
+        if source.get("read_status") not in SOURCE_READ_STATES:
+            errors.append("source.read_status must be pending, complete, or blocked")
+        if source.get("read_status") != "complete":
+            errors.append("source must be completely read before delivery")
+        if not isinstance(source.get("title"), str) or not source.get("title"):
+            errors.append("source.title is required")
+        if source.get("input_type") in {"file", "url"} and not source.get("reference"):
+            errors.append("source.reference is required for file or url input")
+
     platforms = data.get("platforms", [])
     if not isinstance(platforms, list) or not platforms:
         errors.append("platforms must be a non-empty list")
@@ -95,6 +115,48 @@ def validate(data: dict) -> list[str]:
         errors.append("every platform must be a non-empty string")
     if len(platforms) != len(set(platforms)):
         errors.append("platforms contains duplicates")
+    unsupported_platforms = sorted(set(platforms) - PLATFORMS)
+    if unsupported_platforms:
+        errors.append(
+            "unsupported platforms: " + ", ".join(unsupported_platforms)
+        )
+
+    recommendations = data.get("platform_recommendations")
+    if not isinstance(recommendations, list):
+        errors.append("platform_recommendations must be a list")
+        recommendations = []
+    if len(recommendations) > 3:
+        errors.append("platform_recommendations must contain at most three items")
+    if recommendations and len(recommendations) < 2:
+        errors.append("platform_recommendations must contain two or three items")
+    recommended_platforms: set[str] = set()
+    selected_recommendations: set[str] = set()
+    for index, recommendation in enumerate(recommendations):
+        label = f"platform_recommendations[{index}]"
+        if not isinstance(recommendation, dict):
+            errors.append(f"{label} must be an object")
+            continue
+        platform = recommendation.get("platform")
+        if not isinstance(platform, str) or not platform:
+            errors.append(f"{label}.platform is required")
+        elif platform not in PLATFORMS:
+            errors.append(f"{label}.platform is unsupported")
+        elif platform in recommended_platforms:
+            errors.append(f"duplicate recommended platform: {platform}")
+        else:
+            recommended_platforms.add(platform)
+        if not recommendation.get("rationale"):
+            errors.append(f"{label}.rationale is required")
+        if not recommendation.get("visual_direction"):
+            errors.append(f"{label}.visual_direction is required")
+        if recommendation.get("selection_status") not in RECOMMENDATION_STATES:
+            errors.append(f"{label}.selection_status is invalid")
+        if recommendation.get("selection_status") == "selected":
+            selected_recommendations.add(platform)
+    if not selected_recommendations.issubset(set(platforms)):
+        errors.append("selected platform recommendations must appear in platforms")
+    if recommendations and not selected_recommendations:
+        errors.append("platform_recommendations must record the selected result")
 
     locale = data.get("locale_assumptions")
     if not isinstance(locale, dict):
