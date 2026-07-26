@@ -9,7 +9,7 @@ from pathlib import Path
 import shutil
 
 from _shared import emit, fail, load_json_object
-from validate_manifest import validate
+from validate_manifest import validate, validate_delivery
 
 
 TOKEN = "__PLATFORM_CONNECT_CASE_JSON__"
@@ -146,6 +146,7 @@ def main() -> int:
     try:
         manifest = load_json_object(args.manifest)
         errors = validate(manifest)
+        errors.extend(validate_delivery(manifest, args.manifest.resolve().parent))
         if errors:
             raise ValueError("; ".join(errors))
         display = load_display_data(args.data)

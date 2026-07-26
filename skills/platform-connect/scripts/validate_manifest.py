@@ -175,6 +175,44 @@ def validate(data: dict) -> list[str]:
     return errors
 
 
+def validate_delivery(
+    data: dict,
+    run_root: Path,
+    *,
+    require_showcase: bool = False,
+) -> list[str]:
+    errors: list[str] = []
+    root = run_root.resolve()
+
+    def require_file(value: object, label: str) -> None:
+        if not isinstance(value, str) or not value:
+            errors.append(f"{label} must be a non-empty relative file path")
+            return
+        candidate = (root / value).resolve()
+        if candidate != root and root not in candidate.parents:
+            errors.append(f"{label} escapes the run directory")
+        elif not candidate.is_file():
+            errors.append(f"{label} does not exist: {value}")
+
+    require_file("source-brief.md", "source brief")
+
+    copy_files = data.get("copy_files")
+    if isinstance(copy_files, dict):
+        for platform in data.get("platforms", []):
+            require_file(copy_files.get(platform), f"copy_files.{platform}")
+
+    for index, asset in enumerate(data.get("assets", [])):
+        if (
+            isinstance(asset, dict)
+            and asset.get("generation_status") == "ready"
+        ):
+            require_file(asset.get("file"), f"assets[{index}].file")
+
+    if require_showcase:
+        require_file(data.get("showcase_file"), "showcase_file")
+    return errors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("manifest", type=Path)
@@ -185,6 +223,7 @@ def main() -> int:
         return fail(error, manifest=str(args.manifest.resolve()))
 
     errors = validate(data)
+    errors.extend(validate_delivery(data, args.manifest.resolve().parent))
     payload = {
         "status": "failed" if errors else "passed",
         "manifest": str(args.manifest.resolve()),

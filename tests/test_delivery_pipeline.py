@@ -101,6 +101,8 @@ class DeliveryPipelineTests(unittest.TestCase):
                 json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
             )
+            image_path = run_root / "xiaohongshu" / "images" / "cover-01.png"
+            image_path.write_bytes(b"representative-image")
 
             validated = run_script("validate_manifest.py", str(manifest_path))
             self.assertEqual(validated.returncode, 0, validated.stdout + validated.stderr)
@@ -172,6 +174,59 @@ class DeliveryPipelineTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             errors = json.loads(result.stdout)["errors"]
             self.assertTrue(any("all visual gates" in error for error in errors))
+
+    def test_ready_asset_requires_a_real_delivery_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            prepared = run_script(
+                "prepare_workspace.py",
+                "missing-asset",
+                "--platforms",
+                "linkedin",
+                "--mode",
+                "full",
+                "--root",
+                str(root),
+                "--run-id",
+                "asset-001",
+            )
+            manifest_path = Path(json.loads(prepared.stdout)["manifest"])
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest.update(
+                {
+                    "copy_approval": "approved",
+                    "image_intent": "yes",
+                    "visual_direction_approval": "approved",
+                    "visual_manifest_approval": "approved",
+                    "assets": [
+                        {
+                            "id": "linkedin-cover-01",
+                            "platform": "linkedin",
+                            "asset_type": "cover",
+                            "purpose": "explain the thesis",
+                            "source_anchor": "core-thesis",
+                            "core_idea": "tasks change before roles disappear",
+                            "aspect_ratio": "4:5",
+                            "style_id": "editorial",
+                            "on_image_text": "TASKS CHANGE",
+                            "planning_status": "approved",
+                            "generation_status": "ready",
+                            "file": "linkedin/images/missing.png",
+                            "qa": {
+                                "facts": "passed",
+                                "text": "passed",
+                                "composition": "passed",
+                                "style": "passed",
+                            },
+                        }
+                    ],
+                }
+            )
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            result = run_script("validate_manifest.py", str(manifest_path))
+            self.assertNotEqual(result.returncode, 0)
+            errors = json.loads(result.stdout)["errors"]
+            self.assertTrue(any("does not exist" in error for error in errors))
 
     def test_script_failures_are_structured_json(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

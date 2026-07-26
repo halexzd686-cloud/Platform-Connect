@@ -7,7 +7,7 @@ import argparse
 from pathlib import Path
 
 from _shared import emit, fail, load_json_object
-from validate_manifest import validate
+from validate_manifest import validate, validate_delivery
 
 
 def main() -> int:
@@ -20,6 +20,13 @@ def main() -> int:
     except (OSError, ValueError) as error:
         return fail(error, manifest=str(args.manifest.resolve()))
     errors = validate(data)
+    errors.extend(
+        validate_delivery(
+            data,
+            args.manifest.resolve().parent,
+            require_showcase=True,
+        )
+    )
     if errors:
         emit({"status": "failed", "errors": errors})
         return 1
