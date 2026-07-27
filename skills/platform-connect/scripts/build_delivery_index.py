@@ -52,9 +52,8 @@ def main() -> int:
         "## 决策状态",
         "",
         f"- 文案确认：`{data['copy_approval']}`",
-        f"- 配图意图：`{data['image_intent']}`",
-        f"- 视觉方向：`{data['visual_direction_approval']}`",
-        f"- 资产清单：`{data['visual_manifest_approval']}`",
+        f"- 生图提示词：`{data['visual_prompt_intent']}`",
+        f"- 提示词确认：`{data['visual_prompt_approval']}`",
         "",
         "## 决策来源",
         "",
@@ -69,9 +68,11 @@ def main() -> int:
     for platform in data["platforms"]:
         copy_path = data["copy_files"].get(platform, "未记录")
         count = sum(
-            1 for asset in data["assets"] if asset.get("platform") == platform
+            1
+            for prompt in data["visual_prompts"]
+            if prompt.get("platform") == platform
         )
-        lines.append(f"- **{platform}**：文案 `{copy_path}`；视觉资产 {count} 张")
+        lines.append(f"- **{platform}**：文案 `{copy_path}`；生图提示词 {count} 条")
 
     if data["platform_recommendations"]:
         lines.extend(["", "## 平台推荐记录", ""])
@@ -83,14 +84,14 @@ def main() -> int:
                 f"视觉方向：{recommendation['visual_direction']}"
             )
 
-    lines.extend(["", "## 视觉资产", ""])
-    if not data["assets"]:
-        lines.append("尚未规划视觉资产。")
-    for asset in data["assets"]:
-        file_path = asset.get("file") or "尚未生成"
+    lines.extend(["", "## 生图提示词", ""])
+    if not data["visual_prompts"]:
+        lines.append("本次未交付生图提示词。")
+    for prompt in data["visual_prompts"]:
         lines.append(
-            f"- `{asset['id']}` · {asset['platform']} · {asset['asset_type']} · "
-            f"{asset['aspect_ratio']} · {asset['generation_status']} · {file_path}"
+            f"- `{prompt['id']}` · {prompt['platform']} · "
+            f"{prompt['asset_type']} · {prompt['aspect_ratio']} · "
+            f"{prompt['status']}"
         )
 
     if data.get("review_flags"):
@@ -116,7 +117,7 @@ def main() -> int:
             "status": "created",
             "index": str(out.resolve()),
             "platform_count": len(data["platforms"]),
-            "asset_count": len(data["assets"]),
+            "visual_prompt_count": len(data["visual_prompts"]),
         }
     )
     return 0

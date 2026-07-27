@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.3",
-  "skill_version": "1.2.0",
+  "schema_version": "1.4",
+  "skill_version": "1.3.0",
   "article_slug": "ai-work-reallocation",
   "run_id": "case-20260726",
   "parent_run_id": null,
@@ -13,6 +13,7 @@
   "source": {
     "input_type": "file",
     "reference": "AI 不会替代你的工作.pdf",
+    "supporting_references": [],
     "media_type": "application/pdf",
     "title": "AI 不会替代你的工作",
     "read_status": "complete"
@@ -37,25 +38,22 @@
     "market": "global"
   },
   "copy_approval": "approved",
-  "image_intent": "yes",
-  "visual_direction_approval": "approved",
-  "visual_manifest_approval": "approved",
+  "visual_prompt_intent": "yes",
+  "visual_prompt_approval": "approved",
+  "visual_prompt_limit": 3,
   "decision_provenance": {
     "brief": "bundled",
     "platforms": "explicit",
     "copy_approval": "bundled",
-    "image_intent": "bundled",
-    "visual_direction_approval": "bundled",
-    "visual_manifest_approval": "bundled"
+    "visual_prompt_intent": "explicit",
+    "visual_prompt_approval": "bundled"
   },
-  "global_style_id": "editorial-poster",
-  "platform_overrides": {},
   "copy_files": {
     "xiaohongshu": "xiaohongshu/copy.md",
     "linkedin": "linkedin/copy.md"
   },
   "showcase_file": "showcase/index.html",
-  "assets": [
+  "visual_prompts": [
     {
       "id": "xiaohongshu-cover-01",
       "platform": "xiaohongshu",
@@ -64,18 +62,16 @@
       "source_anchor": "core-thesis",
       "core_idea": "AI 先重组任务，而不是直接替代岗位",
       "aspect_ratio": "3:4",
-      "style_id": "editorial-poster",
+      "visual_direction": "克制的编辑部观点海报，以任务卡片重新排列构成视觉中心",
       "on_image_text": "重新分工",
-      "custom_prompt": "",
-      "planning_status": "approved",
-      "generation_status": "ready",
-      "file": "xiaohongshu/images/cover-01.svg",
-      "qa": {
-        "facts": "passed",
-        "text": "passed",
-        "composition": "passed",
-        "style": "passed"
-      }
+      "prompt": "小红书 3:4 竖版封面，克制的中文编辑部海报。画面中心是被重新排列的任务卡片，一侧为重复、可描述、可快速验证的任务，另一侧为目标、判断和责任；表达 AI 先重组任务而不是让岗位消失。灰白纸张、森林绿结构线、少量棕色强调，留出顶部标题安全区，画面简洁、可收藏。",
+      "negative_prompt": "不要机器人头像，不要科幻霓虹，不要虚构效率数字，不要暗示所有岗位都会消失，不要密集小字，不要水印。",
+      "factual_invariants": [
+        "AI 改变岗位内部任务组合，而不是证明岗位必然消失",
+        "目标、判断和最终责任仍由人承担"
+      ],
+      "tool_notes": "若模型文字能力不稳定，生成无字底图后再排版“重新分工”。",
+      "status": "approved"
     },
     {
       "id": "linkedin-carousel-01",
@@ -85,18 +81,16 @@
       "source_anchor": "content-unit-02",
       "core_idea": "重复任务可以交给 AI，责任仍然属于人",
       "aspect_ratio": "4:5",
-      "style_id": "editorial-diagram",
+      "visual_direction": "专业编辑图解，将任务自动化与人的判断责任拆成两层",
       "on_image_text": "TASKS × JUDGMENT",
-      "custom_prompt": "",
-      "planning_status": "approved",
-      "generation_status": "ready",
-      "file": "linkedin/images/carousel-01.svg",
-      "qa": {
-        "facts": "passed",
-        "text": "passed",
-        "composition": "passed",
-        "style": "passed"
-      }
+      "prompt": "LinkedIn 4:5 editorial diagram for a professional audience. Show a role decomposed into task cards: repeatable and verifiable work can move toward AI assistance, while goals, judgment and accountability remain clearly connected to a human decision maker. Restrained forest green, warm gray and brown palette, precise grid, generous whitespace, credible business-publication tone, crop-safe composition.",
+      "negative_prompt": "No humanoid robot, no job-loss alarmism, no invented statistics, no corporate logos, no tiny illegible labels, no glossy sci-fi interface.",
+      "factual_invariants": [
+        "Task redistribution is not the same as total job replacement",
+        "Humans retain final accountability"
+      ],
+      "tool_notes": "Prefer a no-text diagram if the chosen model cannot render TASKS × JUDGMENT reliably.",
+      "status": "approved"
     }
   ],
   "review_flags": [

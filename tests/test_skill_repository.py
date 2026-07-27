@@ -90,7 +90,8 @@ class SkillRepositoryTests(unittest.TestCase):
         self.assertIn("`compact` is the default", skill)
         for name in ("Compact", "Strict", "Autopilot"):
             self.assertIn(f"## {name}", policy)
-        self.assertIn("Never use `inferred` for `image_intent=yes`", policy)
+        self.assertIn("Never call an image-generation", skill)
+        self.assertIn("visual prompt approval", policy.lower())
 
     def test_direct_source_intake_and_recommendations_are_routed(self) -> None:
         skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
@@ -104,8 +105,9 @@ class SkillRepositoryTests(unittest.TestCase):
         for extension in (".txt", ".md", ".docx", ".pdf", ".html"):
             self.assertIn(extension, intake)
         self.assertIn("Article URL", intake)
+        self.assertIn("Do not fetch a URL merely because", intake)
         self.assertIn("two platforms by default", skill)
-        self.assertIn("platform selection, image intent", policy)
+        self.assertIn("whether to include visual prompts", policy)
 
     def test_showcase_is_outcome_first(self) -> None:
         html = (
@@ -115,9 +117,21 @@ class SkillRepositoryTests(unittest.TestCase):
             SKILL / "assets" / "static-showcase" / "app.js"
         ).read_text(encoding="utf-8")
         self.assertIn("OUTCOME CONSOLE", html)
-        self.assertIn("最终平台图文", html)
-        self.assertIn("<img", app)
+        self.assertIn("最终平台文案与提示词", html)
+        self.assertIn("可直接使用的生图提示词", html)
+        self.assertIn("visual_prompts", app)
+        self.assertNotIn("<img", app)
         self.assertIn("platform_recommendations", app)
+
+    def test_skill_never_calls_image_tools(self) -> None:
+        skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+        handoff = (SKILL / "references" / "visual-handoff.md").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Never call an image-generation", skill)
+        self.assertIn("Do not generate preview images", handoff)
+        self.assertIn("Do not use `view_image`", handoff)
+        self.assertNotIn("once per distinct asset", skill)
 
     def test_behavior_eval_catalog_is_actionable(self) -> None:
         path = REPO_ROOT / "tests" / "evals" / "platform-connect.json"
@@ -151,7 +165,7 @@ class SkillRepositoryTests(unittest.TestCase):
     def test_readme_documents_project_install_without_tracking_copies(self) -> None:
         readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn(
-            "npx skills add halexzd686-cloud/Platform-Connect",
+            "npx skills add https://github.com/halexzd686-cloud/Platform-Connect",
             readme,
         )
         self.assertIn("--agent codex", readme)

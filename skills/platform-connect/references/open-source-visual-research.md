@@ -26,7 +26,7 @@ Research checked on 2026-07-21. This project adopts structural methods and write
 
 - Source: <https://github.com/YouMind-OpenLab/nano-banana-pro-prompts-recommend-skill>
 - License: MIT
-- Useful method: route a large prompt collection by use case, retrieve only a few relevant candidates, let the user choose, then remix for the actual content. This supports the product rule that recommendations precede generation.
+- Useful method: route a large prompt collection by use case, retrieve only a few relevant candidates, let the user choose, then remix for the actual content. This supports the product rule that the Skill delivers a small, deliberate prompt set rather than expanding into generation.
 
 ### Qwen-Image prompt utilities
 
@@ -50,13 +50,13 @@ Research checked on 2026-07-21. This project adopts structural methods and write
 
 - Source: <https://github.com/Comfy-Org/ComfyUI>
 - License: GPL-3.0
-- Useful method: represent complex generation as explicit, inspectable workflows and keep model/tool execution separate from the editorial asset manifest. Do not copy GPL-covered implementation code into this skill.
+- Useful method: represent complex prompt intent as explicit, inspectable fields and keep any downstream model/tool execution outside the Skill. Do not copy GPL-covered implementation code into this skill.
 
 ### ComfyUI workflow templates
 
 - Source: <https://github.com/Comfy-Org/workflow_templates>
 - License: MIT
-- Useful method: pair reusable workflow templates with a manifest and schema validation. This is a useful model for validating our own asset manifests without adopting ComfyUI as a required runtime.
+- Useful method: pair reusable workflow templates with a manifest and schema validation. This is a useful model for validating our prompt packages without adopting ComfyUI—or any image runtime—as a dependency.
 
 ### Stable Diffusion Dynamic Prompts
 

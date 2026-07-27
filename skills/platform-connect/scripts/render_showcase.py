@@ -72,20 +72,13 @@ def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
         )
 
     locale = manifest["locale_assumptions"]
-    assets = manifest["assets"]
-    ready_assets = [
-        asset for asset in assets if asset.get("generation_status") == "ready"
-    ]
-    qa_passed = [
-        asset
-        for asset in ready_assets
-        if all(value == "passed" for value in asset.get("qa", {}).values())
-    ]
-    visual_ready = (
-        manifest.get("image_intent") != "yes"
+    visual_prompts = manifest["visual_prompts"]
+    prompt_ready = (
+        manifest.get("visual_prompt_intent") != "yes"
         or (
-            bool(ready_assets)
-            and len(ready_assets) == len(qa_passed)
+            bool(visual_prompts)
+            and manifest.get("visual_prompt_approval") == "approved"
+            and all(item.get("status") == "approved" for item in visual_prompts)
         )
     )
     case = {
@@ -124,16 +117,15 @@ def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
         ],
         "copies": copies,
         "platform_recommendations": manifest.get("platform_recommendations", []),
-        "assets": assets,
+        "visual_prompts": visual_prompts,
         "outcome": {
             "platform_count": len(manifest["platforms"]),
             "copy_count": len(copies),
-            "asset_count": len(ready_assets),
-            "qa_passed_count": len(qa_passed),
+            "visual_prompt_count": len(visual_prompts),
             "status": (
                 "ready"
                 if manifest.get("copy_approval") == "approved"
-                and visual_ready
+                and prompt_ready
                 else "in-progress"
             ),
         },
@@ -160,6 +152,7 @@ def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
         "platforms",
         "copies",
         "platform_recommendations",
+        "visual_prompts",
         "outcome",
         "decisions",
         "trace",

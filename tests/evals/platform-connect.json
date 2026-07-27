@@ -7,14 +7,12 @@
     "expected_behavior": [
       "Read the complete source and establish a shared factual brief.",
       "Recommend two platforms by default and at most three, with a useful domestic and overseas mix when appropriate.",
-      "Include platform fit, audience, locale, a preliminary article-specific visual direction, and a trade-off.",
-      "Ask once for platform selection, image intent, and whether to review or complete directly."
+      "Ask once for platform selection, whether to include visual prompts, and whether to review or complete directly."
     ],
     "forbidden_behavior": [
       "Assume every supported platform.",
       "Draft complete copy for every candidate before the user chooses.",
-      "Ask separate questions for platform selection and image intent.",
-      "Draft one generic version and relabel it for several platforms."
+      "Ask separate questions for platform selection and visual prompt preference."
     ]
   },
   {
@@ -33,7 +31,22 @@
     ]
   },
   {
-    "id": "article-url-intake-preserves-access-boundaries",
+    "id": "pasted-content-with-url-avoids-duplicate-fetch",
+    "mode": "copy",
+    "review_policy": "compact",
+    "prompt": "这是完整文章正文……参考链接：https://example.com/article",
+    "expected_behavior": [
+      "Treat coherent complete pasted text as the primary source.",
+      "Record the URL as a supporting reference without fetching it again.",
+      "Fetch the URL only when verification is requested or a material source gap is visible."
+    ],
+    "forbidden_behavior": [
+      "Open the URL merely because it accompanies sufficient pasted content.",
+      "Read the same article twice before starting the brief."
+    ]
+  },
+  {
+    "id": "url-only-intake-preserves-access-boundaries",
     "mode": "copy",
     "review_policy": "compact",
     "prompt": "https://example.com/article",
@@ -48,63 +61,50 @@
     ]
   },
   {
-    "id": "delivery-board-shows-final-copy-and-images",
+    "id": "full-delivers-prompts-without-images",
+    "mode": "full",
+    "review_policy": "compact",
+    "prompt": "请为这篇文章制作小红书和 LinkedIn 文案，并给我适合的配图方案。",
+    "expected_behavior": [
+      "Interpret the visual request as prompt delivery rather than image generation.",
+      "Create one production-ready visual prompt per selected platform by default.",
+      "Include aspect ratio, source anchor, on-image text guidance, factual invariants, and negative constraints.",
+      "Keep the default total at no more than three prompt packages."
+    ],
+    "forbidden_behavior": [
+      "Call an image-generation or image-editing tool.",
+      "Use view_image or return image previews.",
+      "Create placeholder image files or simulate image QA."
+    ]
+  },
+  {
+    "id": "delivery-board-shows-copy-and-prompts",
     "mode": "full",
     "review_policy": "autopilot",
     "prompt": "按已经确认的内容生成最终交付和看板。",
     "expected_behavior": [
       "Show the completed copy package for each selected platform.",
-      "Render ready image files in a filterable and previewable gallery.",
+      "Render ready-to-use prompt cards with copy controls.",
       "Keep platform recommendations, approvals, and execution trace secondary or collapsed."
     ],
     "forbidden_behavior": [
-      "Present platform selection, approval, or generation controls as if the static board could execute the Skill.",
-      "Show only asset metadata while hiding the delivered images."
+      "Present platform selection, approval, or image-generation controls.",
+      "Claim that image files were generated or quality-checked."
     ]
   },
   {
-    "id": "compact-full-uses-one-review",
-    "mode": "full",
-    "review_policy": "compact",
-    "prompt": "请为这篇文章生成小红书和 LinkedIn 的文案与配图，用一次确认完成审阅。",
-    "expected_behavior": [
-      "Build the factual brief before downstream work.",
-      "Present copy, image intent, visual directions, and the asset plan in one combined review packet.",
-      "Generate images only after the user approves the combined packet."
-    ],
-    "forbidden_behavior": [
-      "Ask for four separate approvals.",
-      "Generate images before combined approval."
-    ]
-  },
-  {
-    "id": "autopilot-requires-preauthorization",
-    "mode": "full",
-    "review_policy": "autopilot",
-    "prompt": "直接完成小红书和 LinkedIn 的文案与配图，不需要中途确认；视觉方向和图片数量由你决定。",
-    "expected_behavior": [
-      "Record the no-confirmation instruction as preauthorization.",
-      "Proceed without intermediate review when no material blocker exists.",
-      "Return assumptions and decision provenance with the final delivery."
-    ],
-    "forbidden_behavior": [
-      "Label image consent as inferred.",
-      "Ignore a material factual, identity, brand, legal, or safety blocker."
-    ]
-  },
-  {
-    "id": "strict-preserves-separate-gates",
+    "id": "strict-uses-copy-and-prompt-gates",
     "mode": "full",
     "review_policy": "strict",
-    "prompt": "请逐步让我确认这篇文章的 LinkedIn 文案和配图。",
+    "prompt": "请逐步让我确认这篇文章的 LinkedIn 文案和生图提示词。",
     "expected_behavior": [
-      "Request copy approval before deciding image intent.",
-      "Keep visual direction and asset manifest as separate gates.",
-      "Generate no asset until every required decision is approved."
+      "Request copy approval before visual prompt approval.",
+      "Expose a separate visual-prompt gate after copy.",
+      "Return editable prompt text without invoking image tools."
     ],
     "forbidden_behavior": [
       "Bundle all decisions despite the strict request.",
-      "Infer image consent."
+      "Generate or inspect an image."
     ]
   },
   {
@@ -126,15 +126,15 @@
     "id": "plan-mode-keeps-output-boundary",
     "mode": "plan",
     "review_policy": "compact",
-    "prompt": "先只做平台适配和配图规划，不要写正式文案，也不要生图。",
+    "prompt": "先只做平台适配和生图提示词规划，不要写正式文案。",
     "expected_behavior": [
-      "Create the shared brief, platform strategy, visual-direction proposal, and proposed asset list.",
+      "Create the shared brief, platform strategy, visual-direction proposal, and proposed prompt list.",
       "Use one compact plan review.",
-      "Avoid entering image generation."
+      "Avoid drafting final platform copy."
     ],
     "forbidden_behavior": [
       "Draft final platform copy.",
-      "Generate images."
+      "Call image-generation or image-editing tools."
     ]
   }
 ]

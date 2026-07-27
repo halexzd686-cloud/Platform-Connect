@@ -1,58 +1,47 @@
-# Visual handoff
+# Visual prompt handoff
 
-Use this after reading the full source. In `plan`, propose directions and assets without generating copy or images. In `full`, enter the planning branch as part of a compact review, a strict visual gate, or an autopilot run with recorded image authorization.
+Use this after reading the source and building the shared brief. This Skill delivers
+image-generation prompts only. Never call an image-generation or image-editing tool, inspect
+generated images, or embed image files.
 
-## Interaction sequence
+## Prompt-first sequence
 
-1. Enter the planning branch after the shared brief and platform strategy. Enter generation only when `image_intent=yes` has explicit, bundled, profile, or preauthorized provenance.
-2. Summarize the visual problem: audience, emotional register, abstract concepts, and platform contexts.
-3. Classify the source's primary industry and communication job, then apply the industry route already selected through `SKILL.md`.
-4. Recommend three to five distinct visual directions. Explain why each direction fits this particular article and include one concise editable sample prompt per direction.
-5. In `strict`, let the user choose one global main style or `自定义提示词`. In `compact`, include the recommended choice in the combined review. In `autopilot`, select it only under recorded delegation.
-6. Allow per-platform overrides for style, aspect ratio, or asset type.
-7. Always include:
-   - refresh recommendations;
-   - custom prompt input;
-   - no-images option.
-8. Build an editable proposed asset list or manifest. Recommend the number of images dynamically; do not force a fixed count.
-9. In `plan`, apply the selected review policy and stop before generation.
-10. In `full`, call an image-generation tool one asset at a time only after the manifest records valid approval or preauthorization.
+1. Summarize the visual problem: audience, communication job, emotional register, abstract concepts, and platform context.
+2. Classify the source's primary industry and communication job, then use the routed industry constraints.
+3. Create one recommended prompt package per selected platform by default.
+4. Limit the default delivery to three prompt packages total. Add alternatives only when the user explicitly asks for them.
+5. Choose the platform-appropriate asset type and aspect ratio.
+6. Ground each prompt in one source anchor and one communication job.
+7. Preserve names, numbers, products, people, locations, quotations, and other factual invariants.
+8. Keep on-image text short and exact. Recommend leaving text blank when image models are likely to render it poorly.
+9. Include an editable main prompt, negative constraints, and practical tool notes.
+10. In `compact`, include prompt packages in the combined review. In `strict`, expose a separate visual-prompt gate. In `autopilot`, deliver them directly.
 
-## Style recommendation fields
+If the user supplies a custom prompt, keep it as a first-class input. Reconcile it with source
+facts and platform constraints instead of replacing its creative direction.
 
-```yaml
-id: stable-style-id
-name: user-facing name
-fit_reason: why it matches the actual article
-visual_language: composition, medium, palette, texture, and typography
-best_for: relevant platforms and asset types
-risk: likely mismatch or trade-off
-sample_prompt: concise, editable prompt grounded in the source article
-```
-
-## Asset manifest fields
+## Prompt package fields
 
 ```yaml
-platform: youtube-shorts
+id: stable-prompt-id
+platform: xiaohongshu
 asset_type: cover | opening-keyframe | explainer | chapter-card | carousel-page
-purpose: the single communication job of this image
+purpose: the single communication job
 source_anchor: content brief unit or protected claim
 core_idea: one idea only
 aspect_ratio: platform-appropriate ratio
-style_id: global style or platform override
-visual_metaphor: optional physical or spatial metaphor
-on_image_text: short, editable labels
-custom_prompt: optional user instruction
-factual_invariants: people, products, anatomy, numbers, locations, or evidence that must remain accurate
-brand_constraints: exact logo, product geometry, packaging, type, and brand colors when applicable
-avoid: industry-specific safety, compliance, stereotype, and visual-quality constraints
-planning_status: proposed | edited | approved
-generation_status: not-requested | generating | ready | needs-review
+visual_direction: composition, medium, palette, texture, and typography
+on_image_text: exact short text or empty
+prompt: production-ready positive prompt grounded in the article
+negative_prompt: factual, safety, stereotype, typography, and quality constraints
+factual_invariants: facts that must remain accurate
+tool_notes: optional model-agnostic guidance such as crop-safe placement
+status: proposed | edited | approved
 ```
 
 ## Prompt assembly
 
-Normalize each confirmed asset into this order:
+Normalize each package into this order:
 
 ```text
 Use case and asset type
@@ -63,14 +52,26 @@ Style and medium
 Composition and crop-safe placement
 Lighting and mood
 Palette, materials, and texture
-Exact on-image text
+Exact on-image text or no-text instruction
 Factual invariants
-Brand constraints
-Constraints and avoid list
+Brand and safety constraints
+Negative constraints
 ```
 
-Keep one prompt per distinct asset. For revisions, change one variable at a time and repeat all invariants.
+Write self-contained prompts that can be copied into different image tools. Do not mention a
+specific provider unless the user asks for provider-specific syntax.
+
+## Efficiency boundaries
+
+- Do not generate preview images.
+- Do not use `view_image`.
+- Do not create placeholder raster or SVG assets.
+- Do not simulate visual QA for an image that does not exist.
+- Do not expand one article into a multi-image campaign unless explicitly requested.
+- Prefer one strong prompt per platform over several generic style alternatives.
 
 ## Xiaohei preset
 
-Xiaohei can be offered when hand-drawn explanatory diagrams suit the source. It should remain optional and may be used only after the attribution requirements routed through `SKILL.md` have been checked.
+Xiaohei can be offered when hand-drawn explanatory diagrams fit the article. Keep it optional
+and apply the attribution requirements routed through `SKILL.md` before reusing derived rules or
+examples.

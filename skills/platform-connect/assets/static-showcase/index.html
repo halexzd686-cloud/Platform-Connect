@@ -44,9 +44,9 @@
 
       <section class="summary-strip" id="summaryStrip" aria-label="交付概览"></section>
 
-      <section class="section" data-screen-label="最终平台图文">
+      <section class="section" data-screen-label="最终平台内容">
         <div class="section-head">
-          <div><p>01 / FINAL PACKAGES</p><h2>最终平台图文</h2></div>
+          <div><p>01 / FINAL PACKAGES</p><h2>最终平台文案与提示词</h2></div>
           <span>切换只改变查看对象，不会重新触发生成。</span>
         </div>
         <div class="package-shell">
@@ -63,12 +63,12 @@
         <div class="baseline-grid" id="baselineGrid"></div>
       </section>
 
-      <section class="section" data-screen-label="最终图片">
+      <section class="section" data-screen-label="生图提示词">
         <div class="section-head gallery-head">
-          <div><p>03 / ASSET GALLERY</p><h2>最终图片</h2></div>
-          <div class="filters" id="assetFilters" aria-label="图片平台筛选"></div>
+          <div><p>03 / VISUAL PROMPTS</p><h2>可直接使用的生图提示词</h2></div>
+          <div class="filters" id="promptFilters" aria-label="提示词平台筛选"></div>
         </div>
-        <div class="asset-gallery" id="assetGallery"></div>
+        <div class="prompt-gallery" id="promptGallery"></div>
       </section>
 
       <section class="section" data-screen-label="交付清单">
@@ -95,18 +95,6 @@
         <span>READ-ONLY DELIVERY REPORT · NO LIVE GENERATION</span>
       </footer>
     </main>
-  </div>
-
-  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="图片预览">
-    <div class="lightbox-card">
-      <div class="lightbox-visual"><img id="lightboxImage" alt=""></div>
-      <div class="lightbox-info">
-        <button id="lightboxClose" aria-label="关闭图片预览">×</button>
-        <p>ASSET PREVIEW</p>
-        <h3 id="lightboxTitle"></h3>
-        <div id="lightboxMeta"></div>
-      </div>
-    </div>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

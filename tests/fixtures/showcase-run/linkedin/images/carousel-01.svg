@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1250" viewBox="0 0 1000 1250">
-  <rect width="1000" height="1250" fill="#1f2923"/>
-  <path d="M0 300H1000M0 760H1000M250 0V1250M690 0V1250" stroke="#425147" stroke-width="2"/>
-  <text x="70" y="110" fill="#b7c2b9" font-family="monospace" font-size="26">FIELD NOTE / HUMAN × MACHINE</text>
-  <text x="70" y="690" fill="#f6f4ef" font-family="serif" font-size="92" font-weight="700">AI unbundles</text>
-  <text x="70" y="800" fill="#f6f4ef" font-family="serif" font-size="92" font-weight="700">the job first.</text>
-  <rect x="650" y="1000" width="280" height="110" fill="#8a684f"/>
-  <text x="688" y="1065" fill="#fbfaf6" font-family="sans-serif" font-size="27">KEEP JUDGMENT</text>
-</svg>

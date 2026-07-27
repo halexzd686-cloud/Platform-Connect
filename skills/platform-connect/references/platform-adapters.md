@@ -19,7 +19,7 @@ These are editorial defaults, not a substitute for checking current publishing s
 - [Threads](#threads)
 - [Pinterest](#pinterest)
 - [Snapchat Spotlight](#snapchat-spotlight)
-- [Cross-platform QA](#cross-platform-qa)
+- [Cross-platform content QA](#cross-platform-content-qa)
 
 ## Douyin
 
@@ -109,8 +109,8 @@ These are editorial defaults, not a substitute for checking current publishing s
 
 - Turn the article into a saveable utility: a checklist, guide, comparison, process, or inspiration board.
 - Make the title and description search-friendly without promising results unsupported by the source.
-- Plan vertical visual assets with a clear first-frame value proposition.
-- Output: pin title options, pin description, on-image headline, asset concept, CTA.
+- Plan vertical visual prompts with a clear first-frame value proposition.
+- Output: pin title options, pin description, on-image headline, prompt-ready visual concept, CTA.
 
 ## Snapchat Spotlight
 
@@ -119,7 +119,7 @@ These are editorial defaults, not a substitute for checking current publishing s
 - Localize references, humor, and CTA for the selected market.
 - Output: hook options, spoken script, on-screen beat list, caption, CTA, suggested duration.
 
-## Cross-platform QA
+## Cross-platform content QA
 
 - Each version should sound native to its destination, not merely differ in length.
 - Hooks, script, cover text, and CTA must promise the same outcome.

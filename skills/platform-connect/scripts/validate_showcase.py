@@ -67,14 +67,16 @@ def validate(showcase: Path) -> list[str]:
     for marker in (
         "summary-strip",
         "package-shell",
-        "asset-gallery",
+        "prompt-gallery",
         "delivery-board",
         "trace-toggle",
     ):
         if marker not in combined:
             errors.append(f"outcome-first showcase marker is missing: {marker}")
-    if "<img" not in app:
-        errors.append("showcase runtime must render delivered images")
+    if "visual_prompts" not in app:
+        errors.append("showcase runtime must render visual prompt packages")
+    if "<img" in app:
+        errors.append("showcase runtime must not render generated images")
     if "data-platform-tab" not in app:
         errors.append("showcase runtime must expose platform result switching")
 

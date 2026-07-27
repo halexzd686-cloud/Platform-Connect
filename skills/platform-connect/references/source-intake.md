@@ -16,11 +16,22 @@ Accept the source with no special prompt ceremony. If the user attaches a docume
 
 Do not require the user to restate content already available in the attachment or URL.
 
+## Multiple-source precedence
+
+When the same request contains both pasted article text and a URL:
+
+1. Treat the pasted text as the primary source when it is coherent and appears complete for the requested task.
+2. Record the URL as a canonical or supporting reference without fetching it again.
+3. Retrieve the URL only when the user asks for verification, the pasted text is clearly an excerpt, or a missing section materially blocks accurate adaptation.
+4. If retrieval is needed, explain the gap being checked and do not reread content already present.
+
+Do not fetch a URL merely because it appears beside sufficient pasted content.
+
 ## Intake procedure
 
 1. Identify the input type from the attachment, URL, or pasted content.
 2. Use the host capability that matches the format. Do not assume a particular vendor or local library.
-3. Read the complete article before summarizing or recommending platforms.
+3. Read the complete available article before summarizing or recommending platforms. Apply multiple-source precedence before opening a URL.
 4. Separate article content from navigation, comments, advertisements, related links, and page chrome.
 5. Record the source title, reference, media type, read status, and useful anchors in the manifest or showcase data.
 6. Build `source-brief.md` from the extracted article, not from metadata or an excerpt.

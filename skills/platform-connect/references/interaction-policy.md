@@ -18,12 +18,12 @@ Use by default.
 1. Read the full source and build the factual brief.
 2. Use explicitly named platforms. If none are named, return one compact recommendation packet with two or three candidates. Prefer a useful domestic and overseas mix when the article and audience support both.
 3. For each candidate, include platform fit, audience, language and market, a preliminary article-specific visual direction, and one trade-off. Do not draft every candidate before the user chooses.
-4. Ask for platform selection, image intent, and completion preference in the same reply. Accept natural language; a compact reply such as `小红书 + X；配图；按推荐直接完成` is sufficient.
+4. Ask for platform selection, whether to include visual prompts, and completion preference in the same reply. Accept natural language; a compact reply such as `小红书 + X；需要生图提示词；按推荐直接完成` is sufficient.
 5. If the user authorizes direct completion, continue under `autopilot` with the recorded scope. Otherwise produce one combined review packet:
    - factual brief and review flags;
    - platform and locale assumptions;
    - editable platform copy;
-   - for `full`, image intent, visual directions, and proposed assets.
+   - for `full`, visual direction and production-ready prompt packages.
 6. Ask for one combined approval or one consolidated set of revisions.
 7. Record approved decisions with provenance `bundled`.
 
@@ -38,7 +38,7 @@ Keep this packet short and decision-ready:
 1. 小红书 — 适合原因；初步配图方向；主要取舍
 2. X — 适合原因；初步配图方向；主要取舍
 
-请一次回复：选择哪些平台；是否配图；审阅后继续，还是按推荐直接完成。
+请一次回复：选择哪些平台；是否需要生图提示词；审阅后继续，还是按推荐直接完成。
 ```
 
 Recommend two platforms by default. Use three only when the third adds a genuinely different audience or format.
@@ -51,9 +51,7 @@ Resolve these in order:
 
 1. platforms and locale;
 2. copy approval;
-3. image intent;
-4. visual direction;
-5. asset manifest.
+3. visual prompt approval.
 
 Expose only the current gate. Record direct user choices as `explicit`.
 
@@ -63,9 +61,9 @@ Use only when the user explicitly requests direct completion without intermediat
 
 - Record delegated choices as `preauthorized` or `profile`.
 - Auto-select platforms only when platform choice was delegated.
-- Generate images only when image intent is explicitly `yes` or a profile explicitly enables it.
 - Stop despite preauthorization when facts conflict, identity is unclear, localization changes meaning, or legal, medical, financial, brand, copyright, or safety risk is material.
 - Return assumptions and provenance with the final delivery so the user can audit what was delegated.
+- Never call an image-generation or image-editing tool; `full` delivers prompt text only.
 
 ## Decision provenance
 
@@ -77,8 +75,6 @@ Use these values:
 - `profile`: supplied by a user-authored project profile;
 - `bundled`: approved in one combined review;
 - `preauthorized`: delegated through an explicit no-confirmation instruction.
-
-Never use `inferred` for `image_intent=yes`.
 
 ## Project profile
 
@@ -93,13 +89,15 @@ When `platform-connect.profile.json` exists in the working directory, treat it a
     "linkedin": "en"
   },
   "market": "global",
-  "image_intent": "yes",
-  "visual_asset_limit": 3,
+  "visual_prompt_intent": "yes",
+  "visual_prompt_limit": 3,
   "allow_agent_direction": true
 }
 ```
 
-Record profile-derived decisions as `profile`. A profile with `image_intent=yes` is valid image authorization because the user authored it; do not treat the mere existence of a profile as permission for unspecified actions.
+Record profile-derived decisions as `profile`. For backward compatibility, interpret a legacy
+`image_intent: "yes"` profile value as a request for visual prompts only. It never authorizes
+image generation.
 
 ## Blocking questions
 
@@ -108,7 +106,6 @@ Ask one consolidated question only when the answer materially affects:
 - factual accuracy or author stance;
 - target language or market meaning;
 - identity, brand, copyright, or safety constraints;
-- permission to generate images;
 - an unsupported platform's required format and audience when no delegation exists.
 
-Do not ask separately about tone, CTA, asset count, or other reversible preferences when a stated default is safe.
+Do not ask separately about tone, CTA, prompt count, or other reversible preferences when a stated default is safe.

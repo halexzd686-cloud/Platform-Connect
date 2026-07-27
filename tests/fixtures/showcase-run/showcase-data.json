@@ -86,29 +86,29 @@
     "intent": [
       {
         "mark": "U",
-        "label": "Image intent",
-        "text": "用户明确选择：是，生成配图。"
+        "label": "Visual prompt intent",
+        "text": "用户需要适合各平台的生图提示词，不要求实际生成图片。"
       }
     ],
     "directions": [
       {
         "mark": "S",
-        "label": "Visual routing",
-        "text": "根据文章行业、受众和沟通任务推荐视觉方向。"
+        "label": "Prompt routing",
+        "text": "根据文章行业、受众和沟通任务整理平台化提示词。"
       }
     ],
-    "assets": [
+    "prompts": [
       {
         "mark": "R",
-        "label": "Manifest gate",
-        "text": "资产用途、来源锚点、比例与事实约束已确认。"
+        "label": "Prompt package",
+        "text": "用途、来源锚点、比例、主提示词与负面约束已记录。"
       }
     ],
     "delivery": [
       {
         "mark": "S",
         "label": "Delivery",
-        "text": "逐张生成并完成事实、文字、构图和风格 QA。"
+        "text": "交付平台文案与可复制提示词，全程未调用图片工具。"
       }
     ]
   }

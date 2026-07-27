@@ -46,6 +46,7 @@ def main() -> int:
         default="pasted",
     )
     parser.add_argument("--source-ref")
+    parser.add_argument("--supporting-ref", action="append", default=[])
     parser.add_argument("--source-title")
     parser.add_argument("--source-media-type", default="text/plain")
     args = parser.parse_args()
@@ -85,6 +86,7 @@ def main() -> int:
         "source": {
             "input_type": args.source_type,
             "reference": args.source_ref,
+            "supporting_references": args.supporting_ref,
             "media_type": args.source_media_type,
             "title": args.source_title or args.slug,
             "read_status": "complete",
@@ -96,31 +98,30 @@ def main() -> int:
             "market": args.market,
         },
         "copy_approval": "pending",
-        "image_intent": "pending",
-        "visual_direction_approval": "pending",
-        "visual_manifest_approval": "pending",
+        "visual_prompt_intent": (
+            "yes" if args.mode in {"plan", "full"} else "no"
+        ),
+        "visual_prompt_approval": "pending",
+        "visual_prompt_limit": 3,
         "decision_provenance": {
             "brief": "pending",
             "platforms": args.platform_source,
             "copy_approval": "pending",
-            "image_intent": "pending",
-            "visual_direction_approval": "pending",
-            "visual_manifest_approval": "pending",
+            "visual_prompt_intent": "inferred",
+            "visual_prompt_approval": "pending",
         },
-        "global_style_id": None,
-        "platform_overrides": {},
         "copy_files": {
             platform: f"{platform}/copy.md" for platform in platforms
         },
         "showcase_file": "showcase/index.html",
-        "assets": [],
+        "visual_prompts": [],
         "review_flags": [],
     }
     manifest_path = workspace / "manifest.json"
     try:
         workspace.mkdir(parents=True)
         for platform in platforms:
-            (workspace / platform / "images").mkdir(parents=True)
+            (workspace / platform).mkdir(parents=True)
             (workspace / platform / "copy.md").write_text("", encoding="utf-8")
         (workspace / "source-brief.md").write_text("", encoding="utf-8")
         manifest_path.write_text(

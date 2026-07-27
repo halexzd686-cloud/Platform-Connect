@@ -1,6 +1,6 @@
 # Industry visual routing
 
-Choose the primary industry from the source itself. If two industries materially overlap, combine no more than two entries and state the combination. These routes suggest visual vocabulary and QA; they do not prescribe a single style.
+Choose the primary industry from the source itself. If two industries materially overlap, combine no more than two entries and state the combination. These routes suggest visual vocabulary and prompt constraints; they do not prescribe a single style.
 
 ## Contents
 

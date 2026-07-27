@@ -4,7 +4,7 @@
 
 - [Run directory](#run-directory)
 - [Manifest](#manifest)
-- [Asset](#asset)
+- [Visual prompt package](#visual-prompt-package)
 - [Optional showcase data](#optional-showcase-data)
 
 ## Run directory
@@ -21,11 +21,11 @@ outputs/<article-slug>/<run-id>/
 │   ├── app.js
 │   └── styles.css
 └── <platform>/
-    ├── copy.md
-    └── images/
+    └── copy.md
 ```
 
-Never overwrite an earlier run. A revision creates a new `run_id` and records the previous run in `parent_run_id`.
+Never overwrite an earlier run. A revision creates a new `run_id` and records the previous run in
+`parent_run_id`.
 
 ## Manifest
 
@@ -33,10 +33,10 @@ The manifest is the machine-readable source of truth:
 
 ```json
 {
-  "schema_version": "1.3",
-  "skill_version": "1.2.0",
+  "schema_version": "1.4",
+  "skill_version": "1.3.0",
   "article_slug": "example",
-  "run_id": "20260726-143500",
+  "run_id": "20260727-143500",
   "parent_run_id": null,
   "mode": "full",
   "review_policy": "compact",
@@ -44,6 +44,7 @@ The manifest is the machine-readable source of truth:
   "source": {
     "input_type": "file",
     "reference": "article.pdf",
+    "supporting_references": [],
     "media_type": "application/pdf",
     "title": "Example article",
     "read_status": "complete"
@@ -68,102 +69,88 @@ The manifest is the machine-readable source of truth:
     "market": "global"
   },
   "copy_approval": "pending",
-  "image_intent": "pending",
-  "visual_direction_approval": "pending",
-  "visual_manifest_approval": "pending",
+  "visual_prompt_intent": "yes",
+  "visual_prompt_approval": "pending",
+  "visual_prompt_limit": 3,
   "decision_provenance": {
     "brief": "pending",
     "platforms": "explicit",
     "copy_approval": "pending",
-    "image_intent": "pending",
-    "visual_direction_approval": "pending",
-    "visual_manifest_approval": "pending"
+    "visual_prompt_intent": "explicit",
+    "visual_prompt_approval": "pending"
   },
-  "global_style_id": null,
-  "platform_overrides": {},
   "copy_files": {
     "douyin": "douyin/copy.md",
     "linkedin": "linkedin/copy.md"
   },
   "showcase_file": "showcase/index.html",
-  "assets": [],
+  "visual_prompts": [],
   "review_flags": []
 }
 ```
 
-Allowed decision values:
+Allowed values:
 
 - approval fields: `pending`, `approved`, or `needs-revision`;
-- `image_intent`: `pending`, `yes`, or `no`;
-- `mode`: `plan`, `copy`, or `full`.
+- `visual_prompt_intent`: `pending`, `yes`, or `no`;
+- `mode`: `plan`, `copy`, or `full`;
 - `review_policy`: `strict`, `compact`, or `autopilot`.
 
-Keep these as separate audit records even when one bundled reply or preauthorization resolves several decisions:
-
-1. `copy_approval`;
-2. `image_intent`;
-3. `visual_direction_approval`;
-4. `visual_manifest_approval`.
-
-Each decision records provenance as `pending`, `explicit`, `inferred`, `profile`, `bundled`, or `preauthorized`. Never use `inferred` for `image_intent=yes`. Under `autopilot`, approved or affirmative decisions must be `explicit`, `profile`, or `preauthorized`.
+Keep copy approval and visual-prompt approval as separate audit records when review is required.
+Each decision records provenance as `pending`, `explicit`, `inferred`, `profile`, `bundled`, or
+`preauthorized`.
 
 `source.input_type` is `pasted`, `file`, or `url`. Delivery requires
-`source.read_status: complete`; use `blocked` when pages, OCR passages, or the
-article body could not be retrieved.
+`source.read_status: complete`; use `blocked` when pages, OCR passages, or the article body could
+not be retrieved. When pasted content is primary and a URL is only supporting context, keep
+`input_type: pasted` and record the URL in `source.supporting_references`.
 
-Keep `platform_recommendations` empty when platforms were explicit. Otherwise
-record two recommendations by default and no more than three. Every item needs a
-platform, rationale, preliminary article-specific visual direction, and
-`selection_status` of `selected` or `not-selected`.
+Keep `platform_recommendations` empty when platforms were explicit. Otherwise record two
+recommendations by default and no more than three. Every item needs a platform, rationale,
+preliminary article-specific visual direction, and `selection_status` of `selected` or
+`not-selected`.
 
-## Asset
+## Visual prompt package
 
-Each distinct asset must contain:
+Each prompt package must contain:
 
 ```json
 {
   "id": "douyin-cover-01",
   "platform": "douyin",
   "asset_type": "cover",
-  "purpose": "one communication job",
+  "purpose": "express the core contrast",
   "source_anchor": "brief fact or content-unit id",
-  "core_idea": "one idea only",
+  "core_idea": "tasks change before roles disappear",
   "aspect_ratio": "9:16",
-  "style_id": "selected-style",
-  "on_image_text": "exact short text",
-  "custom_prompt": "",
-  "planning_status": "proposed",
-  "generation_status": "not-requested",
-  "file": null,
-  "qa": {
-    "facts": "pending",
-    "text": "pending",
-    "composition": "pending",
-    "style": "pending"
-  }
+  "visual_direction": "editorial task diagram with restrained typography",
+  "on_image_text": "TASKS CHANGE",
+  "prompt": "Production-ready positive prompt...",
+  "negative_prompt": "No invented statistics, no illegible text...",
+  "factual_invariants": [
+    "Do not imply that every role disappears."
+  ],
+  "tool_notes": "Keep the main subject inside the vertical crop-safe area.",
+  "status": "approved"
 }
 ```
 
-Allowed asset states:
+Allowed prompt states are `proposed`, `edited`, or `approved`.
 
-- `planning_status`: `proposed`, `edited`, or `approved`;
-- `generation_status`: `not-requested`, `generating`, `ready`, or `needs-review`;
-- each QA field: `pending`, `passed`, or `failed`.
+Rules:
 
-An asset cannot be `generating` or `ready` unless:
-
-- `mode` is `full`;
-- `copy_approval` is `approved`;
-- `image_intent` is `yes`;
-- `visual_direction_approval` is `approved`;
-- `visual_manifest_approval` is `approved`;
-- the asset `planning_status` is `approved`.
-
-When `image_intent` is `no`, keep `assets` empty and offer only non-visual follow-up actions.
+- `copy` mode keeps `visual_prompts` empty.
+- `visual_prompt_intent: no` keeps `visual_prompts` empty.
+- `full` mode with `visual_prompt_intent: yes` requires at least one prompt package.
+- Default to one package per selected platform and no more than three total.
+- Every prompt must be non-empty, self-contained, grounded in a source anchor, and associated with a selected platform.
+- Prompt packages never contain generated file paths, generation states, image QA states, or image-tool output.
 
 ## Optional showcase data
 
-`render_showcase.py` can derive a minimal report from the manifest, brief, and copy files. For a richer interview-ready report, provide `--data showcase-data.json` with any of these optional fields:
+`render_showcase.py` can derive a minimal report from the manifest, brief, and copy files. For a
+richer interview-ready report, provide `--data showcase-data.json` with any of these optional
+fields:
 
 ```json
 {
@@ -192,8 +179,9 @@ When `image_intent` is `no`, keep `assets` empty and offer only non-visual follo
 }
 ```
 
-Showcase data is a presentation projection. It must not override decision states, asset states, run metadata, or review flags stored in `manifest.json`.
+Showcase data is a presentation projection. It must not override decision states, prompt states,
+run metadata, or review flags stored in `manifest.json`.
 
-The rendered board is outcome-first: final copy and ready image files are
-primary; brief, recommendations, decisions, and trace are supporting audit
-information. Do not add controls that imply selection, approval, or generation.
+The rendered board is outcome-first: final copy and ready-to-use visual prompt cards are primary;
+brief, recommendations, decisions, and trace are supporting audit information. Do not add
+controls that imply platform selection, approval, or image generation.

@@ -17,8 +17,7 @@
   const manifest = data.manifest || {};
   const platforms = list(data.platforms);
   const copies = list(data.copies);
-  const assets = list(data.assets);
-  const readyAssets = assets.filter(asset => asset.generation_status === "ready" && asset.file);
+  const visualPrompts = list(data.visual_prompts);
   const outcome = data.outcome || {};
   let currentPlatform = platforms[0]?.id || manifest.platforms?.[0] || "";
   let activeFilter = "all";
@@ -38,11 +37,6 @@
     return platform?.label || platformId;
   }
 
-  function assetUrl(file) {
-    if (!file) return "";
-    return "../" + String(file).split("/").map(encodeURIComponent).join("/");
-  }
-
   function showToast(message) {
     $("toast").textContent = message;
     $("toast").classList.add("show");
@@ -50,18 +44,18 @@
     toastTimer = setTimeout(() => $("toast").classList.remove("show"), 1800);
   }
 
-  function copyText(value) {
+  function copyText(value, successMessage) {
     const content = String(value || "");
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(content)
-        .then(() => showToast("文案已复制"))
-        .catch(() => fallbackCopy(content));
+        .then(() => showToast(successMessage))
+        .catch(() => fallbackCopy(content, successMessage));
       return;
     }
-    fallbackCopy(content);
+    fallbackCopy(content, successMessage);
   }
 
-  function fallbackCopy(content) {
+  function fallbackCopy(content, successMessage) {
     const field = document.createElement("textarea");
     field.value = content;
     field.setAttribute("readonly", "");
@@ -71,7 +65,7 @@
     field.select();
     const copied = document.execCommand("copy");
     field.remove();
-    showToast(copied ? "文案已复制" : "请手动选中文案复制");
+    showToast(copied ? successMessage : "请手动选中内容复制");
   }
 
   function renderSource() {
@@ -96,11 +90,8 @@
     $("sideFacts").innerHTML = [
       ["发布平台", platforms.map(item => item.label || item.id).join(" · ")],
       ["文案版本", `${copies.length} 份`],
-      ["视觉资产", `${readyAssets.length} 张`],
-      ["质量检查", readyAssets.length && readyAssets.every(asset =>
-        Object.values(asset.qa || {}).every(value => value === "passed"))
-        ? "全部通过"
-        : "见交付状态"],
+      ["生图提示词", `${visualPrompts.length} 条`],
+      ["图片工具", "未调用"],
     ].map(([label, value]) => `
       <div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>
     `).join("");
@@ -109,10 +100,10 @@
   function renderHero() {
     const sourceTitle = data.source?.title || manifest.source?.title || manifest.article_slug;
     const labels = platforms.map(item => item.label || item.id).join("与");
-    const assetSentence = readyAssets.length
-      ? `和 ${readyAssets.length} 张视觉资产`
+    const promptSentence = visualPrompts.length
+      ? `和 ${visualPrompts.length} 条可复制的生图提示词`
       : "";
-    $("outcomeSentence").innerHTML = `本次读取了<strong>《${escapeHtml(sourceTitle)}》</strong>，最终选择<strong>${escapeHtml(labels || "已记录平台")}</strong>，完成 ${copies.length} 份平台原生文案${assetSentence}；最终成果与事实基线已整理为可复核的交付包。`;
+    $("outcomeSentence").innerHTML = `本次读取了<strong>《${escapeHtml(sourceTitle)}》</strong>，最终选择<strong>${escapeHtml(labels || "已记录平台")}</strong>，完成 ${copies.length} 份平台原生文案${promptSentence}；全程未调用图片工具。`;
     $("caseId").innerHTML = [
       `CASE ${escapeHtml(manifest.run_id)}`,
       `${escapeHtml(data.locale_assumptions?.source_language)} / ${escapeHtml(data.locale_assumptions?.target_language || "SOURCE")}`,
@@ -122,8 +113,8 @@
       ["INPUT", `${escapeHtml((data.source?.input_type || "source").toUpperCase())} · COMPLETE`],
       ["PLATFORMS", platforms.map(item => escapeHtml(item.label || item.id)).join(" · ")],
       ["COPY", `${copies.length} 份定稿`],
-      ["VISUALS", `${readyAssets.length} 张配图`],
-      ["QA", outcome.status === "ready" ? "● PASSED" : "● IN PROGRESS"],
+      ["PROMPTS", `${visualPrompts.length} 条可复制`],
+      ["STATUS", outcome.status === "ready" ? "● READY" : "● IN PROGRESS"],
     ];
     $("summaryStrip").innerHTML = summary.map(([label, value], index) => `
       <div><small>${label}</small><strong class="${index === 4 ? "ready" : ""}">${value}</strong></div>
@@ -138,7 +129,7 @@
           <strong>${escapeHtml(platform.label || platform.id)}</strong>
           <span>${escapeHtml(platform.language || data.locale_assumptions?.target_language || data.locale_assumptions?.source_language)} · ${escapeHtml(platform.market || data.locale_assumptions?.market || "source")}</span>
         </button>`;
-    }).join("") + `<p>${platforms.length} / ${platforms.length} PACKAGES<br>FINAL COPY + VISUALS</p>`;
+    }).join("") + `<p>${platforms.length} / ${platforms.length} PACKAGES<br>FINAL COPY + PROMPTS</p>`;
     document.querySelectorAll("[data-platform-tab]").forEach(button => {
       button.addEventListener("click", () => {
         currentPlatform = button.dataset.platformTab;
@@ -147,27 +138,33 @@
     });
   }
 
-  function renderAssetPreview(asset, compact = false) {
-    if (!asset || !asset.file) {
-      return `<div class="visual-empty"><span>NO IMAGE</span><strong>本平台未交付图片</strong></div>`;
+  function promptCard(promptPackage, compact = false) {
+    if (!promptPackage) {
+      return `<div class="visual-empty"><span>NO PROMPT</span><strong>本平台未请求生图提示词</strong></div>`;
     }
-    const url = assetUrl(asset.file);
     return `
-      <button class="asset-preview ${compact ? "compact" : ""}" data-preview-asset="${escapeHtml(asset.id)}">
-        <img src="${escapeHtml(url)}" alt="${escapeHtml(asset.on_image_text || asset.purpose || asset.id)}">
-        <span>${escapeHtml(asset.asset_type)} · ${escapeHtml(asset.aspect_ratio)}</span>
-      </button>`;
+      <article class="prompt-card ${compact ? "compact" : ""}">
+        <header>
+          <span>${escapeHtml(promptPackage.asset_type)} · ${escapeHtml(promptPackage.aspect_ratio)}</span>
+          <strong>${escapeHtml(promptPackage.visual_direction)}</strong>
+        </header>
+        <p class="prompt-purpose">${escapeHtml(promptPackage.purpose)}</p>
+        <div class="prompt-copy">${multiline(promptPackage.prompt)}</div>
+        <div class="prompt-meta">
+          <span>画面文字：${escapeHtml(promptPackage.on_image_text || "建议无文字")}</span>
+          <span>来源：${escapeHtml(promptPackage.source_anchor)}</span>
+        </div>
+        <button class="copy-prompt" data-copy-prompt="${escapeHtml(promptPackage.id)}">复制生图提示词</button>
+      </article>`;
   }
 
   function renderPackages() {
     renderPackageTabs();
     const copy = copies.find(item => item.platform === currentPlatform) || copies[0];
     const platform = platforms.find(item => item.id === currentPlatform) || {};
-    const packageAssets = readyAssets.filter(asset => asset.platform === currentPlatform);
+    const platformPrompts = visualPrompts.filter(item => item.platform === currentPlatform);
     const title = copy?.title || platformLabel(currentPlatform);
     const content = copy?.content || "当前运行未写入平台文案。";
-    const primary = packageAssets[0];
-    const secondary = packageAssets.slice(1, 3);
     $("packageView").innerHTML = `
       <article class="copy-pane">
         <div class="chips">
@@ -182,15 +179,15 @@
           <button id="copyCurrent">复制文案</button>
         </div>
       </article>
-      <div class="visual-pane">
-        <div class="visual-grid ${secondary.length ? "" : "single"}">
-          ${renderAssetPreview(primary)}
-          ${secondary.length ? `<div class="visual-stack">${secondary.map(asset => renderAssetPreview(asset, true)).join("")}</div>` : ""}
-        </div>
-        <p><span>${packageAssets.length} ASSETS</span><strong>${packageAssets.every(asset => Object.values(asset.qa || {}).every(value => value === "passed")) ? "QA PASSED" : "QA PENDING"}</strong></p>
+      <div class="visual-pane prompt-pane">
+        ${promptCard(platformPrompts[0])}
+        ${platformPrompts.length > 1
+          ? `<div class="prompt-alternatives">${platformPrompts.slice(1).map(item => promptCard(item, true)).join("")}</div>`
+          : ""}
+        <p><span>${platformPrompts.length} PROMPTS</span><strong>NO IMAGE TOOL USED</strong></p>
       </div>`;
-    $("copyCurrent").addEventListener("click", () => copyText(content));
-    bindAssetPreviews();
+    $("copyCurrent").addEventListener("click", () => copyText(content, "文案已复制"));
+    bindPromptCopies();
   }
 
   function renderBaseline() {
@@ -217,42 +214,57 @@
 
   function renderFilters() {
     const filterPlatforms = platforms.filter(platform =>
-      readyAssets.some(asset => asset.platform === platform.id));
-    $("assetFilters").innerHTML = [
-      `<button class="${activeFilter === "all" ? "active" : ""}" data-filter="all">全部 ${readyAssets.length}</button>`,
+      visualPrompts.some(item => item.platform === platform.id));
+    $("promptFilters").innerHTML = [
+      `<button class="${activeFilter === "all" ? "active" : ""}" data-filter="all">全部 ${visualPrompts.length}</button>`,
       ...filterPlatforms.map(platform => {
-        const count = readyAssets.filter(asset => asset.platform === platform.id).length;
+        const count = visualPrompts.filter(item => item.platform === platform.id).length;
         return `<button class="${activeFilter === platform.id ? "active" : ""}" data-filter="${escapeHtml(platform.id)}">${escapeHtml(platform.label || platform.id)} ${count}</button>`;
       }),
     ].join("");
     document.querySelectorAll("[data-filter]").forEach(button => {
       button.addEventListener("click", () => {
         activeFilter = button.dataset.filter;
-        renderGallery();
+        renderPromptGallery();
       });
     });
   }
 
-  function renderGallery() {
+  function renderPromptGallery() {
     renderFilters();
     const filtered = activeFilter === "all"
-      ? readyAssets
-      : readyAssets.filter(asset => asset.platform === activeFilter);
-    $("assetGallery").innerHTML = filtered.length ? filtered.map(asset => `
-      <article class="asset-card">
-        ${renderAssetPreview(asset)}
-        <div>
-          <header><strong>${escapeHtml(asset.purpose || asset.id)}</strong><span>${escapeHtml(asset.id)}</span></header>
-          <dl>
-            <div><dt>平台</dt><dd>${escapeHtml(platformLabel(asset.platform))}</dd></div>
-            <div><dt>比例</dt><dd>${escapeHtml(asset.aspect_ratio)}</dd></div>
-            <div><dt>来源</dt><dd>${escapeHtml(asset.source_anchor)}</dd></div>
-            <div><dt>QA</dt><dd class="passed">${Object.values(asset.qa || {}).every(value => value === "passed") ? "PASSED" : "PENDING"}</dd></div>
-          </dl>
-        </div>
-      </article>
-    `).join("") : `<div class="empty-state"><strong>本次没有最终图片</strong><span>文案交付仍可正常查看。</span></div>`;
-    bindAssetPreviews();
+      ? visualPrompts
+      : visualPrompts.filter(item => item.platform === activeFilter);
+    $("promptGallery").innerHTML = filtered.length
+      ? filtered.map(item => `
+        <article class="prompt-gallery-card">
+          <header>
+            <span>${escapeHtml(platformLabel(item.platform))}</span>
+            <b>${escapeHtml(item.aspect_ratio)}</b>
+          </header>
+          <h3>${escapeHtml(item.purpose)}</h3>
+          <p class="direction">${escapeHtml(item.visual_direction)}</p>
+          <div class="prompt-copy">${multiline(item.prompt)}</div>
+          <details>
+            <summary>查看约束与使用说明</summary>
+            <p><strong>负面约束</strong>${escapeHtml(item.negative_prompt)}</p>
+            <p><strong>事实不变量</strong>${list(item.factual_invariants).map(escapeHtml).join("；")}</p>
+            <p><strong>工具建议</strong>${escapeHtml(item.tool_notes)}</p>
+          </details>
+          <button class="copy-prompt" data-copy-prompt="${escapeHtml(item.id)}">复制生图提示词</button>
+        </article>
+      `).join("")
+      : `<div class="empty-state"><strong>本次没有生图提示词</strong><span>平台文案仍可正常查看。</span></div>`;
+    bindPromptCopies();
+  }
+
+  function bindPromptCopies() {
+    document.querySelectorAll("[data-copy-prompt]").forEach(button => {
+      button.addEventListener("click", () => {
+        const promptPackage = visualPrompts.find(item => item.id === button.dataset.copyPrompt);
+        if (promptPackage) copyText(promptPackage.prompt, "生图提示词已复制");
+      });
+    });
   }
 
   function deliverableType(path) {
@@ -273,7 +285,7 @@
     $("deliveryStatus").innerHTML = `
       <span>${String(deliverables.length).padStart(2, "0")}</span>
       <h3>${ready ? "成果已经归档" : "成果仍在整理"}</h3>
-      <p>从原始文档到平台文案、视觉资产与来源记录，本次内容工作已经形成可复核的交付闭环。</p>
+      <p>从原始文档到平台文案、生图提示词与来源记录，本次内容工作已经形成可复核的交付闭环。</p>
       <strong>${ready ? "READY TO DELIVER" : "IN PROGRESS"}</strong>`;
   }
 
@@ -310,46 +322,10 @@
     $("traceContent").innerHTML = recommendationHtml + decisionHtml + eventsHtml;
   }
 
-  function bindAssetPreviews() {
-    document.querySelectorAll("[data-preview-asset]").forEach(button => {
-      button.addEventListener("click", () => openLightbox(button.dataset.previewAsset));
-    });
-  }
-
-  function openLightbox(assetId) {
-    const asset = assets.find(item => item.id === assetId);
-    if (!asset || !asset.file) return;
-    $("lightboxImage").src = assetUrl(asset.file);
-    $("lightboxImage").alt = asset.on_image_text || asset.purpose || asset.id;
-    $("lightboxTitle").textContent = asset.purpose || asset.id;
-    $("lightboxMeta").innerHTML = `
-      <span>${escapeHtml(platformLabel(asset.platform))}</span>
-      <span>${escapeHtml(asset.aspect_ratio)}</span>
-      <span>${escapeHtml(asset.source_anchor)}</span>
-      <span>${Object.values(asset.qa || {}).every(value => value === "passed") ? "QA PASSED" : "QA PENDING"}</span>`;
-    $("lightbox").classList.add("open");
-    document.body.classList.add("no-scroll");
-    $("lightboxClose").focus();
-  }
-
-  function closeLightbox() {
-    $("lightbox").classList.remove("open");
-    document.body.classList.remove("no-scroll");
-  }
-
   function bindGlobalInteractions() {
     $("traceToggle").addEventListener("click", () => {
       const open = $("trace").classList.toggle("open");
       $("traceToggle").setAttribute("aria-expanded", String(open));
-    });
-    $("lightboxClose").addEventListener("click", closeLightbox);
-    $("lightbox").addEventListener("click", event => {
-      if (event.target === $("lightbox")) closeLightbox();
-    });
-    document.addEventListener("keydown", event => {
-      if (event.key === "Escape" && $("lightbox").classList.contains("open")) {
-        closeLightbox();
-      }
     });
   }
 
@@ -360,7 +336,7 @@
   renderHero();
   renderPackages();
   renderBaseline();
-  renderGallery();
+  renderPromptGallery();
   renderDelivery();
   renderTrace();
   bindGlobalInteractions();

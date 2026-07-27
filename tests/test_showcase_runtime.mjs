@@ -29,18 +29,20 @@ test("template stays offline and data-driven", () => {
 
 test("runtime is outcome-first and renders delivered content", () => {
   for (const label of [
-    "最终平台图文",
+    "最终平台文案与提示词",
     "这组内容从哪里来",
-    "最终图片",
+    "可直接使用的生图提示词",
     "可带走的全部成果",
   ]) {
     assert.match(html, new RegExp(label));
   }
   assert.match(app, /data-platform-tab/);
-  assert.match(app, /<img/);
-  assert.match(app, /assetUrl/);
+  assert.match(app, /visual_prompts/);
+  assert.match(app, /data-copy-prompt/);
+  assert.doesNotMatch(app, /<img/);
+  assert.doesNotMatch(app, /assetUrl/);
   assert.match(styles, /\.package-shell/);
-  assert.match(styles, /\.asset-gallery/);
+  assert.match(styles, /\.prompt-gallery/);
 });
 
 test("showcase is a read-only delivery board with collapsed provenance", () => {
@@ -52,6 +54,7 @@ test("showcase is a read-only delivery board with collapsed provenance", () => {
   assert.match(html, /切换只改变查看对象/);
   assert.doesNotMatch(app, /classList\.toggle\("selected"\)/);
   assert.doesNotMatch(html, /选择平台|确认生成|开始生成/);
+  assert.doesNotMatch(app, /generation_status|view_image|lightbox/);
 });
 
 

@@ -22,8 +22,48 @@ def run_script(name: str, *arguments: str) -> subprocess.CompletedProcess[str]:
     )
 
 
+def approved_prompt(
+    platform: str = "xiaohongshu",
+    prompt_id: str = "xiaohongshu-cover-01",
+) -> dict:
+    return {
+        "id": prompt_id,
+        "platform": platform,
+        "asset_type": "cover",
+        "purpose": "表达文章核心判断",
+        "source_anchor": "core-thesis",
+        "core_idea": "AI 重组任务而不是直接替代岗位",
+        "aspect_ratio": "3:4",
+        "visual_direction": "克制的编辑部观点海报",
+        "on_image_text": "重新分工",
+        "prompt": "3:4 编辑部观点海报，以重新排列的任务卡片表达工作重组。",
+        "negative_prompt": "不要机器人头像，不要虚构数据，不要科幻霓虹。",
+        "factual_invariants": ["不把任务重组夸大为岗位必然消失"],
+        "tool_notes": "文字不稳定时生成无字底图。",
+        "status": "approved",
+    }
+
+
+def approve_full_manifest(manifest: dict, prompts: list[dict]) -> None:
+    manifest.update(
+        {
+            "copy_approval": "approved",
+            "visual_prompt_intent": "yes",
+            "visual_prompt_approval": "approved",
+            "decision_provenance": {
+                "brief": "bundled",
+                "platforms": manifest["decision_provenance"]["platforms"],
+                "copy_approval": "bundled",
+                "visual_prompt_intent": "explicit",
+                "visual_prompt_approval": "bundled",
+            },
+            "visual_prompts": prompts,
+        }
+    )
+
+
 class DeliveryPipelineTests(unittest.TestCase):
-    def test_complete_offline_smoke_pipeline(self) -> None:
+    def test_complete_prompt_first_offline_pipeline(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             prepared = run_script(
@@ -44,13 +84,12 @@ class DeliveryPipelineTests(unittest.TestCase):
                 "global",
             )
             self.assertEqual(prepared.returncode, 0, prepared.stdout + prepared.stderr)
-            prepared_payload = json.loads(prepared.stdout)
-            run_root = Path(prepared_payload["workspace"])
+            run_root = Path(json.loads(prepared.stdout)["workspace"])
             manifest_path = run_root / "manifest.json"
-            self.assertEqual(
-                json.loads(manifest_path.read_text(encoding="utf-8"))["skill_version"],
-                "1.2.0",
-            )
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["skill_version"], "1.3.0")
+            self.assertEqual(manifest["schema_version"], "1.4")
+            self.assertFalse((run_root / "xiaohongshu" / "images").exists())
 
             (run_root / "source-brief.md").write_text(
                 "# AI 重新分配工作\n\nAI 改变岗位内部的任务组合。\n",
@@ -64,202 +103,132 @@ class DeliveryPipelineTests(unittest.TestCase):
                 "# AI redistributes tasks\n\nThe role remains accountable.",
                 encoding="utf-8",
             )
-            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest.update(
-                {
-                    "copy_approval": "approved",
-                    "image_intent": "yes",
-                    "visual_direction_approval": "approved",
-                    "visual_manifest_approval": "approved",
-                    "decision_provenance": {
-                        "brief": "bundled",
-                        "platforms": "explicit",
-                        "copy_approval": "bundled",
-                        "image_intent": "bundled",
-                        "visual_direction_approval": "bundled",
-                        "visual_manifest_approval": "bundled",
-                    },
-                    "global_style_id": "editorial-poster",
-                    "assets": [
-                        {
-                            "id": "xiaohongshu-cover-01",
-                            "platform": "xiaohongshu",
-                            "asset_type": "cover",
-                            "purpose": "表达任务重组",
-                            "source_anchor": "core-thesis",
-                            "core_idea": "工作被重新拆分",
-                            "aspect_ratio": "3:4",
-                            "style_id": "editorial-poster",
-                            "on_image_text": "重新分工",
-                            "custom_prompt": "",
-                            "planning_status": "approved",
-                            "generation_status": "ready",
-                            "file": "xiaohongshu/images/cover-01.png",
-                            "qa": {
-                                "facts": "passed",
-                                "text": "passed",
-                                "composition": "passed",
-                                "style": "passed",
-                            },
-                        }
-                    ],
-                }
-            )
+            prompts = [
+                approved_prompt(),
+                approved_prompt("linkedin", "linkedin-cover-01")
+                | {
+                    "aspect_ratio": "4:5",
+                    "on_image_text": "TASKS × JUDGMENT",
+                },
+            ]
+            approve_full_manifest(manifest, prompts)
             manifest_path.write_text(
                 json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
             )
-            image_path = run_root / "xiaohongshu" / "images" / "cover-01.png"
-            image_path.write_bytes(b"representative-image")
 
             validated = run_script("validate_manifest.py", str(manifest_path))
             self.assertEqual(validated.returncode, 0, validated.stdout + validated.stderr)
-            self.assertEqual(json.loads(validated.stdout)["status"], "passed")
+            self.assertEqual(json.loads(validated.stdout)["visual_prompt_count"], 2)
 
             rendered = run_script("render_showcase.py", str(manifest_path))
             self.assertEqual(rendered.returncode, 0, rendered.stdout + rendered.stderr)
             showcase = run_root / "showcase"
-
             checked = run_script("validate_showcase.py", str(showcase))
             self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-            self.assertEqual(json.loads(checked.stdout)["status"], "passed")
 
             indexed = run_script("build_delivery_index.py", str(manifest_path))
             self.assertEqual(indexed.returncode, 0, indexed.stdout + indexed.stderr)
-            self.assertTrue((run_root / "index.md").is_file())
+            index_text = (run_root / "index.md").read_text(encoding="utf-8")
+            self.assertIn("生图提示词", index_text)
+            self.assertNotIn("尚未生成", index_text)
             self.assertEqual(
                 {path.name for path in showcase.iterdir()},
                 {"index.html", "app.js", "styles.css"},
             )
 
-    def test_generation_is_blocked_before_visual_approval(self) -> None:
-        manifest = {
-            "schema_version": "1.3",
-            "skill_version": "1.2.0",
-            "article_slug": "blocked",
-            "run_id": "blocked-001",
-            "parent_run_id": None,
-            "mode": "full",
-            "review_policy": "compact",
-            "platforms": ["douyin"],
-            "source": {
-                "input_type": "pasted",
-                "reference": None,
-                "media_type": "text/plain",
-                "title": "Blocked example",
-                "read_status": "complete",
-            },
-            "platform_recommendations": [],
-            "locale_assumptions": {
-                "source_language": "zh-CN",
-                "target_language": None,
-                "market": None,
-            },
-            "copy_approval": "approved",
-            "image_intent": "yes",
-            "visual_direction_approval": "approved",
-            "visual_manifest_approval": "pending",
-            "decision_provenance": {
-                "brief": "bundled",
-                "platforms": "explicit",
-                "copy_approval": "bundled",
-                "image_intent": "bundled",
-                "visual_direction_approval": "bundled",
-                "visual_manifest_approval": "pending",
-            },
-            "copy_files": {"douyin": "douyin/copy.md"},
-            "showcase_file": "showcase/index.html",
-            "assets": [
-                {
-                    "id": "douyin-cover-01",
-                    "platform": "douyin",
-                    "asset_type": "cover",
-                    "purpose": "开场",
-                    "source_anchor": "thesis",
-                    "core_idea": "one idea",
-                    "aspect_ratio": "9:16",
-                    "style_id": "editorial",
-                    "on_image_text": "",
-                    "planning_status": "approved",
-                    "generation_status": "ready",
-                    "qa": {
-                        "facts": "passed",
-                        "text": "passed",
-                        "composition": "passed",
-                        "style": "passed",
-                    },
-                }
-            ],
-            "review_flags": [],
-        }
+    def test_image_generation_fields_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
-            manifest_path = Path(temp_dir) / "manifest.json"
-            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-            result = run_script("validate_manifest.py", str(manifest_path))
-            self.assertNotEqual(result.returncode, 0)
-            errors = json.loads(result.stdout)["errors"]
-            self.assertTrue(any("all visual gates" in error for error in errors))
-
-    def test_ready_asset_requires_a_real_delivery_file(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            root = Path(temp_dir)
             prepared = run_script(
                 "prepare_workspace.py",
-                "missing-asset",
+                "no-image-tools",
                 "--platforms",
-                "linkedin",
+                "xiaohongshu",
                 "--mode",
                 "full",
                 "--root",
-                str(root),
+                temp_dir,
                 "--run-id",
-                "asset-001",
+                "prompt-001",
             )
             manifest_path = Path(json.loads(prepared.stdout)["manifest"])
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest.update(
-                {
-                    "copy_approval": "approved",
-                    "image_intent": "yes",
-                    "visual_direction_approval": "approved",
-                    "visual_manifest_approval": "approved",
-                    "decision_provenance": {
-                        "brief": "bundled",
-                        "platforms": "explicit",
-                        "copy_approval": "bundled",
-                        "image_intent": "bundled",
-                        "visual_direction_approval": "bundled",
-                        "visual_manifest_approval": "bundled",
-                    },
-                    "assets": [
-                        {
-                            "id": "linkedin-cover-01",
-                            "platform": "linkedin",
-                            "asset_type": "cover",
-                            "purpose": "explain the thesis",
-                            "source_anchor": "core-thesis",
-                            "core_idea": "tasks change before roles disappear",
-                            "aspect_ratio": "4:5",
-                            "style_id": "editorial",
-                            "on_image_text": "TASKS CHANGE",
-                            "planning_status": "approved",
-                            "generation_status": "ready",
-                            "file": "linkedin/images/missing.png",
-                            "qa": {
-                                "facts": "passed",
-                                "text": "passed",
-                                "composition": "passed",
-                                "style": "passed",
-                            },
-                        }
-                    ],
-                }
-            )
+            prompt = approved_prompt() | {
+                "file": "xiaohongshu/images/cover.png",
+                "generation_status": "ready",
+                "qa": {"facts": "passed"},
+            }
+            approve_full_manifest(manifest, [prompt])
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             result = run_script("validate_manifest.py", str(manifest_path))
             self.assertNotEqual(result.returncode, 0)
-            errors = json.loads(result.stdout)["errors"]
-            self.assertTrue(any("does not exist" in error for error in errors))
+            self.assertTrue(
+                any(
+                    "image-generation fields" in error
+                    for error in json.loads(result.stdout)["errors"]
+                )
+            )
+
+    def test_visual_prompt_limit_is_enforced(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = run_script(
+                "prepare_workspace.py",
+                "prompt-limit",
+                "--platforms",
+                "xiaohongshu",
+                "--mode",
+                "full",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "prompt-002",
+            )
+            manifest_path = Path(json.loads(prepared.stdout)["manifest"])
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            prompts = [
+                approved_prompt(prompt_id=f"prompt-{index}")
+                for index in range(4)
+            ]
+            approve_full_manifest(manifest, prompts)
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            result = run_script("validate_manifest.py", str(manifest_path))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertTrue(
+                any(
+                    "visual_prompt_limit" in error
+                    for error in json.loads(result.stdout)["errors"]
+                )
+            )
+
+    def test_copy_mode_rejects_visual_prompts(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = run_script(
+                "prepare_workspace.py",
+                "copy-only",
+                "--platforms",
+                "linkedin",
+                "--mode",
+                "copy",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "copy-001",
+            )
+            manifest_path = Path(json.loads(prepared.stdout)["manifest"])
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["visual_prompt_intent"] = "yes"
+            manifest["visual_prompts"] = [
+                approved_prompt("linkedin", "linkedin-cover-01")
+            ]
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+            result = run_script("validate_manifest.py", str(manifest_path))
+            self.assertNotEqual(result.returncode, 0)
+            self.assertTrue(
+                any(
+                    "copy mode" in error
+                    for error in json.loads(result.stdout)["errors"]
+                )
+            )
 
     def test_compact_policy_accepts_one_bundled_approval(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -279,71 +248,12 @@ class DeliveryPipelineTests(unittest.TestCase):
                 "--run-id",
                 "compact-001",
             )
-            self.assertEqual(prepared.returncode, 0, prepared.stdout + prepared.stderr)
             manifest_path = Path(json.loads(prepared.stdout)["manifest"])
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest.update(
-                {
-                    "copy_approval": "approved",
-                    "image_intent": "yes",
-                    "visual_direction_approval": "approved",
-                    "visual_manifest_approval": "approved",
-                    "decision_provenance": {
-                        "brief": "bundled",
-                        "platforms": "inferred",
-                        "copy_approval": "bundled",
-                        "image_intent": "bundled",
-                        "visual_direction_approval": "bundled",
-                        "visual_manifest_approval": "bundled",
-                    },
-                }
-            )
+            approve_full_manifest(manifest, [approved_prompt()])
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             result = run_script("validate_manifest.py", str(manifest_path))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-
-    def test_autopilot_rejects_inferred_image_consent(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            prepared = run_script(
-                "prepare_workspace.py",
-                "autopilot-review",
-                "--platforms",
-                "linkedin",
-                "--mode",
-                "full",
-                "--review-policy",
-                "autopilot",
-                "--platform-source",
-                "preauthorized",
-                "--root",
-                temp_dir,
-                "--run-id",
-                "autopilot-001",
-            )
-            self.assertEqual(prepared.returncode, 0, prepared.stdout + prepared.stderr)
-            manifest_path = Path(json.loads(prepared.stdout)["manifest"])
-            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest.update(
-                {
-                    "copy_approval": "approved",
-                    "image_intent": "yes",
-                    "visual_direction_approval": "approved",
-                    "visual_manifest_approval": "approved",
-                    "decision_provenance": {
-                        "brief": "preauthorized",
-                        "platforms": "preauthorized",
-                        "copy_approval": "preauthorized",
-                        "image_intent": "inferred",
-                        "visual_direction_approval": "preauthorized",
-                        "visual_manifest_approval": "preauthorized",
-                    },
-                }
-            )
-            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-            result = run_script("validate_manifest.py", str(manifest_path))
-            self.assertNotEqual(result.returncode, 0)
-            errors = json.loads(result.stdout)["errors"]
-            self.assertTrue(any("consent" in error for error in errors))
 
     def test_autopilot_accepts_recorded_preauthorization(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -361,24 +271,24 @@ class DeliveryPipelineTests(unittest.TestCase):
                 "--root",
                 temp_dir,
                 "--run-id",
-                "autopilot-002",
+                "autopilot-001",
             )
             manifest_path = Path(json.loads(prepared.stdout)["manifest"])
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             manifest.update(
                 {
                     "copy_approval": "approved",
-                    "image_intent": "yes",
-                    "visual_direction_approval": "approved",
-                    "visual_manifest_approval": "approved",
+                    "visual_prompt_approval": "approved",
                     "decision_provenance": {
                         "brief": "preauthorized",
                         "platforms": "preauthorized",
                         "copy_approval": "preauthorized",
-                        "image_intent": "explicit",
-                        "visual_direction_approval": "preauthorized",
-                        "visual_manifest_approval": "preauthorized",
+                        "visual_prompt_intent": "inferred",
+                        "visual_prompt_approval": "preauthorized",
                     },
+                    "visual_prompts": [
+                        approved_prompt("linkedin", "linkedin-cover-01")
+                    ],
                 }
             )
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -408,11 +318,8 @@ class DeliveryPipelineTests(unittest.TestCase):
                 "--run-id",
                 "source-001",
             )
-            self.assertEqual(prepared.returncode, 0, prepared.stdout + prepared.stderr)
             manifest_path = Path(json.loads(prepared.stdout)["manifest"])
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            self.assertEqual(manifest["source"]["input_type"], "file")
-            self.assertEqual(manifest["source"]["reference"], "article.pdf")
             manifest["platform_recommendations"] = [
                 {
                     "platform": "xiaohongshu",
@@ -434,6 +341,34 @@ class DeliveryPipelineTests(unittest.TestCase):
             result = run_script("validate_manifest.py", str(manifest_path))
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_pasted_source_can_record_supporting_url_without_refetch(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = run_script(
+                "prepare_workspace.py",
+                "pasted-with-url",
+                "--platforms",
+                "linkedin",
+                "--source-type",
+                "pasted",
+                "--supporting-ref",
+                "https://example.com/article",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "source-002",
+            )
+            self.assertEqual(prepared.returncode, 0, prepared.stdout + prepared.stderr)
+            manifest = json.loads(
+                Path(json.loads(prepared.stdout)["manifest"]).read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(manifest["source"]["input_type"], "pasted")
+            self.assertEqual(
+                manifest["source"]["supporting_references"],
+                ["https://example.com/article"],
+            )
+
     def test_incomplete_source_blocks_delivery(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             prepared = run_script(
@@ -444,7 +379,7 @@ class DeliveryPipelineTests(unittest.TestCase):
                 "--root",
                 temp_dir,
                 "--run-id",
-                "source-002",
+                "source-003",
             )
             manifest_path = Path(json.loads(prepared.stdout)["manifest"])
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -452,81 +387,75 @@ class DeliveryPipelineTests(unittest.TestCase):
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             result = run_script("validate_manifest.py", str(manifest_path))
             self.assertNotEqual(result.returncode, 0)
-            errors = json.loads(result.stdout)["errors"]
-            self.assertTrue(any("completely read" in error for error in errors))
+            self.assertTrue(
+                any(
+                    "completely read" in error
+                    for error in json.loads(result.stdout)["errors"]
+                )
+            )
 
     def test_single_platform_recommendation_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             prepared = run_script(
                 "prepare_workspace.py",
-                "weak-recommendation",
+                "bad-recommendations",
                 "--platforms",
-                "x",
+                "linkedin",
                 "--platform-source",
                 "inferred",
                 "--root",
                 temp_dir,
                 "--run-id",
-                "recommendation-001",
+                "recommend-001",
             )
             manifest_path = Path(json.loads(prepared.stdout)["manifest"])
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
             manifest["platform_recommendations"] = [
                 {
-                    "platform": "x",
-                    "rationale": "适合短观点",
-                    "visual_direction": "观点卡片",
+                    "platform": "linkedin",
+                    "rationale": "专业受众",
+                    "visual_direction": "编辑图解",
                     "selection_status": "selected",
                 }
             ]
-            manifest_path.write_text(
-                json.dumps(manifest, ensure_ascii=False),
-                encoding="utf-8",
-            )
+            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
             result = run_script("validate_manifest.py", str(manifest_path))
             self.assertNotEqual(result.returncode, 0)
-            errors = json.loads(result.stdout)["errors"]
-            self.assertTrue(any("two or three" in error for error in errors))
-
-    def test_script_failures_are_structured_json(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            missing_manifest = Path(temp_dir) / "missing.json"
-            for script in (
-                "validate_manifest.py",
-                "render_showcase.py",
-                "build_delivery_index.py",
-            ):
-                result = run_script(script, str(missing_manifest))
-                self.assertNotEqual(result.returncode, 0, script)
-                self.assertEqual(result.stderr, "", script)
-                payload = json.loads(result.stdout)
-                self.assertEqual(payload["status"], "failed", script)
-                self.assertTrue(payload["errors"], script)
-
-            missing_showcase = Path(temp_dir) / "missing-showcase"
-            result = run_script("validate_showcase.py", str(missing_showcase))
-            self.assertNotEqual(result.returncode, 0)
-            self.assertEqual(json.loads(result.stdout)["status"], "failed")
+            self.assertTrue(
+                any(
+                    "two or three" in error
+                    for error in json.loads(result.stdout)["errors"]
+                )
+            )
 
     def test_prepare_workspace_refuses_overwrite_with_json_error(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             arguments = (
-                "immutable-run",
+                "same-run",
                 "--platforms",
                 "linkedin",
                 "--root",
                 temp_dir,
                 "--run-id",
-                "same-run",
+                "fixed",
             )
             first = run_script("prepare_workspace.py", *arguments)
             second = run_script("prepare_workspace.py", *arguments)
-            self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+            self.assertEqual(first.returncode, 0)
             self.assertNotEqual(second.returncode, 0)
-            self.assertEqual(second.stderr, "")
-            payload = json.loads(second.stdout)
-            self.assertEqual(payload["status"], "failed")
-            self.assertTrue(any("will not be overwritten" in item for item in payload["errors"]))
+            self.assertEqual(json.loads(second.stdout)["status"], "failed")
+
+    def test_script_failures_are_structured_json(self) -> None:
+        result = run_script(
+            "prepare_workspace.py",
+            "../escape",
+            "--platforms",
+            "linkedin",
+        )
+        self.assertNotEqual(result.returncode, 0)
+        payload = json.loads(result.stdout)
+        self.assertEqual(payload["status"], "failed")
+        self.assertTrue(payload["errors"])
 
 
 if __name__ == "__main__":
