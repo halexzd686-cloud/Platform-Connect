@@ -13,14 +13,19 @@
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
   const multiline = value => escapeHtml(value).replaceAll("\n", "<br>");
+  const paragraphs = value => String(value || "")
+    .split(/\n\s*\n/)
+    .filter(Boolean)
+    .map(item => `<p>${multiline(item.trim())}</p>`)
+    .join("");
 
   const manifest = data.manifest || {};
   const platforms = list(data.platforms);
   const copies = list(data.copies);
   const visualPrompts = list(data.visual_prompts);
+  const downloads = data.downloads || {};
   const outcome = data.outcome || {};
   let currentPlatform = platforms[0]?.id || manifest.platforms?.[0] || "";
-  let activeFilter = "all";
   let toastTimer;
 
   const provenanceLabels = {
@@ -35,6 +40,10 @@
   function platformLabel(platformId) {
     const platform = platforms.find(item => item.id === platformId);
     return platform?.label || platformId;
+  }
+
+  function relativeUrl(path) {
+    return `../${String(path || "").split("/").map(encodeURIComponent).join("/")}`;
   }
 
   function showToast(message) {
@@ -70,6 +79,7 @@
 
   function renderSource() {
     const source = data.source || {};
+    const brief = data.brief || {};
     const fileName = source.file_name || manifest.source?.reference || `${manifest.article_slug}.md`;
     const inputType = source.input_type || manifest.source?.input_type || "pasted";
     const typeLabel = inputType === "url"
@@ -82,42 +92,36 @@
       source.language || data.locale_assumptions?.source_language,
       source.read_status === "complete" ? "已完整读取" : source.read_status,
     ].filter(Boolean).join(" · ");
-    $("sourceHeadline").textContent = source.title || manifest.source?.title || manifest.article_slug;
-    $("sourceSummary").innerHTML = list(source.summary_paragraphs)
-      .slice(0, 3)
-      .map(item => `<p>${escapeHtml(item)}</p>`)
-      .join("");
+    $("sourceHeadline").textContent = brief.core_thesis || source.title || manifest.source?.title || manifest.article_slug;
     $("sideFacts").innerHTML = [
-      ["发布平台", platforms.map(item => item.label || item.id).join(" · ")],
-      ["文案版本", `${copies.length} 份`],
-      ["生图提示词", `${visualPrompts.length} 条`],
-      ["图片工具", "未调用"],
+      ["作者立场", brief.author_stance],
+      ["目标读者", brief.audience],
+      ["已选平台", platforms.map(item => item.label || item.id).join(" · ")],
     ].map(([label, value]) => `
-      <div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>
+      <div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>
     `).join("");
   }
 
   function renderHero() {
-    const sourceTitle = data.source?.title || manifest.source?.title || manifest.article_slug;
-    const labels = platforms.map(item => item.label || item.id).join("与");
+    const labels = platforms.map(item => item.label || item.id);
     const promptSentence = visualPrompts.length
-      ? `和 ${visualPrompts.length} 条可复制的生图提示词`
+      ? `，并准备好 <strong>${visualPrompts.length} 条配图提示词</strong>`
       : "";
-    $("outcomeSentence").innerHTML = `本次读取了<strong>《${escapeHtml(sourceTitle)}》</strong>，最终选择<strong>${escapeHtml(labels || "已记录平台")}</strong>，完成 ${copies.length} 份平台原生文案${promptSentence}；全程未调用图片工具。`;
-    $("caseId").innerHTML = [
-      `CASE ${escapeHtml(manifest.run_id)}`,
-      `${escapeHtml(data.locale_assumptions?.source_language)} / ${escapeHtml(data.locale_assumptions?.target_language || "SOURCE")}`,
-      escapeHtml(outcome.status || "in-progress").toUpperCase(),
-    ].map(item => `<span>${item}</span>`).join("");
-    const summary = [
-      ["INPUT", `${escapeHtml((data.source?.input_type || "source").toUpperCase())} · COMPLETE`],
-      ["PLATFORMS", platforms.map(item => escapeHtml(item.label || item.id)).join(" · ")],
-      ["COPY", `${copies.length} 份定稿`],
-      ["PROMPTS", `${visualPrompts.length} 条可复制`],
-      ["STATUS", outcome.status === "ready" ? "● READY" : "● IN PROGRESS"],
+    $("outcomeSentence").innerHTML = `已完成<strong>${escapeHtml(labels.join("与") || "已记录平台")}</strong>的最终文案${promptSentence}。`;
+    const routeItems = [
+      "<span>SOURCE</span>",
+      ...labels.flatMap(label => ["<i></i>", `<span>${escapeHtml(label)}</span>`]),
+      `<b>${outcome.status === "ready" ? "READY" : "IN PROGRESS"}</b>`,
     ];
-    $("summaryStrip").innerHTML = summary.map(([label, value], index) => `
-      <div><small>${label}</small><strong class="${index === 4 ? "ready" : ""}">${value}</strong></div>
+    $("deliveryRoute").innerHTML = routeItems.join("");
+    const summary = [
+      ["原始内容", "1 篇", "完整读取"],
+      ["发布平台", `${platforms.length} 个`, "平台原生"],
+      ["最终文案", `${copies.length} 份`, "已经定稿"],
+      ["配图提示词", `${visualPrompts.length} 条`, "可复制"],
+    ];
+    $("summaryStrip").innerHTML = summary.map(([label, value, note]) => `
+      <div><small>${escapeHtml(label)}</small><strong>${escapeHtml(value)}</strong><span>${escapeHtml(note)}</span></div>
     `).join("");
   }
 
@@ -126,10 +130,11 @@
       const active = platform.id === currentPlatform;
       return `
         <button class="${active ? "active" : ""}" data-platform-tab="${escapeHtml(platform.id)}" aria-pressed="${active}">
-          <strong>${escapeHtml(platform.label || platform.id)}</strong>
-          <span>${escapeHtml(platform.language || data.locale_assumptions?.target_language || data.locale_assumptions?.source_language)} · ${escapeHtml(platform.market || data.locale_assumptions?.market || "source")}</span>
+          <span>${escapeHtml(platform.label || platform.id)}</span>
+          <small>${escapeHtml(platform.language || data.locale_assumptions?.target_language || data.locale_assumptions?.source_language)} · ${escapeHtml(platform.market || data.locale_assumptions?.market || "source")}</small>
         </button>`;
-    }).join("") + `<p>${platforms.length} / ${platforms.length} PACKAGES<br>FINAL COPY + PROMPTS</p>`;
+    }).join("") + `
+      <p><b>${String(platforms.length).padStart(2, "0")}</b><span>FINAL<br>DRAFTS</span></p>`;
     document.querySelectorAll("[data-platform-tab]").forEach(button => {
       button.addEventListener("click", () => {
         currentPlatform = button.dataset.platformTab;
@@ -138,123 +143,62 @@
     });
   }
 
-  function promptCard(promptPackage, compact = false) {
-    if (!promptPackage) {
-      return `<div class="visual-empty"><span>NO PROMPT</span><strong>本平台未请求生图提示词</strong></div>`;
-    }
-    return `
-      <article class="prompt-card ${compact ? "compact" : ""}">
-        <header>
-          <span>${escapeHtml(promptPackage.asset_type)} · ${escapeHtml(promptPackage.aspect_ratio)}</span>
-          <strong>${escapeHtml(promptPackage.visual_direction)}</strong>
-        </header>
-        <p class="prompt-purpose">${escapeHtml(promptPackage.purpose)}</p>
-        <div class="prompt-copy">${multiline(promptPackage.prompt)}</div>
-        <div class="prompt-meta">
-          <span>画面文字：${escapeHtml(promptPackage.on_image_text || "建议无文字")}</span>
-          <span>来源：${escapeHtml(promptPackage.source_anchor)}</span>
-        </div>
-        <button class="copy-prompt" data-copy-prompt="${escapeHtml(promptPackage.id)}">复制生图提示词</button>
-      </article>`;
-  }
-
   function renderPackages() {
     renderPackageTabs();
-    const copy = copies.find(item => item.platform === currentPlatform) || copies[0];
+    const copy = copies.find(item => item.platform === currentPlatform) || copies[0] || {};
     const platform = platforms.find(item => item.id === currentPlatform) || {};
-    const platformPrompts = visualPrompts.filter(item => item.platform === currentPlatform);
-    const title = copy?.title || platformLabel(currentPlatform);
-    const content = copy?.content || "当前运行未写入平台文案。";
+    const content = copy.content || "当前运行未写入平台文案。";
+    const copyDownload = list(downloads.files).find(item =>
+      item.kind === "copy" && item.platform === currentPlatform);
     $("packageView").innerHTML = `
-      <article class="copy-pane">
-        <div class="chips">
-          <span class="strong">FINAL</span>
-          <span>${escapeHtml(currentPlatform)}</span>
+      <article class="copy-sheet">
+        <div class="copy-meta">
+          <span class="status-chip">FINAL</span>
+          <span>${escapeHtml(platformLabel(currentPlatform))}</span>
           <span>${escapeHtml(platform.language || data.locale_assumptions?.target_language || data.locale_assumptions?.source_language)}</span>
         </div>
-        <h3>${escapeHtml(title)}</h3>
-        <div class="copy-content">${multiline(content)}</div>
-        <div class="copy-foot">
-          <small>${content.length} 字符 · ${escapeHtml(platformLabel(currentPlatform))}</small>
-          <button id="copyCurrent">复制文案</button>
-        </div>
-      </article>
-      <div class="visual-pane prompt-pane">
-        ${promptCard(platformPrompts[0])}
-        ${platformPrompts.length > 1
-          ? `<div class="prompt-alternatives">${platformPrompts.slice(1).map(item => promptCard(item, true)).join("")}</div>`
-          : ""}
-        <p><span>${platformPrompts.length} PROMPTS</span><strong>NO IMAGE TOOL USED</strong></p>
-      </div>`;
-    $("copyCurrent").addEventListener("click", () => copyText(content, "文案已复制"));
-    bindPromptCopies();
-  }
-
-  function renderBaseline() {
-    const brief = data.brief || {};
-    const claims = list(brief.protected_claims);
-    const flags = list(data.review_flags);
-    $("baselineGrid").innerHTML = `
-      <article class="baseline-primary">
-        <p>CORE THESIS</p>
-        <h3>${escapeHtml(brief.core_thesis)}</h3>
-        <div class="baseline-facts">
-          <div><span>作者立场</span><strong>${escapeHtml(brief.author_stance)}</strong></div>
-          <div><span>目标受众</span><strong>${escapeHtml(brief.audience)}</strong></div>
-          <div><span>沟通任务</span><strong>${escapeHtml(brief.audience_need)}</strong></div>
-          <div><span>语气</span><strong>${escapeHtml(brief.tone)}</strong></div>
-        </div>
-      </article>
-      <article class="baseline-secondary">
-        <p>PROTECTED CLAIMS</p>
-        <ul>${claims.length ? claims.map(item => `<li><b>L</b><span>${escapeHtml(item)}</span></li>`).join("") : "<li><span>暂无不可漂移声明</span></li>"}</ul>
-        ${flags.length ? `<p class="flag-title">REVIEW FLAGS</p><ul>${flags.map(item => `<li><b>!</b><span>${escapeHtml(item)}</span></li>`).join("")}</ul>` : ""}
+        <h3>${escapeHtml(copy.title || platformLabel(currentPlatform))}</h3>
+        <div class="copy-body">${paragraphs(content)}</div>
+        <footer>
+          <small>${content.length} 字符 · ${escapeHtml(platformLabel(currentPlatform))}定稿</small>
+          <div class="button-row">
+            <button class="button button-quiet" type="button" id="copyCurrent">复制文案</button>
+            ${copyDownload ? `<a class="button button-dark" href="${relativeUrl(copyDownload.path)}" download>下载文案</a>` : ""}
+          </div>
+        </footer>
       </article>`;
-  }
-
-  function renderFilters() {
-    const filterPlatforms = platforms.filter(platform =>
-      visualPrompts.some(item => item.platform === platform.id));
-    $("promptFilters").innerHTML = [
-      `<button class="${activeFilter === "all" ? "active" : ""}" data-filter="all">全部 ${visualPrompts.length}</button>`,
-      ...filterPlatforms.map(platform => {
-        const count = visualPrompts.filter(item => item.platform === platform.id).length;
-        return `<button class="${activeFilter === platform.id ? "active" : ""}" data-filter="${escapeHtml(platform.id)}">${escapeHtml(platform.label || platform.id)} ${count}</button>`;
-      }),
-    ].join("");
-    document.querySelectorAll("[data-filter]").forEach(button => {
-      button.addEventListener("click", () => {
-        activeFilter = button.dataset.filter;
-        renderPromptGallery();
-      });
-    });
+    $("copyCurrent").addEventListener("click", () => copyText(content, "文案已复制"));
+    bindDownloadToasts();
   }
 
   function renderPromptGallery() {
-    renderFilters();
-    const filtered = activeFilter === "all"
-      ? visualPrompts
-      : visualPrompts.filter(item => item.platform === activeFilter);
-    $("promptGallery").innerHTML = filtered.length
-      ? filtered.map(item => `
-        <article class="prompt-gallery-card">
+    $("promptGallery").innerHTML = visualPrompts.length
+      ? visualPrompts.map((item, index) => `
+        <article class="prompt-card ${index % 2 ? "prompt-card-dark" : ""}">
           <header>
-            <span>${escapeHtml(platformLabel(item.platform))}</span>
-            <b>${escapeHtml(item.aspect_ratio)}</b>
+            <div>
+              <span>${escapeHtml(platformLabel(item.platform))}</span>
+              <small>${escapeHtml(item.asset_type)} · ${escapeHtml(item.aspect_ratio)}</small>
+            </div>
+            <b>${String(index + 1).padStart(2, "0")}</b>
           </header>
-          <h3>${escapeHtml(item.purpose)}</h3>
-          <p class="direction">${escapeHtml(item.visual_direction)}</p>
+          <h3>${escapeHtml(item.visual_direction)}</h3>
+          <p class="prompt-purpose">${escapeHtml(item.purpose)}</p>
           <div class="prompt-copy">${multiline(item.prompt)}</div>
           <details>
-            <summary>查看约束与使用说明</summary>
+            <summary>查看使用约束</summary>
+            <p><strong>画面文字</strong>${escapeHtml(item.on_image_text || "建议无文字")}</p>
             <p><strong>负面约束</strong>${escapeHtml(item.negative_prompt)}</p>
             <p><strong>事实不变量</strong>${list(item.factual_invariants).map(escapeHtml).join("；")}</p>
-            <p><strong>工具建议</strong>${escapeHtml(item.tool_notes)}</p>
+            <p><strong>使用建议</strong>${escapeHtml(item.tool_notes)}</p>
           </details>
-          <button class="copy-prompt" data-copy-prompt="${escapeHtml(item.id)}">复制生图提示词</button>
+          <div class="card-actions">
+            <span>来源：${escapeHtml(item.source_anchor)}</span>
+            <button type="button" data-copy-prompt="${escapeHtml(item.id)}">复制提示词</button>
+          </div>
         </article>
       `).join("")
-      : `<div class="empty-state"><strong>本次没有生图提示词</strong><span>平台文案仍可正常查看。</span></div>`;
+      : `<div class="empty-state"><strong>本次没有配图提示词</strong><span>平台文案仍可正常查看和下载。</span></div>`;
     bindPromptCopies();
   }
 
@@ -262,7 +206,7 @@
     document.querySelectorAll("[data-copy-prompt]").forEach(button => {
       button.addEventListener("click", () => {
         const promptPackage = visualPrompts.find(item => item.id === button.dataset.copyPrompt);
-        if (promptPackage) copyText(promptPackage.prompt, "生图提示词已复制");
+        if (promptPackage) copyText(promptPackage.prompt, "配图提示词已复制");
       });
     });
   }
@@ -273,37 +217,51 @@
   }
 
   function renderDelivery() {
-    const deliverables = list(data.deliverables);
-    $("deliveryList").innerHTML = deliverables.map(path => `
-      <a href="../${escapeHtml(String(path).split("/").map(encodeURIComponent).join("/"))}">
-        <b>${escapeHtml(deliverableType(path))}</b>
-        <span><strong>${escapeHtml(path)}</strong><small>交付文件 · 可离线访问</small></span>
-        <em>READY</em>
+    const bundle = downloads.bundle || {};
+    const files = list(downloads.files);
+    $("downloadPrimary").innerHTML = `
+      <span class="package-number">${String(files.length).padStart(2, "0")}</span>
+      <div>
+        <small>PLATFORM CONNECT · DELIVERY PACKAGE</small>
+        <h3>${outcome.status === "ready" ? "本次成果已经整理完毕" : "本次成果仍在整理"}</h3>
+        <p>${escapeHtml(bundle.description || `包含 ${files.length} 个用户可直接使用的文件。`)}</p>
+      </div>
+      ${bundle.path ? `
+        <a class="download-all" href="${relativeUrl(bundle.path)}" download>
+          <span>下载全部成果</span><small>ZIP · ${files.length} FILES</small>
+        </a>` : ""}`;
+    $("deliveryList").innerHTML = files.map(item => `
+      <a href="${relativeUrl(item.path)}" download>
+        <b>${escapeHtml(deliverableType(item.path))}</b>
+        <span><strong>${escapeHtml(item.label || item.path)}</strong><small>${escapeHtml(item.description || "最终交付文件")}</small></span>
+        <em>下载</em>
       </a>
     `).join("");
-    const ready = outcome.status === "ready";
-    $("deliveryStatus").innerHTML = `
-      <span>${String(deliverables.length).padStart(2, "0")}</span>
-      <h3>${ready ? "成果已经归档" : "成果仍在整理"}</h3>
-      <p>从原始文档到平台文案、生图提示词与来源记录，本次内容工作已经形成可复核的交付闭环。</p>
-      <strong>${ready ? "READY TO DELIVER" : "IN PROGRESS"}</strong>`;
+    bindDownloadToasts();
   }
 
   function renderTrace() {
+    const brief = data.brief || {};
     const recommendations = list(data.platform_recommendations);
     const provenance = data.decision_provenance || {};
+    const reviewPolicy = manifest.review_policy || "compact";
+    const sourceHtml = `
+      <article>
+        <p>SOURCE & FACTS</p>
+        <div class="trace-summary"><b>共享事实基线</b><span>${escapeHtml(brief.core_thesis)}</span></div>
+        ${list(brief.protected_claims).map(item => `<div class="trace-line"><span>${escapeHtml(item)}</span></div>`).join("")}
+      </article>`;
     const recommendationHtml = recommendations.length ? `
       <article>
-        <p>PLATFORM RECOMMENDATIONS</p>
+        <p>PLATFORM DECISIONS · ${escapeHtml(reviewPolicy)}</p>
         ${recommendations.map(item => `
           <div class="recommendation">
             <b>${escapeHtml(platformLabel(item.platform))}</b>
             <span>${escapeHtml(item.rationale)}</span>
-            <small>${escapeHtml(item.visual_direction)} · ${escapeHtml(item.selection_status)}</small>
+            <small>${escapeHtml(item.selection_status)}</small>
           </div>
         `).join("")}
-      </article>` : "";
-    const decisionHtml = `
+      </article>` : `
       <article>
         <p>DECISION PROVENANCE</p>
         ${Object.entries(provenance).map(([key, value]) => `
@@ -319,25 +277,39 @@
           <div class="trace-event"><b>${escapeHtml(event.mark || "S")}</b><span><strong>${escapeHtml(event.label || event.stage)}</strong><small>${escapeHtml(event.text)}</small></span></div>
         `).join("") : '<div class="trace-event"><span><strong>执行记录已归档</strong><small>本次没有额外事件说明。</small></span></div>'}
       </article>`;
-    $("traceContent").innerHTML = recommendationHtml + decisionHtml + eventsHtml;
+    $("traceContent").innerHTML = sourceHtml + recommendationHtml + eventsHtml;
+  }
+
+  function bindDownloadToasts() {
+    document.querySelectorAll("a[download]").forEach(link => {
+      if (link.dataset.toastBound === "true") return;
+      link.dataset.toastBound = "true";
+      link.addEventListener("click", () => {
+        const fileName = decodeURIComponent(link.getAttribute("href").split("/").pop());
+        showToast(`正在下载：${fileName}`);
+      });
+    });
   }
 
   function bindGlobalInteractions() {
     $("traceToggle").addEventListener("click", () => {
-      const open = $("trace").classList.toggle("open");
+      const trace = $("trace");
+      const open = trace.classList.toggle("open");
       $("traceToggle").setAttribute("aria-expanded", String(open));
     });
   }
 
-  $("runtimeLabel").textContent = `${text(manifest.mode).toUpperCase()} · ${text(manifest.review_policy).toUpperCase()} · ${text(outcome.status).toUpperCase()}`;
-  $("runMeta").innerHTML = `SCHEMA ${escapeHtml(manifest.schema_version)}<br>SKILL ${escapeHtml(manifest.skill_version)}`;
+  function renderMeta() {
+    $("runMeta").innerHTML = `CASE ${escapeHtml(manifest.run_id)}<br>SKILL ${escapeHtml(manifest.skill_version)}`;
+    $("runtimeLabel").textContent = outcome.status === "ready" ? "DELIVERY READY" : "DELIVERY IN PROGRESS";
+  }
 
   renderSource();
   renderHero();
   renderPackages();
-  renderBaseline();
   renderPromptGallery();
   renderDelivery();
   renderTrace();
+  renderMeta();
   bindGlobalInteractions();
 })();

@@ -8,6 +8,7 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
+import zipfile
 
 from _shared import emit, fail
 
@@ -94,6 +95,44 @@ def validate(showcase: Path) -> list[str]:
     source = case.get("source", {}) if isinstance(case, dict) else {}
     if source.get("read_status") != "complete":
         errors.append("embedded source must record complete intake")
+
+    downloads = case.get("downloads", {}) if isinstance(case, dict) else {}
+    bundle = downloads.get("bundle", {}) if isinstance(downloads, dict) else {}
+    download_files = downloads.get("files", []) if isinstance(downloads, dict) else []
+    declared = [bundle, *download_files]
+    delivery_root = showcase.parent.resolve()
+    for item in declared:
+        relative = item.get("path") if isinstance(item, dict) else None
+        if not relative:
+            errors.append("embedded download entry is missing path")
+            continue
+        target = (delivery_root / relative).resolve()
+        try:
+            target.relative_to(delivery_root)
+        except ValueError:
+            errors.append(f"download path escapes delivery root: {relative}")
+            continue
+        if not target.is_file():
+            errors.append(f"download file is missing: {relative}")
+
+    bundle_path = bundle.get("path") if isinstance(bundle, dict) else None
+    if bundle_path:
+        archive_path = (delivery_root / bundle_path).resolve()
+        if archive_path.is_file():
+            try:
+                with zipfile.ZipFile(archive_path) as archive:
+                    archive_names = set(archive.namelist())
+                    expected_names = {
+                        Path(item["path"]).name
+                        for item in download_files
+                        if isinstance(item, dict) and item.get("path")
+                    }
+                    if archive.testzip() is not None:
+                        errors.append("download bundle contains a corrupt member")
+                    if archive_names != expected_names:
+                        errors.append("download bundle contents do not match declared files")
+            except zipfile.BadZipFile:
+                errors.append("download bundle is not a valid ZIP archive")
     return errors
 
 

@@ -39,7 +39,7 @@ Keep output scope and review policy independent. Record both in the manifest.
 10. Apply the review policy: use one combined approval in `compact`, separate copy and visual-prompt gates in `strict`, or recorded preauthorization in `autopilot`. Treat requested revisions as replacing approval for the affected decision.
 11. Never call an image-generation or image-editing tool. Do not generate, inspect, revise, or embed image files. Deliver prompt text, aspect-ratio guidance, optional on-image text, factual invariants, and avoid constraints so the user can generate images elsewhere.
 12. When filesystem output is requested, follow the deterministic delivery loop below. Create a new immutable run directory for every revision; never overwrite a prior approved run.
-13. Render the bundled offline showcase from the completed run. Make final copy and visual prompt cards the primary content; keep recommendations, decisions, and execution trace secondary or collapsed. Treat the board as a read-only delivery report, not a control surface or a separate AI application.
+13. Render the bundled offline showcase from the completed run. Make final copy, visual prompt cards, and real download links the primary content; keep recommendations, decisions, and execution trace secondary or collapsed. The renderer creates individual user-facing files and one ZIP bundle in `downloads/`. Treat the board as a read-only delivery report, not a control surface or a separate AI application.
 
 ## Non-negotiable boundaries
 
@@ -85,8 +85,8 @@ Execute these scripts for file operations; do not manually recreate their behavi
 - `scripts/prepare_workspace.py <slug> --platforms ... --review-policy ...` creates an immutable versioned run directory and starter manifest.
 - `scripts/validate_manifest.py <manifest.json>` validates required fields, platform selection, duplicate prompt packages, ratios, and approval state.
 - `scripts/build_delivery_index.py <manifest.json>` builds a Markdown delivery index after visual prompts and copy paths are recorded.
-- `scripts/render_showcase.py <manifest.json>` renders the bundled offline execution showcase.
-- `scripts/validate_showcase.py <showcase-dir>` checks the rendered showcase contract and offline constraints.
+- `scripts/render_showcase.py <manifest.json>` renders the bundled offline execution showcase and creates user-facing files plus a ZIP in `downloads/`.
+- `scripts/validate_showcase.py <showcase-dir>` checks the rendered showcase, download bundle, and offline constraints.
 
 Run scripts from the repository or skill consumer's working directory. Use `--root` to choose a different output root.
 

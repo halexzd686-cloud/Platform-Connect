@@ -117,9 +117,14 @@ class SkillRepositoryTests(unittest.TestCase):
             SKILL / "assets" / "static-showcase" / "app.js"
         ).read_text(encoding="utf-8")
         self.assertIn("OUTCOME CONSOLE", html)
-        self.assertIn("最终平台文案与提示词", html)
-        self.assertIn("可直接使用的生图提示词", html)
+        self.assertIn("从一份表达，", html)
+        self.assertIn("到多种抵达", html)
+        self.assertIn("各平台最终文案", html)
+        self.assertIn("配图建议与提示词", html)
+        self.assertIn("下载本次成果", html)
+        self.assertNotIn("这组内容从哪里来", html)
         self.assertIn("visual_prompts", app)
+        self.assertIn("downloads", app)
         self.assertNotIn("<img", app)
         self.assertIn("platform_recommendations", app)
 

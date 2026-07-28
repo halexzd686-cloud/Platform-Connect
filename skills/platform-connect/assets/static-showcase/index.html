@@ -10,81 +10,73 @@
   <header class="topbar">
     <div class="brand">
       <span class="brand-mark">PC</span>
-      <span>Platform Connect<small>OUTCOME CONSOLE · OFFLINE REPORT</small></span>
+      <span class="brand-copy">Platform Connect<small>OUTCOME CONSOLE · OFFLINE REPORT</small></span>
     </div>
-    <div class="runtime"><i></i><span id="runtimeLabel">DELIVERY LOADED</span></div>
+    <div class="runtime"><i></i><span id="runtimeLabel">DELIVERY READY</span></div>
     <div class="run-meta" id="runMeta"></div>
   </header>
 
   <div class="shell">
     <aside class="source-rail">
-      <div class="rail-label"><span>SOURCE</span><span>01 / 01</span></div>
-      <div class="source-card">
-        <span class="file-mark" id="sourceType">DOC</span>
+      <div class="rail-heading"><span>本次原文</span><b>01 / 01</b></div>
+      <article class="source-file">
+        <span class="file-type" id="sourceType">DOC</span>
         <div><strong id="sourceTitle">Source article</strong><small id="sourceMeta"></small></div>
-      </div>
-      <p class="side-kicker">ORIGINAL THESIS</p>
+      </article>
+      <p class="rail-kicker">文章核心</p>
       <h2 id="sourceHeadline"></h2>
-      <div class="source-summary" id="sourceSummary"></div>
-      <div class="side-facts" id="sideFacts"></div>
-      <footer><span></span> 事实基线已锁定</footer>
+      <dl class="rail-facts" id="sideFacts"></dl>
+      <footer><i></i><span>来源记录已保留</span></footer>
     </aside>
 
     <main class="stage">
       <section class="hero" data-screen-label="交付摘要">
-        <div>
-          <p class="eyebrow">A finished story, ready to travel</p>
-          <h1>这一次，内容已经抵达<br><em>它该去的地方</em></h1>
+        <div class="hero-title">
+          <p>PLATFORM-NATIVE DELIVERY · FINAL OUTPUT</p>
+          <h1>从一份表达，<br><em>到多种抵达</em></h1>
         </div>
-        <div class="outcome-copy">
+        <div class="hero-outcome">
+          <span class="outcome-index">01</span>
           <p id="outcomeSentence"></p>
-          <div class="case-id" id="caseId"></div>
+          <div class="route" id="deliveryRoute"></div>
         </div>
       </section>
 
       <section class="summary-strip" id="summaryStrip" aria-label="交付概览"></section>
 
-      <section class="section" data-screen-label="最终平台内容">
-        <div class="section-head">
-          <div><p>01 / FINAL PACKAGES</p><h2>最终平台文案与提示词</h2></div>
-          <span>切换只改变查看对象，不会重新触发生成。</span>
-        </div>
-        <div class="package-shell">
-          <nav class="package-tabs" id="packageTabs" aria-label="平台成品切换"></nav>
+      <section class="content-section" data-screen-label="各平台最终文案">
+        <header class="section-head">
+          <div><span>FINAL COPY</span><h2>各平台最终文案</h2></div>
+          <p>切换平台只改变当前查看的定稿，不会重新执行 Skill。</p>
+        </header>
+        <div class="package-shell copy-workbench">
+          <nav class="package-tabs platform-tabs" id="packageTabs" aria-label="平台文案切换"></nav>
           <div class="package-view" id="packageView"></div>
         </div>
       </section>
 
-      <section class="section" data-screen-label="事实基线">
-        <div class="section-head">
-          <div><p>02 / SOURCE FIDELITY</p><h2>这组内容从哪里来</h2></div>
-          <span>不同平台，共享同一组核心事实与作者立场。</span>
-        </div>
-        <div class="baseline-grid" id="baselineGrid"></div>
+      <section class="content-section" data-screen-label="配图建议与提示词">
+        <header class="section-head">
+          <div><span>VISUAL PROMPTS</span><h2>配图建议与提示词</h2></div>
+          <p>每个平台一条完整提示词，不重复生成图片。</p>
+        </header>
+        <div class="prompt-gallery prompt-grid" id="promptGallery"></div>
       </section>
 
-      <section class="section" data-screen-label="生图提示词">
-        <div class="section-head gallery-head">
-          <div><p>03 / VISUAL PROMPTS</p><h2>可直接使用的生图提示词</h2></div>
-          <div class="filters" id="promptFilters" aria-label="提示词平台筛选"></div>
-        </div>
-        <div class="prompt-gallery" id="promptGallery"></div>
-      </section>
-
-      <section class="section" data-screen-label="交付清单">
-        <div class="section-head">
-          <div><p>04 / DELIVERY</p><h2>可带走的全部成果</h2></div>
-          <span>文件清单与可视化结果一一对应。</span>
-        </div>
-        <div class="delivery-board">
-          <div class="delivery-list" id="deliveryList"></div>
-          <aside class="delivery-status" id="deliveryStatus"></aside>
+      <section class="content-section" data-screen-label="下载本次成果">
+        <header class="section-head">
+          <div><span>DOWNLOAD</span><h2>下载本次成果</h2></div>
+          <p>只打包最终成稿，不把内部记录塞给用户。</p>
+        </header>
+        <div class="delivery-board download-board">
+          <div class="download-primary" id="downloadPrimary"></div>
+          <div class="delivery-list file-list" id="deliveryList"></div>
         </div>
       </section>
 
       <section class="trace" id="trace">
         <button class="trace-toggle" id="traceToggle" aria-expanded="false">
-          <span><strong>查看本次执行记录</strong><small>推荐、决策来源与执行过程默认折叠</small></span>
+          <span><strong>查看来源与执行记录</strong><small>事实基线、平台选择与确认过程默认收起</small></span>
           <b>＋</b>
         </button>
         <div class="trace-content"><div class="trace-inner" id="traceContent"></div></div>
@@ -92,7 +84,7 @@
 
       <footer class="page-footer">
         <span>PLATFORM CONNECT · OUTCOME CONSOLE</span>
-        <span>READ-ONLY DELIVERY REPORT · NO LIVE GENERATION</span>
+        <span>READ-ONLY DELIVERY · PROMPT FIRST</span>
       </footer>
     </main>
   </div>

@@ -7,6 +7,7 @@ import argparse
 import json
 from pathlib import Path
 import shutil
+import zipfile
 
 from _shared import emit, fail, load_json_object
 from validate_manifest import validate, validate_delivery
@@ -53,7 +54,130 @@ def load_display_data(path: Path | None) -> dict:
     return payload
 
 
-def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
+def display_copy(text: str) -> str:
+    """Remove the first Markdown title from the on-screen body only."""
+    lines = text.strip().splitlines()
+    if lines and lines[0].lstrip().startswith("#"):
+        lines = lines[1:]
+    return "\n".join(lines).strip()
+
+
+def prompt_markdown(prompts: list[dict]) -> str:
+    lines = ["# 配图提示词", ""]
+    for index, item in enumerate(prompts, start=1):
+        label = PLATFORM_LABELS.get(item.get("platform"), item.get("platform", "通用"))
+        lines.extend(
+            [
+                f"## {index}. {label}｜{item.get('visual_direction', '视觉方向')}",
+                "",
+                f"- 用途：{item.get('purpose', '')}",
+                f"- 资产类型：{item.get('asset_type', '')}",
+                f"- 比例：{item.get('aspect_ratio', '')}",
+                f"- 来源锚点：{item.get('source_anchor', '')}",
+                "",
+                "### 正向提示词",
+                "",
+                item.get("prompt", ""),
+                "",
+                "### 使用约束",
+                "",
+                f"- 画面文字：{item.get('on_image_text') or '建议无文字'}",
+                f"- 负面约束：{item.get('negative_prompt', '')}",
+                f"- 事实不变量：{'；'.join(item.get('factual_invariants', []))}",
+                f"- 使用建议：{item.get('tool_notes', '')}",
+                "",
+            ]
+        )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def create_downloads(manifest: dict, run_root: Path, output_dir: Path) -> dict:
+    """Create user-facing files and one deterministic ZIP beside the showcase."""
+    download_root = output_dir.parent / "downloads"
+    download_root.mkdir(parents=True, exist_ok=True)
+    files: list[dict] = []
+    archive_members: list[tuple[Path, str]] = []
+
+    for platform in manifest["platforms"]:
+        label = PLATFORM_LABELS.get(platform, platform)
+        file_name = f"{label}-文案.md"
+        target = download_root / file_name
+        source = run_root / manifest["copy_files"][platform]
+        target.write_text(read_text(source).rstrip() + "\n", encoding="utf-8")
+        files.append(
+            {
+                "path": f"downloads/{file_name}",
+                "label": file_name,
+                "description": f"{label}最终平台文案",
+                "kind": "copy",
+                "platform": platform,
+            }
+        )
+        archive_members.append((target, file_name))
+
+    prompts = manifest.get("visual_prompts", [])
+    if prompts:
+        prompt_name = "配图提示词.md"
+        prompt_target = download_root / prompt_name
+        prompt_target.write_text(prompt_markdown(prompts), encoding="utf-8")
+        files.append(
+            {
+                "path": f"downloads/{prompt_name}",
+                "label": prompt_name,
+                "description": "全部平台的配图方向、提示词与使用约束",
+                "kind": "visual-prompts",
+            }
+        )
+        archive_members.append((prompt_target, prompt_name))
+
+    notes_name = "交付说明.md"
+    notes_target = download_root / notes_name
+    labels = [PLATFORM_LABELS.get(item, item) for item in manifest["platforms"]]
+    notes = "\n".join(
+        [
+            "# Platform Connect 交付说明",
+            "",
+            f"- 运行编号：{manifest['run_id']}",
+            f"- 发布平台：{'、'.join(labels)}",
+            f"- 最终文案：{len(manifest['copy_files'])} 份",
+            f"- 配图提示词：{len(prompts)} 条",
+            "- 说明：本目录是面向用户的可下载成果；来源与执行记录保留在看板折叠区。",
+            "",
+        ]
+    )
+    notes_target.write_text(notes, encoding="utf-8")
+    files.append(
+        {
+            "path": f"downloads/{notes_name}",
+            "label": notes_name,
+            "description": "本次运行的交付范围与文件说明",
+            "kind": "delivery-notes",
+        }
+    )
+    archive_members.append((notes_target, notes_name))
+
+    bundle_name = "Platform-Connect-成果包.zip"
+    bundle_target = download_root / bundle_name
+    with zipfile.ZipFile(bundle_target, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for source, archive_name in archive_members:
+            archive.write(source, archive_name)
+
+    return {
+        "bundle": {
+            "path": f"downloads/{bundle_name}",
+            "description": f"包含 {len(files)} 个可直接使用的交付文件。",
+            "file_count": len(files),
+        },
+        "files": files,
+    }
+
+
+def build_case(
+    manifest: dict,
+    run_root: Path,
+    display: dict,
+    downloads: dict,
+) -> dict:
     brief_text = read_text(run_root / "source-brief.md")
     brief_lines = clean_lines(brief_text)
     manifest_source = manifest.get("source", {})
@@ -67,7 +191,7 @@ def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
                 "platform": platform,
                 "platform_label": PLATFORM_LABELS.get(platform, platform),
                 "title": copy_lines[0] if copy_lines else PLATFORM_LABELS.get(platform, platform),
-                "content": copy_text.strip() or "当前运行尚未写入平台文案。",
+                "content": display_copy(copy_text) or "当前运行尚未写入平台文案。",
             }
         )
 
@@ -137,13 +261,7 @@ def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
             "platforms": "approved",
         },
         "trace": {},
-        "deliverables": [
-            "source-brief.md",
-            "manifest.json",
-            *manifest["copy_files"].values(),
-            "index.md",
-            manifest["showcase_file"],
-        ],
+        "downloads": downloads,
     }
 
     for key in (
@@ -156,7 +274,6 @@ def build_case(manifest: dict, run_root: Path, display: dict) -> dict:
         "outcome",
         "decisions",
         "trace",
-        "deliverables",
     ):
         if key in display:
             if isinstance(case.get(key), dict) and isinstance(display[key], dict):
@@ -192,10 +309,11 @@ def main() -> int:
     if TOKEN not in template:
         return fail("showcase template token is missing")
 
-    case = build_case(manifest, run_root, display)
-    encoded = json.dumps(case, ensure_ascii=False).replace("</", "<\\/")
-    rendered = template.replace(TOKEN, encoded)
     try:
+        downloads = create_downloads(manifest, run_root, output_dir)
+        case = build_case(manifest, run_root, display, downloads)
+        encoded = json.dumps(case, ensure_ascii=False).replace("</", "<\\/")
+        rendered = template.replace(TOKEN, encoded)
         output_dir.mkdir(parents=True, exist_ok=True)
         (output_dir / "index.html").write_text(rendered, encoding="utf-8")
         shutil.copyfile(template_root / "app.js", output_dir / "app.js")
@@ -207,6 +325,7 @@ def main() -> int:
             "status": "created",
             "showcase": str((output_dir / "index.html").resolve()),
             "files": ["index.html", "app.js", "styles.css"],
+            "downloads": downloads,
         }
     )
     return 0

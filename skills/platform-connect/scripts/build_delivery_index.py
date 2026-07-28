@@ -27,6 +27,9 @@ def main() -> int:
             require_showcase=True,
         )
     )
+    bundle_path = args.manifest.resolve().parent / "downloads" / "Platform-Connect-成果包.zip"
+    if not bundle_path.is_file():
+        errors.append("download bundle is missing; run render_showcase.py first")
     if errors:
         emit({"status": "failed", "errors": errors})
         return 1
@@ -104,6 +107,11 @@ def main() -> int:
             "## 可视化展示",
             "",
             f"- `{data['showcase_file']}`",
+            "",
+            "## 下载成果",
+            "",
+            "- `downloads/Platform-Connect-成果包.zip`",
+            "- `downloads/` 中同时保留各平台文案、配图提示词（如有）和交付说明",
         ]
     )
 

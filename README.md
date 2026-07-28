@@ -35,7 +35,7 @@ Platform Connect 不是 React/FastAPI AI 应用，也不是把同一段文案换
 | 平台推荐 | 未指定目标时推荐 2–3 个适合的平台，并兼顾国内外发布场景 |
 | 原生文案适配 | 针对平台调整开场、节奏、结构与 CTA，不改变原文事实 |
 | 提示词式视觉交付 | 按文章、平台和行业推荐可复制的提示词，不调用生图工具 |
-| 结果型离线看板 | 最终文案与生图提示词集中展示，可通过 `file://` 打开，不依赖服务器或 CDN |
+| 结果型离线看板 | 最终文案、提示词与真实下载入口集中展示，可通过 `file://` 打开 |
 
 ## 交付结果
 
@@ -46,8 +46,9 @@ LinkedIn 可以保留专业判断与讨论空间，其他平台则遵循各自�
 
 ### 图文资产集中交付
 
-最终看板优先展示已经确认的平台文案和可复制生图提示词。来源简报、推荐依据和审批记录仍然
-保留，但默认折叠，不干扰用户查看最终成果。Skill 不生成或预览图片。
+最终看板只保留三类主要内容：已经确认的平台文案、可复制的生图提示词和真实可下载成果。
+来源简报、推荐依据和审批记录仍然保留，但默认折叠，不干扰用户查看最终成果。Skill 不生成
+或预览图片。
 
 ### 一次运行，一个可追溯目录
 
@@ -56,6 +57,11 @@ outputs/<article-slug>/<run-id>/
 ├── source-brief.md
 ├── manifest.json
 ├── index.md
+├── downloads/
+│   ├── Platform-Connect-成果包.zip
+│   ├── <平台>-文案.md
+│   ├── 配图提示词.md
+│   └── 交付说明.md
 ├── showcase/
 │   ├── index.html
 │   ├── app.js
@@ -78,7 +84,7 @@ npx skills add https://github.com/halexzd686-cloud/Platform-Connect --skill plat
 
 安装程序会引导选择 Agent 和安装范围。项目级安装是默认选择；只有明确需要在多个项目间复用时，
 才选择全局安装；需要直接指定用户级安装时，可在命令末尾增加 `--global`。当前正式发布版本为
-`v1.3.0`。
+`v1.4.0`。
 
 ### 2. 交给 Agent
 
@@ -106,7 +112,8 @@ npx skills add https://github.com/halexzd686-cloud/Platform-Connect --skill plat
 outputs/<article-slug>/<run-id>/showcase/index.html
 ```
 
-看板是最终成果的可视化总结，不承担与 Agent 对话或替代 Agent 决策的职责。
+看板是最终成果的可视化总结，不承担与 Agent 对话或替代 Agent 决策的职责。页面中的平台
+切换只用于查看不同定稿，复制和下载按钮作用于已经交付的文件，不会回写 Skill 决策。
 
 ## 工作原理
 
@@ -117,7 +124,7 @@ flowchart LR
     C --> D["推荐或确认平台"]
     D --> E["生成平台原生文案"]
     E --> F["生成平台化生图提示词"]
-    F --> G["渲染结果型离线看板"]
+    F --> G["生成下载包并渲染结果看板"]
 ```
 
 | 阶段 | 脚本 / 产物 | 责任 |
@@ -126,8 +133,8 @@ flowchart LR
 | 来源简报 | Agent + `source-brief.md` | 固定核心观点、事实、受众与不可漂移内容 |
 | 平台适配 | Agent + `<platform>/copy.md` | 生成平台原生文案并保留事实一致性 |
 | 视觉交付 | Agent + `visual_prompts` | 生成平台化主提示词、负面约束、比例和事实不变量 |
-| 页面渲染 | `render_showcase.py` | 生成离线看板三件套 |
-| 完整性校验 | `validate_manifest.py`、`validate_showcase.py` | 检查状态、资产、数据和离线约束 |
+| 页面渲染 | `render_showcase.py` | 生成离线看板、独立成果文件和 ZIP 下载包 |
+| 完整性校验 | `validate_manifest.py`、`validate_showcase.py` | 检查状态、数据、下载包和离线约束 |
 | 交付索引 | `build_delivery_index.py` | 汇总运行结果与文件入口 |
 
 ## 审阅策略
@@ -142,7 +149,7 @@ flowchart LR
 
 - `plan`：只生成内容简报、适配策略和视觉计划。
 - `copy`：生成内容简报与平台文案，不提供视觉提示词。
-- `full`：完成文案、生产级生图提示词、Manifest 和离线看板。
+- `full`：完成文案、生产级生图提示词、Manifest、离线看板和可下载成果包。
 
 高频用户可以在工作目录创建 `platform-connect.profile.json`，保存默认平台、语言、市场、视觉提示词偏好
 和审阅策略；当前请求始终优先于配置。
@@ -155,7 +162,7 @@ flowchart LR
 - **减少对话往返**：默认合并可安全合并的确认，高风险歧义才拆分处理。
 - **不调用图片工具**：即使用户提出“配图”或“生图”，也只交付可直接使用的提示词。
 - **控制提示词数量**：默认每个平台一条、总数不超过三条，用户明确要求时再扩展。
-- **结果优先展示**：最终看板先呈现文案和生图提示词，过程记录默认折叠。
+- **结果优先展示**：最终看板先呈现文案、提示词和下载成果，过程记录默认折叠。
 - **唯一源码**：仓库只维护 `skills/platform-connect`，不直接修补安装副本或生成后的页面。
 - **离线交付**：展示页不发起远程请求，也不要求用户安装前端运行环境。
 
@@ -204,7 +211,7 @@ npx skills update platform-connect --project --yes
 ### 回退到上一稳定版
 
 ```powershell
-npx skills add halexzd686-cloud/Platform-Connect@v1.1.0 `
+npx skills add halexzd686-cloud/Platform-Connect@v1.3.0 `
   --agent codex `
   --skill platform-connect `
   --yes `

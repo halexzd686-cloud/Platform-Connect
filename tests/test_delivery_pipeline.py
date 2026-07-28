@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import zipfile
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -87,7 +88,7 @@ class DeliveryPipelineTests(unittest.TestCase):
             run_root = Path(json.loads(prepared.stdout)["workspace"])
             manifest_path = run_root / "manifest.json"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            self.assertEqual(manifest["skill_version"], "1.3.0")
+            self.assertEqual(manifest["skill_version"], "1.4.0")
             self.assertEqual(manifest["schema_version"], "1.4")
             self.assertFalse((run_root / "xiaohongshu" / "images").exists())
 
@@ -136,6 +137,23 @@ class DeliveryPipelineTests(unittest.TestCase):
                 {path.name for path in showcase.iterdir()},
                 {"index.html", "app.js", "styles.css"},
             )
+            downloads = run_root / "downloads"
+            self.assertTrue((downloads / "Platform-Connect-成果包.zip").is_file())
+            self.assertTrue((downloads / "小红书-文案.md").is_file())
+            self.assertTrue((downloads / "LinkedIn-文案.md").is_file())
+            self.assertTrue((downloads / "配图提示词.md").is_file())
+            self.assertTrue((downloads / "交付说明.md").is_file())
+            with zipfile.ZipFile(downloads / "Platform-Connect-成果包.zip") as archive:
+                self.assertEqual(
+                    set(archive.namelist()),
+                    {
+                        "小红书-文案.md",
+                        "LinkedIn-文案.md",
+                        "配图提示词.md",
+                        "交付说明.md",
+                    },
+                )
+                self.assertIsNone(archive.testzip())
 
     def test_image_generation_fields_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

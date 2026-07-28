@@ -16,6 +16,11 @@ outputs/<article-slug>/<run-id>/
 ├── source-brief.md
 ├── manifest.json
 ├── index.md
+├── downloads/
+│   ├── Platform-Connect-成果包.zip
+│   ├── <平台>-文案.md
+│   ├── 配图提示词.md
+│   └── 交付说明.md
 ├── showcase/
 │   ├── index.html
 │   ├── app.js
@@ -34,7 +39,7 @@ The manifest is the machine-readable source of truth:
 ```json
 {
   "schema_version": "1.4",
-  "skill_version": "1.3.0",
+  "skill_version": "1.4.0",
   "article_slug": "example",
   "run_id": "20260727-143500",
   "parent_run_id": null,
@@ -174,14 +179,18 @@ fields:
   "copies": [],
   "platform_recommendations": [],
   "decisions": {},
-  "trace": {},
-  "deliverables": []
+  "trace": {}
 }
 ```
 
 Showcase data is a presentation projection. It must not override decision states, prompt states,
 run metadata, or review flags stored in `manifest.json`.
 
-The rendered board is outcome-first: final copy and ready-to-use visual prompt cards are primary;
-brief, recommendations, decisions, and trace are supporting audit information. Do not add
-controls that imply platform selection, approval, or image generation.
+The rendered board is outcome-first: final copy, ready-to-use visual prompt cards, and downloads
+are primary; brief, recommendations, decisions, and trace are supporting audit information. Do
+not add controls that imply platform selection, approval, or image generation.
+
+`render_showcase.py` creates `downloads/` beside `showcase/`. It writes one friendly Markdown
+copy file per selected platform, an aggregate `配图提示词.md` when prompt packages exist,
+`交付说明.md`, and `Platform-Connect-成果包.zip`. These files are generated projections; the
+manifest, source brief, and platform copy files remain the source of truth.

@@ -29,13 +29,15 @@ test("template stays offline and data-driven", () => {
 
 test("runtime is outcome-first and renders delivered content", () => {
   for (const label of [
-    "最终平台文案与提示词",
-    "这组内容从哪里来",
-    "可直接使用的生图提示词",
-    "可带走的全部成果",
+    "从一份表达，",
+    "各平台最终文案",
+    "配图建议与提示词",
+    "下载本次成果",
   ]) {
     assert.match(html, new RegExp(label));
   }
+  assert.match(html, /到多种抵达/);
+  assert.doesNotMatch(html, /这组内容从哪里来/);
   assert.match(app, /data-platform-tab/);
   assert.match(app, /visual_prompts/);
   assert.match(app, /data-copy-prompt/);
@@ -47,11 +49,12 @@ test("runtime is outcome-first and renders delivered content", () => {
 
 test("showcase is a read-only delivery board with collapsed provenance", () => {
   assert.match(html, /OFFLINE REPORT/);
-  assert.match(html, /查看本次执行记录/);
+  assert.match(html, /查看来源与执行记录/);
   assert.match(app, /review_policy/);
   assert.match(app, /decision_provenance/);
   assert.match(app, /platform_recommendations/);
-  assert.match(html, /切换只改变查看对象/);
+  assert.match(html, /切换平台只改变当前查看的定稿/);
+  assert.match(app, /downloadPrimary/);
   assert.doesNotMatch(app, /classList\.toggle\("selected"\)/);
   assert.doesNotMatch(html, /选择平台|确认生成|开始生成/);
   assert.doesNotMatch(app, /generation_status|view_image|lightbox/);
@@ -62,5 +65,5 @@ test("visual language uses the green gray brown system", () => {
   assert.match(styles, /--forest:/);
   assert.match(styles, /--paper:/);
   assert.match(styles, /--brown:/);
-  assert.match(styles, /\.summary-strip \.ready/);
+  assert.match(styles, /\.download-primary/);
 });
