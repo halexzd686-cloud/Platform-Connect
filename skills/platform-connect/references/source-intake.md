@@ -4,15 +4,15 @@ Accept the source with no special prompt ceremony. If the user attaches a docume
 
 ## Supported inputs
 
-| Input | Intake method | Required record |
-|---|---|---|
-| Pasted text | Read the complete message content | `input_type: pasted` |
-| `.txt`, `.md` | Read the complete text file | file name, media type |
-| `.docx` | Use the host document-reading capability and preserve headings, lists, tables, and footnotes that affect meaning | file name, media type |
-| `.pdf` | Use the host PDF capability and read every page; preserve page anchors for facts and quotations | file name, page count when available |
-| `.html` | Extract the article body, title, byline, date, and canonical URL when present | file name or URL |
-| Article URL | Use the host web or browser capability to retrieve the article body | URL, title, retrieval date when available |
-| Scanned document | Use OCR through the host document or PDF capability | uncertain OCR passages as review flags |
+| Input | Intake method |
+|---|---|
+| Pasted text | Read the complete message content |
+| `.txt`, `.md` | Read the complete text file |
+| `.docx` | Use the host document-reading capability and preserve headings, lists, tables, and footnotes that affect meaning |
+| `.pdf` | Use the host PDF capability and read every page; preserve page anchors for facts and quotations |
+| `.html` | Extract the article body, title, byline, date, and canonical URL when present |
+| Article URL | Use the host web or browser capability to retrieve the article body |
+| Scanned document | Use OCR through the host document or PDF capability and mark uncertain passages |
 
 Do not require the user to restate content already available in the attachment or URL.
 
@@ -33,9 +33,8 @@ Do not fetch a URL merely because it appears beside sufficient pasted content.
 2. Use the host capability that matches the format. Do not assume a particular vendor or local library.
 3. Read the complete available article before summarizing or recommending platforms. Apply multiple-source precedence before opening a URL.
 4. Separate article content from navigation, comments, advertisements, related links, and page chrome.
-5. Record the source title, reference, media type, read status, and useful anchors in the manifest or showcase data.
-6. Build `source-brief.md` from the extracted article, not from metadata or an excerpt.
-7. If retrieval is incomplete, set `read_status: blocked`, explain the exact missing portion, and stop before drafting.
+5. Keep the source title, reference, and useful anchors in working context while drafting.
+6. If retrieval is incomplete, explain the exact missing portion and stop before drafting.
 
 ## URL and access boundaries
 

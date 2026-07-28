@@ -1,4 +1,4 @@
 interface:
   display_name: "Platform Connect"
-  short_description: "直接读取多格式文章，推荐发布平台并交付文案、生图提示词与结果看板"
-  default_prompt: "使用 $platform-connect 直接读取我提供的文章；若未指定平台，请推荐 2–3 个国内外平台，再生成平台文案和可直接使用的生图提示词，不要实际生成图片；完成 copy 或 full 任务时必须生成并验证结果看板与下载包。"
+  short_description: "读取文章并生成平台原生文案与可选配图提示词"
+  default_prompt: "使用 $platform-connect 直接读取我提供的文章；若未指定平台，请推荐两个适合的国内外平台。默认直接在聊天中交付平台文案；我需要配图时提供提示词，但不要实际生成图片。"

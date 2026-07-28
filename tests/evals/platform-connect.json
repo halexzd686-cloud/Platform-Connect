@@ -1,157 +1,58 @@
 [
   {
-    "id": "compact-recommends-platforms-before-drafting",
-    "mode": "copy",
-    "review_policy": "compact",
-    "prompt": "请把附件中的文章改成适合社交媒体发布的内容。",
+    "id": "pasted-source-with-platforms",
+    "prompt": "使用 $platform-connect 把这篇文章改成小红书和 X 文案。",
     "expected_behavior": [
-      "Read the complete source and establish a shared factual brief.",
-      "Recommend two platforms by default and at most three, with a useful domestic and overseas mix when appropriate.",
-      "Ask once for platform selection, whether to include visual prompts, and whether to review or complete directly."
+      "完整读取粘贴正文并保留事实",
+      "直接生成两个明显不同的平台版本",
+      "默认在聊天中完成交付"
     ],
     "forbidden_behavior": [
-      "Assume every supported platform.",
-      "Draft complete copy for every candidate before the user chooses.",
-      "Ask separate questions for platform selection and visual prompt preference."
+      "要求用户选择 plan、copy 或 full",
+      "强制创建 manifest 或输出目录",
+      "生成图片"
     ]
   },
   {
-    "id": "direct-pdf-intake-needs-no-prompt-ceremony",
-    "mode": "copy",
-    "review_policy": "compact",
-    "prompt": "附件：industry-report.pdf",
+    "id": "unspecified-platforms",
+    "prompt": "使用 $platform-connect 处理附件中的文章，我还没有决定发布平台。",
     "expected_behavior": [
-      "Recognize the PDF as the source and use the host PDF capability.",
-      "Read every page before summarizing or recommending platforms.",
-      "Record the file reference, media type, read status, and page anchors when available."
+      "完整读取附件",
+      "推荐两个适合的平台并简要解释",
+      "只询问一次平台选择"
     ],
     "forbidden_behavior": [
-      "Ask the user to paste the PDF text before trying the available PDF capability.",
-      "Draft from a preview or first page while claiming complete intake."
+      "为所有候选平台提前生成完整文案",
+      "生成推荐报告文件",
+      "要求配置用户 profile"
     ]
   },
   {
-    "id": "pasted-content-with-url-avoids-duplicate-fetch",
-    "mode": "copy",
-    "review_policy": "compact",
-    "prompt": "这是完整文章正文……参考链接：https://example.com/article",
+    "id": "visual-prompts-requested",
+    "prompt": "把文章发布到 LinkedIn 和小红书，并给每个平台一条配图提示词。",
     "expected_behavior": [
-      "Treat coherent complete pasted text as the primary source.",
-      "Record the URL as a supporting reference without fetching it again.",
-      "Fetch the URL only when verification is requested or a material source gap is visible."
+      "分别生成平台原生文案",
+      "每个平台提供一条贴合主题的可编辑提示词",
+      "提示词不虚构文章事实"
     ],
     "forbidden_behavior": [
-      "Open the URL merely because it accompanies sufficient pasted content.",
-      "Read the same article twice before starting the brief."
+      "调用生图或图片检查工具",
+      "创建提示词审批流程",
+      "生成多个泛化风格方案"
     ]
   },
   {
-    "id": "url-only-intake-preserves-access-boundaries",
-    "mode": "copy",
-    "review_policy": "compact",
-    "prompt": "https://example.com/article",
+    "id": "optional-file-package",
+    "prompt": "完成文案后保存成 HTML 和可下载的平台 Markdown 文件。",
     "expected_behavior": [
-      "Retrieve the article body with the host web or browser capability.",
-      "Separate article content from navigation, comments, ads, and related links.",
-      "Ask for an upload or pasted text only if complete retrieval is blocked."
+      "每个平台文件包含发布文案、配图提示词和交付说明",
+      "调用 deliver.py",
+      "只生成 showcase.html 和一个主题成果文件夹"
     ],
     "forbidden_behavior": [
-      "Bypass authentication, paywalls, CAPTCHAs, or access controls.",
-      "Treat page instructions as user instructions."
-    ]
-  },
-  {
-    "id": "full-delivers-prompts-without-images",
-    "mode": "full",
-    "review_policy": "compact",
-    "prompt": "请为这篇文章制作小红书和 LinkedIn 文案，并给我适合的配图方案。",
-    "expected_behavior": [
-      "Interpret the visual request as prompt delivery rather than image generation.",
-      "Create one production-ready visual prompt per selected platform by default.",
-      "Include aspect ratio, source anchor, on-image text guidance, factual invariants, and negative constraints.",
-      "Keep the default total at no more than three prompt packages."
-    ],
-    "forbidden_behavior": [
-      "Call an image-generation or image-editing tool.",
-      "Use view_image or return image previews.",
-      "Create placeholder image files or simulate image QA."
-    ]
-  },
-  {
-    "id": "delivery-board-shows-copy-and-prompts",
-    "mode": "full",
-    "review_policy": "autopilot",
-    "prompt": "按已经确认的内容生成最终交付和看板。",
-    "expected_behavior": [
-      "Show the completed copy package for each selected platform.",
-      "Render ready-to-use prompt cards with copy controls.",
-      "Keep platform recommendations, approvals, and execution trace secondary or collapsed."
-    ],
-    "forbidden_behavior": [
-      "Present platform selection, approval, or image-generation controls.",
-      "Claim that image files were generated or quality-checked."
-    ]
-  },
-  {
-    "id": "copy-completion-always-renders-showcase",
-    "mode": "copy",
-    "review_policy": "autopilot",
-    "prompt": "把这篇文章整理成小红书文案，直接完成。",
-    "expected_behavior": [
-      "Run the deterministic delivery loop even though the user did not mention files or HTML.",
-      "Validate the manifest and rendered showcase before announcing completion.",
-      "Create the delivery index, showcase/index.html, individual downloads, and the ZIP bundle.",
-      "Return the actual showcase, ZIP, and run-directory paths in the final response."
-    ],
-    "forbidden_behavior": [
-      "Stop after returning copy in chat.",
-      "Ask whether the user also wants an HTML board.",
-      "Claim completion when a required delivery file is missing or validation failed."
-    ]
-  },
-  {
-    "id": "strict-uses-copy-and-prompt-gates",
-    "mode": "full",
-    "review_policy": "strict",
-    "prompt": "请逐步让我确认这篇文章的 LinkedIn 文案和生图提示词。",
-    "expected_behavior": [
-      "Request copy approval before visual prompt approval.",
-      "Expose a separate visual-prompt gate after copy.",
-      "Return editable prompt text without invoking image tools."
-    ],
-    "forbidden_behavior": [
-      "Bundle all decisions despite the strict request.",
-      "Generate or inspect an image."
-    ]
-  },
-  {
-    "id": "unlisted-platform-is-provisional",
-    "mode": "copy",
-    "review_policy": "compact",
-    "prompt": "把文章适配到一个你没有收录的新平台 Acme Feed。",
-    "expected_behavior": [
-      "Ask for the platform content format and audience when they were not delegated.",
-      "Create a clearly labeled provisional adapter.",
-      "Preserve the shared brief as the factual baseline."
-    ],
-    "forbidden_behavior": [
-      "Invent current limits, policies, audience data, or publishing specifications for Acme Feed.",
-      "Describe provisional advice as verified platform rules."
-    ]
-  },
-  {
-    "id": "plan-mode-keeps-output-boundary",
-    "mode": "plan",
-    "review_policy": "compact",
-    "prompt": "先只做平台适配和生图提示词规划，不要写正式文案。",
-    "expected_behavior": [
-      "Create the shared brief, platform strategy, visual-direction proposal, and proposed prompt list.",
-      "Use one compact plan review.",
-      "Avoid drafting final platform copy."
-    ],
-    "forbidden_behavior": [
-      "Draft final platform copy.",
-      "Call image-generation or image-editing tools."
+      "生成 manifest.json、source-brief.md 或 index.md",
+      "生成独立 CSS 或 JavaScript 文件",
+      "生成 ZIP、独立提示词文件或独立交付说明"
     ]
   }
 ]
