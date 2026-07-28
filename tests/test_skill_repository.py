@@ -123,6 +123,7 @@ class SkillRepositoryTests(unittest.TestCase):
         self.assertIn("配图建议与提示词", html)
         self.assertIn("下载本次成果", html)
         self.assertNotIn("这组内容从哪里来", html)
+        self.assertNotIn("outcome-index", html)
         self.assertIn("visual_prompts", app)
         self.assertIn("downloads", app)
         self.assertNotIn("<img", app)

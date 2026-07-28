@@ -41,6 +41,7 @@ test("runtime is outcome-first and renders delivered content", () => {
   assert.match(app, /data-platform-tab/);
   assert.match(app, /visual_prompts/);
   assert.match(app, /data-copy-prompt/);
+  assert.doesNotMatch(html, /outcome-index/);
   assert.doesNotMatch(app, /<img/);
   assert.doesNotMatch(app, /assetUrl/);
   assert.match(styles, /\.package-shell/);
@@ -65,5 +66,7 @@ test("visual language uses the green gray brown system", () => {
   assert.match(styles, /--forest:/);
   assert.match(styles, /--paper:/);
   assert.match(styles, /--brown:/);
+  assert.match(styles, /--reading:/);
+  assert.match(styles, /\.prompt-card summary/);
   assert.match(styles, /\.download-primary/);
 });
