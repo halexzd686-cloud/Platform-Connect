@@ -74,17 +74,16 @@ outputs/<article-slug>/<run-id>/
 
 ## 快速开始
 
-### 1. 通过 skills.sh 安装
+### 1. 安装当前版本 v1.4.0
 
-按照 [skills.sh](https://skills.sh/halexzd686-cloud/Platform-Connect) 的标准命令安装：
+按照 [skills.sh](https://skills.sh/halexzd686-cloud/Platform-Connect) 的标准命令安装最新版本：
 
 ```bash
 npx skills add https://github.com/halexzd686-cloud/Platform-Connect --skill platform-connect
 ```
 
 安装程序会引导选择 Agent 和安装范围。项目级安装是默认选择；只有明确需要在多个项目间复用时，
-才选择全局安装；需要直接指定用户级安装时，可在命令末尾增加 `--global`。当前正式发布版本为
-`v1.4.0`。
+才选择全局安装；需要直接指定用户级安装时，可在命令末尾增加 `--global`。
 
 ### 2. 交给 Agent
 
@@ -189,38 +188,6 @@ Platform-Connect/
 不要直接修改安装副本。发现问题时修改唯一源码、运行测试并重新安装，也不要修补 `.claude/`
 或生成后的看板。
 
-## 更新与回退
-
-### 重新安装最新版本
-
-重复执行 skills.sh 提供的标准命令，可以重新选择 Agent 和安装范围并覆盖现有副本：
-
-```bash
-npx skills add https://github.com/halexzd686-cloud/Platform-Connect --skill platform-connect
-```
-
-### 跟随最新开发内容
-
-```powershell
-npx skills update platform-connect --project --yes
-```
-
-此命令适合已经安装 Skill、希望直接更新项目级副本的场景。首次安装优先使用 skills.sh 展示的
-标准 `npx skills add` 命令。
-
-### 回退到上一稳定版
-
-```powershell
-npx skills add halexzd686-cloud/Platform-Connect@v1.3.0 `
-  --agent codex `
-  --skill platform-connect `
-  --yes `
-  --copy
-```
-
-回退前保留失败运行目录，定位最后一个通过测试的 Git tag 或提交；修复完成后重新运行测试，再从
-已确认的 GitHub 版本安装。
-
 ## 开发与测试
 
 运行完整回归测试：
@@ -233,7 +200,8 @@ node --test tests/test_showcase_runtime.mjs
 运行官方 Skill 校验：
 
 ```powershell
-python -X utf8 C:\Users\86188\.codex\skills\.system\skill-creator\scripts\quick_validate.py `
+$validator = Join-Path $env:USERPROFILE ".codex\skills\.system\skill-creator\scripts\quick_validate.py"
+python -X utf8 $validator `
   skills/platform-connect
 ```
 
