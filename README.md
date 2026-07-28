@@ -15,7 +15,7 @@
   默认在聊天中完成；需要保存时，只生成一个 HTML 和一个平台成果文件夹。
 </p>
 
-![Platform Connect 精简文件交付：一个 HTML 汇总多个平台成果](README-media/showcase-simplified.png)
+![Platform Connect 精简文件交付：一个 HTML 汇总多个平台成果](README-media/showcase-simplified-v1.5.0.png)
 
 ## 它解决什么问题
 
