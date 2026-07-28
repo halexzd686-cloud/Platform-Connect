@@ -32,6 +32,11 @@ outputs/<article-slug>/<run-id>/
 Never overwrite an earlier run. A revision creates a new `run_id` and records the previous run in
 `parent_run_id`.
 
+Every completed `copy` or `full` run must execute `scripts/finalize_delivery.py`. The command
+must return `"status": "completed"` before the Agent announces completion. This requirement
+applies even when the user did not explicitly request files or an HTML board. A missing manifest,
+index, showcase, or ZIP bundle blocks delivery.
+
 ## Manifest
 
 The manifest is the machine-readable source of truth:
@@ -39,7 +44,7 @@ The manifest is the machine-readable source of truth:
 ```json
 {
   "schema_version": "1.4",
-  "skill_version": "1.4.0",
+  "skill_version": "1.4.1",
   "article_slug": "example",
   "run_id": "20260727-143500",
   "parent_run_id": null,

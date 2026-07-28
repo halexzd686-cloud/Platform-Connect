@@ -93,6 +93,23 @@
     ]
   },
   {
+    "id": "copy-completion-always-renders-showcase",
+    "mode": "copy",
+    "review_policy": "autopilot",
+    "prompt": "把这篇文章整理成小红书文案，直接完成。",
+    "expected_behavior": [
+      "Run the deterministic delivery loop even though the user did not mention files or HTML.",
+      "Validate the manifest and rendered showcase before announcing completion.",
+      "Create the delivery index, showcase/index.html, individual downloads, and the ZIP bundle.",
+      "Return the actual showcase, ZIP, and run-directory paths in the final response."
+    ],
+    "forbidden_behavior": [
+      "Stop after returning copy in chat.",
+      "Ask whether the user also wants an HTML board.",
+      "Claim completion when a required delivery file is missing or validation failed."
+    ]
+  },
+  {
     "id": "strict-uses-copy-and-prompt-gates",
     "mode": "full",
     "review_policy": "strict",

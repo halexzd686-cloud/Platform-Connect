@@ -74,7 +74,7 @@ outputs/<article-slug>/<run-id>/
 
 ## 快速开始
 
-### 1. 安装当前版本 v1.4.0
+### 1. 安装当前版本 v1.4.1
 
 按照 [skills.sh](https://skills.sh/halexzd686-cloud/Platform-Connect) 的标准命令安装最新版本：
 
@@ -111,8 +111,9 @@ npx skills add https://github.com/halexzd686-cloud/Platform-Connect --skill plat
 outputs/<article-slug>/<run-id>/showcase/index.html
 ```
 
-看板是最终成果的可视化总结，不承担与 Agent 对话或替代 Agent 决策的职责。页面中的平台
-切换只用于查看不同定稿，复制和下载按钮作用于已经交付的文件，不会回写 Skill 决策。
+看板是 `copy` 和 `full` 任务的必备最终交付，不需要用户额外提出“保存文件”或“生成 HTML”。
+它不承担与 Agent 对话或替代 Agent 决策的职责；页面中的平台切换只用于查看不同定稿，复制和
+下载按钮作用于已经交付的文件，不会回写 Skill 决策。
 
 ## 工作原理
 
@@ -132,7 +133,8 @@ flowchart LR
 | 来源简报 | Agent + `source-brief.md` | 固定核心观点、事实、受众与不可漂移内容 |
 | 平台适配 | Agent + `<platform>/copy.md` | 生成平台原生文案并保留事实一致性 |
 | 视觉交付 | Agent + `visual_prompts` | 生成平台化主提示词、负面约束、比例和事实不变量 |
-| 页面渲染 | `render_showcase.py` | 生成离线看板、独立成果文件和 ZIP 下载包 |
+| 最终交付 | `finalize_delivery.py` | 强制校验并生成离线看板、独立成果文件、索引和 ZIP 下载包 |
+| 页面渲染 | `render_showcase.py` | 由最终交付命令调用，生成离线看板与下载文件 |
 | 完整性校验 | `validate_manifest.py`、`validate_showcase.py` | 检查状态、数据、下载包和离线约束 |
 | 交付索引 | `build_delivery_index.py` | 汇总运行结果与文件入口 |
 

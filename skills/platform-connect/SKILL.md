@@ -38,8 +38,8 @@ Keep output scope and review policy independent. Record both in the manifest.
 9. For `full`, read [visual-handoff.md](references/visual-handoff.md) and the relevant industry entry in [industry-visual-routing.md](references/industry-visual-routing.md). Create one recommended production-ready prompt per selected platform by default, with no more than three prompt packages total unless the user asks for more. Keep every prompt editable and allow `自定义提示词`.
 10. Apply the review policy: use one combined approval in `compact`, separate copy and visual-prompt gates in `strict`, or recorded preauthorization in `autopilot`. Treat requested revisions as replacing approval for the affected decision.
 11. Never call an image-generation or image-editing tool. Do not generate, inspect, revise, or embed image files. Deliver prompt text, aspect-ratio guidance, optional on-image text, factual invariants, and avoid constraints so the user can generate images elsewhere.
-12. When filesystem output is requested, follow the deterministic delivery loop below. Create a new immutable run directory for every revision; never overwrite a prior approved run.
-13. Render the bundled offline showcase from the completed run. Make final copy, visual prompt cards, and real download links the primary content; keep recommendations, decisions, and execution trace secondary or collapsed. The renderer creates individual user-facing files and one ZIP bundle in `downloads/`. Treat the board as a read-only delivery report, not a control surface or a separate AI application.
+12. For every `copy` or `full` run, follow the deterministic delivery loop below even when the user did not ask to save files or generate HTML. Create a new immutable run directory for every revision; never overwrite a prior approved run. `plan` may stop without a final delivery directory unless the user explicitly requests one.
+13. Render the bundled offline showcase for every completed `copy` or `full` run. Make final copy, visual prompt cards, and real download links the primary content; keep recommendations, decisions, and execution trace secondary or collapsed. The renderer creates individual user-facing files and `downloads/Platform-Connect-成果包.zip`. Treat the board as a read-only delivery report, not a control surface or a separate AI application.
 
 ## Non-negotiable boundaries
 
@@ -58,6 +58,8 @@ Keep output scope and review policy independent. Record both in the manifest.
 - Never invoke image tools, even when the user asks for “配图” or “生图”; interpret those requests as visual-prompt delivery within this Skill.
 - Default to one visual prompt per selected platform and no more than three total to keep the workflow concise.
 - Do not make the final board look interactive in ways that imply platform selection, approval, or image generation. Board interactions may only switch, filter, copy, or open delivered results.
+- Never finish a `copy` or `full` run with chat content alone. Do not announce completion until the manifest, showcase, downloads, and index pass validation and the required files exist.
+- If the host cannot create or validate the delivery files, report the run as blocked with the failing command and missing path. Do not silently downgrade to a chat-only delivery.
 
 ## Output order
 
@@ -76,6 +78,8 @@ When platforms were unspecified, return the recommendation packet before this ou
 
 In `compact`, make the next action one combined approval or one consolidated revision. In `autopilot`, proceed to final delivery without requesting a reply unless a blocking ambiguity appears. In `strict`, expose only the current gate.
 
+At final delivery for `copy` or `full`, include the actual path to `showcase/index.html`, the ZIP bundle path, and the run directory. Do not make the user ask separately for the board.
+
 ## Runtime and deterministic delivery
 
 Require Python 3.10 or newer. The scripts use only the Python standard library. The offline showcase has no package, CDN, network, React, FastAPI, or image-generation dependency.
@@ -83,6 +87,7 @@ Require Python 3.10 or newer. The scripts use only the Python standard library. 
 Execute these scripts for file operations; do not manually recreate their behavior:
 
 - `scripts/prepare_workspace.py <slug> --platforms ... --review-policy ...` creates an immutable versioned run directory and starter manifest.
+- `scripts/finalize_delivery.py <manifest.json>` is the mandatory completion command for every `copy` or `full` run. It validates the manifest, renders and validates the showcase, builds the index, verifies required files, and returns the actual delivery paths.
 - `scripts/validate_manifest.py <manifest.json>` validates required fields, platform selection, duplicate prompt packages, ratios, and approval state.
 - `scripts/build_delivery_index.py <manifest.json>` builds a Markdown delivery index after visual prompts and copy paths are recorded.
 - `scripts/render_showcase.py <manifest.json>` renders the bundled offline execution showcase and creates user-facing files plus a ZIP in `downloads/`.
@@ -90,17 +95,16 @@ Execute these scripts for file operations; do not manually recreate their behavi
 
 Run scripts from the repository or skill consumer's working directory. Use `--root` to choose a different output root.
 
-Follow this delivery loop:
+This delivery loop is mandatory for every completed `copy` or `full` run:
 
 1. Run `prepare_workspace.py` after platform selection.
 2. Write the brief, copy packages, decisions, visual prompt packages, and review flags into the run.
-3. Run `validate_manifest.py`.
-4. If validation fails, fix the manifest or source files and rerun validation. Do not continue from an invalid run.
-5. After validation passes, run `render_showcase.py`, then `validate_showcase.py`.
-6. If showcase validation fails, fix the manifest, display data, or source template and rerender. Do not patch generated HTML as the source of truth.
-7. Run `build_delivery_index.py` only after the manifest and showcase pass.
+3. Run `finalize_delivery.py`. Do not substitute a chat response for this command.
+4. If finalization fails, use the reported stage to fix the manifest, source files, display data, or template, then rerun `finalize_delivery.py`. Do not patch generated HTML as the source of truth.
+5. Before the final response, require `"status": "completed"` and verify that the returned manifest, index, showcase, and bundle paths exist.
+6. Return the actual `run_root`, `showcase`, and `bundle` paths from the completion payload.
 
-Treat nonzero exit codes and JSON with `"status": "failed"` as blocking. Report the error and preserve the failed run for diagnosis; start a child run for any approved revision.
+Treat nonzero exit codes, JSON with `"status": "failed"`, or a missing required file as blocking. Report the error and preserve the failed run for diagnosis; start a child run for any approved revision. Never claim successful delivery from draft text alone.
 
 ## Reference routing
 

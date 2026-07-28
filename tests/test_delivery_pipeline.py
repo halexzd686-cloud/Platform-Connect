@@ -88,7 +88,7 @@ class DeliveryPipelineTests(unittest.TestCase):
             run_root = Path(json.loads(prepared.stdout)["workspace"])
             manifest_path = run_root / "manifest.json"
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            self.assertEqual(manifest["skill_version"], "1.4.0")
+            self.assertEqual(manifest["skill_version"], "1.4.1")
             self.assertEqual(manifest["schema_version"], "1.4")
             self.assertFalse((run_root / "xiaohongshu" / "images").exists())
 
@@ -118,18 +118,20 @@ class DeliveryPipelineTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            validated = run_script("validate_manifest.py", str(manifest_path))
-            self.assertEqual(validated.returncode, 0, validated.stdout + validated.stderr)
-            self.assertEqual(json.loads(validated.stdout)["visual_prompt_count"], 2)
-
-            rendered = run_script("render_showcase.py", str(manifest_path))
-            self.assertEqual(rendered.returncode, 0, rendered.stdout + rendered.stderr)
+            finalized = run_script("finalize_delivery.py", str(manifest_path))
+            self.assertEqual(finalized.returncode, 0, finalized.stdout + finalized.stderr)
+            completion = json.loads(finalized.stdout)
+            self.assertEqual(completion["status"], "completed")
+            self.assertEqual(Path(completion["run_root"]), run_root)
+            self.assertEqual(
+                Path(completion["showcase"]),
+                run_root / "showcase" / "index.html",
+            )
+            self.assertEqual(
+                Path(completion["bundle"]),
+                run_root / "downloads" / "Platform-Connect-成果包.zip",
+            )
             showcase = run_root / "showcase"
-            checked = run_script("validate_showcase.py", str(showcase))
-            self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-
-            indexed = run_script("build_delivery_index.py", str(manifest_path))
-            self.assertEqual(indexed.returncode, 0, indexed.stdout + indexed.stderr)
             index_text = (run_root / "index.md").read_text(encoding="utf-8")
             self.assertIn("生图提示词", index_text)
             self.assertNotIn("尚未生成", index_text)
@@ -154,6 +156,78 @@ class DeliveryPipelineTests(unittest.TestCase):
                     },
                 )
                 self.assertIsNone(archive.testzip())
+
+    def test_finalizer_creates_showcase_for_copy_without_explicit_file_request(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = run_script(
+                "prepare_workspace.py",
+                "copy-only",
+                "--platforms",
+                "xiaohongshu",
+                "--mode",
+                "copy",
+                "--review-policy",
+                "autopilot",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "copy-002",
+            )
+            self.assertEqual(prepared.returncode, 0, prepared.stdout + prepared.stderr)
+            run_root = Path(json.loads(prepared.stdout)["workspace"])
+            manifest_path = run_root / "manifest.json"
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest["copy_approval"] = "approved"
+            manifest["decision_provenance"].update(
+                {
+                    "brief": "preauthorized",
+                    "copy_approval": "preauthorized",
+                    "visual_prompt_intent": "inferred",
+                }
+            )
+            manifest_path.write_text(
+                json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            (run_root / "source-brief.md").write_text(
+                "# 核心判断\n\n这是一份完整简报。\n",
+                encoding="utf-8",
+            )
+            (run_root / "xiaohongshu" / "copy.md").write_text(
+                "# 最终文案\n\n这是已经确认的平台文案。\n",
+                encoding="utf-8",
+            )
+
+            finalized = run_script("finalize_delivery.py", str(manifest_path))
+            self.assertEqual(finalized.returncode, 0, finalized.stdout + finalized.stderr)
+            completion = json.loads(finalized.stdout)
+            self.assertEqual(completion["status"], "completed")
+            self.assertTrue(Path(completion["showcase"]).is_file())
+            self.assertTrue(Path(completion["bundle"]).is_file())
+            self.assertFalse((run_root / "downloads" / "配图提示词.md").exists())
+
+    def test_finalizer_blocks_incomplete_copy_run(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            prepared = run_script(
+                "prepare_workspace.py",
+                "unfinished-copy",
+                "--platforms",
+                "xiaohongshu",
+                "--mode",
+                "copy",
+                "--root",
+                temp_dir,
+                "--run-id",
+                "copy-001",
+            )
+            self.assertEqual(prepared.returncode, 0, prepared.stdout + prepared.stderr)
+            manifest_path = Path(json.loads(prepared.stdout)["manifest"])
+            finalized = run_script("finalize_delivery.py", str(manifest_path))
+            self.assertNotEqual(finalized.returncode, 0)
+            payload = json.loads(finalized.stdout)
+            self.assertEqual(payload["status"], "failed")
+            self.assertIn("copy approval must be approved", payload["errors"][0])
+            self.assertFalse((manifest_path.parent / "showcase" / "index.html").exists())
 
     def test_image_generation_fields_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

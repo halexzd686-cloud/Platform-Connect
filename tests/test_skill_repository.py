@@ -128,6 +128,28 @@ class SkillRepositoryTests(unittest.TestCase):
         self.assertNotIn("<img", app)
         self.assertIn("platform_recommendations", app)
 
+    def test_copy_and_full_require_verified_showcase(self) -> None:
+        skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn(
+            "For every `copy` or `full` run",
+            skill,
+        )
+        self.assertIn(
+            "even when the user did not ask to save files or generate HTML",
+            skill,
+        )
+        self.assertIn(
+            "Never finish a `copy` or `full` run with chat content alone",
+            skill,
+        )
+        self.assertIn(
+            "downloads/Platform-Connect-成果包.zip",
+            skill,
+        )
+        self.assertIn("scripts/finalize_delivery.py", skill)
+        self.assertTrue((SKILL / "scripts" / "finalize_delivery.py").is_file())
+        self.assertNotIn("When filesystem output is requested", skill)
+
     def test_skill_never_calls_image_tools(self) -> None:
         skill = (SKILL / "SKILL.md").read_text(encoding="utf-8")
         handoff = (SKILL / "references" / "visual-handoff.md").read_text(
@@ -173,9 +195,10 @@ class SkillRepositoryTests(unittest.TestCase):
             "npx skills add https://github.com/halexzd686-cloud/Platform-Connect",
             readme,
         )
-        self.assertIn("--agent codex", readme)
         self.assertIn("--skill platform-connect", readme)
         self.assertIn("--global", readme)
+        self.assertIn("安装当前版本 v1.4.1", readme)
+        self.assertEqual(readme.count("npx skills"), 1)
         self.assertIn("不要直接修改安装副本", readme)
 
     def test_project_skill_lock_targets_the_canonical_skill(self) -> None:

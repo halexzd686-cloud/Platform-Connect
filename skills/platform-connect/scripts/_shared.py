@@ -8,7 +8,7 @@ from typing import Any
 
 
 SCHEMA_VERSION = "1.4"
-SKILL_VERSION = "1.4.0"
+SKILL_VERSION = "1.4.1"
 PLATFORMS = frozenset(
     {
         "douyin",
